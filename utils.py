@@ -6,28 +6,13 @@ import discord
 CONFIG_FILE = 'config.json'
 
 def load_config():
-    """সব ফিচারের ডিফল্ট সেটিংস লোড করে"""
+    """ডিফল্ট সেটিংস লোড করে"""
     default_data = {
+        "prefixes": {}, # সার্ভার অনুযায়ী প্রেফিক্স সেভ হবে
         "premium_servers": {},
         "premium_users": {},
-        "welcome_settings": {
-            "enabled": False,
-            "channel_id": None,
-            "message": "Welcome {member} to {server}!",
-            "image_url": "https://img.freepik.com/free-vector/abstract-blue-geometric-shapes-background_1035-17545.jpg",
-            "accent_color": 0xFFFFFF,
-            "ping_delete": False
-        },
-        "daily_settings": {
-            "image_url": None,
-            "message": "Here is your daily reward!"
-        },
-        "poll_settings": {
-            "title": "📊 COMMUNITY POLL",
-            "emoji": "🗳️",
-            "image_url": None,
-            "color": 0x3498db
-        }
+        "welcome_settings": {"enabled": False, "channel_id": None},
+        "ticket_settings": {"support_roles": [], "count": 0}
     }
 
     if not os.path.exists(CONFIG_FILE):
@@ -38,6 +23,7 @@ def load_config():
     with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
         try:
             data = json.load(f)
+            # নতুন কোনো কি (key) মিস থাকলে সেটি অ্যাড করবে
             for key, value in default_data.items():
                 if key not in data:
                     data[key] = value
@@ -50,20 +36,6 @@ def save_config(data):
         json.dump(data, f, indent=4)
 
 def get_theme_color(guild_id):
-    """Premium (Gold) বা Free (Blue) কালার রিটার্ন করে"""
-    if not guild_id: return discord.Color.blue()
-    
-    config = load_config()
-    now = datetime.datetime.now()
-    
-    if str(guild_id) in config.get("premium_servers", {}):
-        expiry_str = config["premium_servers"][str(guild_id)]["expiry"]
-        try:
-            expiry = datetime.datetime.fromisoformat(expiry_str)
-            if now < expiry:
-                return discord.Color.gold()
-        except:
-            pass 
-
+    """থিম কালার রিটার্ন করে"""
     return discord.Color.blue()
-                    
+    
