@@ -50,7 +50,7 @@ class LiveNotifications(commands.Cog):
 
         async with aiohttp.ClientSession() as session:
             # --- YouTube Check Logic ---
-            api_key = "YOUR_YOUTUBE_API_KEY" # এখানে আপনার API Key বসান
+            api_key = "AIzaSyBXWOKcmw79FHmxaKAPP9VhHJg89RBtnT0" # এখানে আপনার API Key বসান
             for yt_id in settings.get("yt_channels", []):
                 url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&channelId={yt_id}&type=video&eventType=live&key={api_key}"
                 async with session.get(url) as resp:
