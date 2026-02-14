@@ -58,18 +58,31 @@ class TicketSelect(Select):
     def __init__(self, categories):
         options = []
         for cat in categories:
-            options.append(discord.SelectOption(label=cat["label"], emoji=cat["emoji"], description=cat["description"], value=cat["value"]))
-        super().__init__(placeholder="👇 Select Support Category...", min_values=1, max_values=1, custom_id="ticket_dropdown")
+            options.append(discord.SelectOption(
+                label=cat["label"], 
+                emoji=cat["emoji"], 
+                description=cat["description"], 
+                value=cat["value"]
+            ))
+        
+        # ⚠️ ফিক্স: এখানে options=options যোগ করা হয়েছে
+        super().__init__(
+            placeholder="👇 Select Support Category...", 
+            min_values=1, 
+            max_values=1, 
+            options=options, 
+            custom_id="ticket_dropdown"
+        )
 
     async def callback(self, interaction: discord.Interaction):
-        self.view.stop()
+        # ড্রপডাউন রিসেট করার দরকার নেই, শুধু টিকিট ক্রিয়েট করবে
         await self.create_ticket(interaction, self.values[0])
 
     async def create_ticket(self, interaction: discord.Interaction, category_name):
         guild = interaction.guild
         config = load_config()
         
-        # Ticket Count
+        # Ticket Count Logic
         count = config.get("ticket_count", 0) + 1
         config["ticket_count"] = count
         save_config(config)
@@ -92,6 +105,7 @@ class TicketSelect(Select):
                 staff_mentions.append(role.mention)
 
         try:
+            # Category Check
             cat_id = config.get("ticket_config", {}).get("category_id")
             category_channel = guild.get_channel(cat_id) if cat_id else None
             
@@ -112,7 +126,7 @@ class TicketSelect(Select):
                 await asyncio.sleep(5)
                 await intr.channel.delete()
 
-            close_btn = Button(label="Close", style=discord.ButtonStyle.danger, emoji="🔒")
+            close_btn = Button(label="Close Ticket", style=discord.ButtonStyle.danger, emoji="🔒")
             close_btn.callback = close_callback
             view = View()
             view.add_item(close_btn)
@@ -206,6 +220,8 @@ class TicketSystem(commands.Cog):
         color = int(tc.get("color", "#5865F2").replace("#", ""), 16)
 
         categories = tc.get("categories", [])
+        
+        # ⚠️ ফিক্স: যদি ক্যাটাগরি না থাকে, তবে ডিফল্ট ক্যাটাগরি সেট হবে
         if not categories:
             categories = [
                 {"label": "Help", "emoji": "❓", "description": "General Help", "value": "Help"},
@@ -219,6 +235,7 @@ class TicketSystem(commands.Cog):
         embed.set_footer(text=footer)
 
         try:
+            # ⚠️ ফিক্স: এখন ক্যাটাগরি লিস্ট সঠিকভাবে ভিউতে যাচ্ছে
             await target_channel.send(embed=embed, view=TicketView(categories))
             await interaction.response.send_message(f"✅ Ticket Panel sent to {target_channel.mention}!", ephemeral=True)
         except Exception as e:
@@ -226,4 +243,3 @@ class TicketSystem(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(TicketSystem(bot))
-            
