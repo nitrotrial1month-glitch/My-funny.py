@@ -7,92 +7,106 @@ from utils import load_config, save_config, get_theme_color
 class InviteTracker(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.invites = {} # ইনভাইট ক্যাশ
+        self.invites = {}
 
-    # ================= 🛡️ AUTO-ENABLE & CACHE =================
     @commands.Cog.listener()
-    async def on_guild_join(self, guild):
-        """বট জয়েন করলে অটোমেটিক সেটিংস কনফিগার করবে"""
-        config = load_config()
-        guild_id = str(guild.id)
-        if guild_id not in config["invite_settings"]:
-            config["invite_settings"][guild_id] = {"enabled": True, "log_channel": None}
-            save_config(config)
-        try:
-            self.invites[guild.id] = await guild.invites()
-        except: pass
+    async def on_ready(self):
+        for guild in self.bot.guilds:
+            try: self.invites[guild.id] = await guild.invites()
+            except: pass
 
-    # ================= 📊 THE INVITES COMMAND (NO RANK) =================
+    # --- মেম্বার জয়েন ট্র্যাকিং (Bot ডিটেকশন সহ) ---
+    @commands.Cog.listener()
+    async def on_member_join(self, member):
+        guild = member.guild
+        config = load_config()
+        settings = config.get("invite_settings", {}).get(str(guild.id), {})
+        if not settings.get("enabled", False): return
+
+        invites_before = self.invites.get(guild.id)
+        invites_after = await guild.invites()
+        self.invites[guild.id] = invites_after
+        inviter = None
+        if invites_before:
+            for i in invites_before:
+                for a in invites_after:
+                    if i.code == a.code and a.uses > i.uses:
+                        inviter = i.inviter
+                        break
+
+        invite_data = config.get("invite_data", {})
+        if str(guild.id) not in invite_data: invite_data[str(guild.id)] = {}
+        
+        if inviter:
+            uid = str(inviter.id)
+            if uid not in invite_data[str(guild.id)]:
+                # নতুন Bots ডাটা স্ট্রাকচার
+                invite_data[str(guild.id)][uid] = {"regular": 0, "fake": 0, "leave": 0, "bonus": 0, "bots": 0}
+            
+            # মেম্বার টাইপ চেক
+            if member.bot:
+                invite_data[str(guild.id)][uid]["bots"] += 1
+            elif (datetime.datetime.now(datetime.timezone.utc) - member.created_at).days < 1:
+                invite_data[str(guild.id)][uid]["fake"] += 1
+            else:
+                invite_data[str(guild.id)][uid]["regular"] += 1
+
+        config["invite_data"] = invite_data
+        save_config(config)
+
+    # ================= 📊 STYLISH INVITE CHECK COMMAND =================
     @commands.hybrid_command(
-        name="invites",
-        description="📊 View detailed invite statistics (Regular, Fake, Leave, Bonus)"
+        name="invite",
+        aliases=["i"], # শর্ট ফর্ম কমান্ড
+        description="📊 View detailed invite statistics with custom icons"
     )
-    @app_commands.describe(member="The member whose invites you want to check")
-    async def invites(self, ctx: commands.Context, member: discord.Member = None):
+    @app_commands.describe(member="The user whose invites you want to check")
+    async def invite(self, ctx: commands.Context, member: discord.Member = None):
         member = member or ctx.author
         config = load_config()
         guild_id = str(ctx.guild.id)
         user_id = str(member.id)
 
-        # ডাটা সংগ্রহ করা
-        user_data = config.get("invite_data", {}).get(guild_id, {}).get(user_id, {
-            "regular": 0, "fake": 0, "leave": 0, "bonus": 0
+        # ডাটা ফেচ করা (ডিফল্ট ভ্যালু সহ)
+        data = config.get("invite_data", {}).get(guild_id, {}).get(user_id, {
+            "regular": 0, "fake": 0, "leave": 0, "bonus": 0, "bots": 0
         })
 
-        reg = user_data.get("regular", 0)
-        fake = user_data.get("fake", 0)
-        leave = user_data.get("leave", 0)
-        bonus = user_data.get("bonus", 0)
-        
-        # টোটাল ক্যালকুলেশন: (Regular + Bonus) - (Fake + Leave)
+        reg, fake, leave, bonus, bots = data.get("regular", 0), data.get("fake", 0), data.get("leave", 0), data.get("bonus", 0), data.get("bots", 0)
         total = max(0, (reg + bonus) - (fake + leave))
 
-        # --- PREMIUM MINIMALIST EMBED ---
+        # --- 🎨 PREMIUM STYLISH EMBED ---
         embed = discord.Embed(
-            title=f"📊 Invite Analytics: {member.display_name}",
+            title=f"{member.name}", # টাইটেলে ইউজারের নাম
             color=get_theme_color(ctx.guild.id),
             timestamp=datetime.datetime.now()
         )
         
+        # থাম্বনেইলে ইউজারের ছবি
         embed.set_thumbnail(url=member.display_avatar.url)
         
-        # ডাটা প্রেজেন্টেশন (কার্টুনিশ নয়, প্রফেশনাল লুক)
-        stats_box = (
-            f"🎯 **Total Success:** `{total}`\n"
+        # ব্যাকগ্রাউন্ড ইমেজ (যদি সেট করা থাকে)
+        settings = config.get("invite_settings", {}).get(guild_id, {})
+        bg_image = settings.get("template", {}).get("image")
+        if bg_image:
+            embed.set_image(url=bg_image)
+
+        # আপনার দেওয়া ইমোজি দিয়ে সাজানো ডেসক্রিপশন
+        stats_info = (
+            f"<:Star:1472268505238863945> **Total Invites:** `{total}`\n"
             f"━━━━━━━━━━━━━━━━━━\n"
-            f"✅ **Regular:** `{reg}`\n"
-            f"🚫 **Fake:** `{fake}`\n"
-            f"📤 **Leave:** `{leave}`\n"
-            f"🎁 **Bonus:** `{bonus}`"
+            f"<:dot:1472268394391670855> **Join:** `{reg}`\n"
+            f"<:dot:1472268394391670855> **Leave:** `{leave}`\n"
+            f"<:dot:1472268394391670855> **Fake:** `{fake}`\n"
+            f"<:dot:1472268394391670855> **Bonus:** `{bonus}`\n"
+            f"<:dot:1472268394391670855> **Bots:** `{bots}`"
         )
         
-        embed.description = stats_box
-        
-        embed.set_footer(
-            text=f"Requested by {ctx.author.name} • Wow Bot Security", 
-            icon_url=self.bot.user.display_avatar.url
-        )
+        embed.description = stats_info
+        embed.set_footer(text=f"Funny Bot Security", icon_url=self.bot.user.display_avatar.url)
 
         await ctx.send(embed=embed)
 
-    # ================= 🎁 BONUS SYSTEM (ADMIN ONLY) =================
-    @commands.hybrid_command(name="addbonus", description="🎁 Manually add bonus invites to a user")
-    @commands.has_permissions(administrator=True)
-    async def addbonus(self, ctx, member: discord.Member, amount: int):
-        """ইকোনমি সিস্টেমের সাথে সামঞ্জস্য রেখে বোনাস দেওয়ার ব্যবস্থা"""
-        config = load_config()
-        gid, uid = str(ctx.guild.id), str(member.id)
-
-        if "invite_data" not in config: config["invite_data"] = {}
-        if gid not in config["invite_data"]: config["invite_data"][gid] = {}
-        if uid not in config["invite_data"][gid]: 
-            config["invite_data"][gid][uid] = {"regular": 0, "fake": 0, "leave": 0, "bonus": 0}
-
-        config["invite_data"][gid][uid]["bonus"] += amount
-        save_config(config)
-        
-        await ctx.send(f"✅ Added **{amount}** bonus invites to {member.mention}!", ephemeral=True)
-
 async def setup(bot):
     await bot.add_cog(InviteTracker(bot))
-  
+        
