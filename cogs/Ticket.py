@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-from discord.ui import View, Button, Modal, TextInput, Select, RoleSelect, ChannelSelect
+from discord.ui import View, Button, Modal, TextInput, Select, RoleSelect, 
 import datetime
 from utils import load_config, save_config
 
