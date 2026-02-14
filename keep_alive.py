@@ -5,7 +5,7 @@ app = Flask('')
 
 @app.route('/')
 def home():
-    return "<h1>Funny Bot is Alive!</h1>"
+    return "<h1>Funny Bot is Online & Alive!</h1>"
 
 def run():
     app.run(host='0.0.0.0', port=8080)
@@ -13,3 +13,4 @@ def run():
 def keep_alive():
     t = Thread(target=run)
     t.start()
+    
