@@ -1,13 +1,12 @@
-
 import discord
 from discord.ext import commands
 from discord import app_commands
-from discord.ui import View, Button, Modal, TextInput, Select
+from discord.ui import View, Button, Modal, TextInput, ChannelSelect
 from easy_pil import Editor, load_image_async, Font
 import os
 from utils import load_config, save_config, get_theme_color
 
-# ================= 1. MODALS (ইনপুট বক্স) =================
+# ================= 1. MODALS (মেসেজ এবং ছবি এডিট) =================
 
 class MessageModal(Modal, title="📝 Edit Welcome Message"):
     msg = TextInput(
@@ -42,19 +41,28 @@ class BackgroundModal(Modal, title="🖼️ Set Background Image"):
         save_config(config)
         await interaction.response.send_message(f"✅ **Background Image Updated!**", ephemeral=True)
 
-# ================= 2. CHANNEL SELECT (চ্যানেল বাছাই) =================
+# ================= 2. CHANNEL SELECT (চ্যানেল বাছাই ফিক্সড) =================
 
-class ChannelSelect(Select):
+class ChannelSelectMenu(ChannelSelect):
     def __init__(self):
-        super().__init__(placeholder="📢 Select a Channel...", channel_types=[discord.ChannelType.text])
+        # এখানে channel_types টেক্সট চ্যানেলে লিমিট করা হয়েছে
+        super().__init__(
+            placeholder="📢 Select a Channel...", 
+            channel_types=[discord.ChannelType.text, discord.ChannelType.news],
+            min_values=1,
+            max_values=1
+        )
     
     async def callback(self, interaction: discord.Interaction):
+        # চ্যানেল সিলেক্ট করার পর যা হবে
         config = load_config()
         if "welcome_settings" not in config: config["welcome_settings"] = {}
         
+        # values[0] হলো সিলেক্ট করা চ্যানেল অবজেক্ট
         channel = self.values[0]
+        
         config["welcome_settings"]["channel_id"] = channel.id
-        config["welcome_settings"]["enabled"] = True # অটোমেটিক অন হবে
+        config["welcome_settings"]["enabled"] = True 
         save_config(config)
         
         await interaction.response.send_message(f"✅ Welcome Channel set to {channel.mention} and System **ON**!", ephemeral=True)
@@ -62,16 +70,17 @@ class ChannelSelect(Select):
 class ChannelView(View):
     def __init__(self):
         super().__init__()
-        self.add_item(ChannelSelect())
+        self.add_item(ChannelSelectMenu())
 
-# ================= 3. MAIN DASHBOARD (মেইন প্যানেল) =================
+# ================= 3. MAIN DASHBOARD (বাটন প্যানেল) =================
 
 class WelcomeDashboard(View):
     def __init__(self):
-        super().__init__(timeout=None)
+        super().__init__(timeout=None) # এটি বাটনকে অনেকক্ষণ এক্টিভ রাখবে
 
     @discord.ui.button(label="Set Channel", style=discord.ButtonStyle.success, emoji="📢", row=0)
     async def set_channel(self, interaction: discord.Interaction, button: Button):
+        # ফিক্স: এখন এটি সঠিক ChannelView ওপেন করবে
         await interaction.response.send_message("👇 **Select the channel below:**", view=ChannelView(), ephemeral=True)
 
     @discord.ui.button(label="Edit Message", style=discord.ButtonStyle.primary, emoji="📝", row=0)
@@ -85,7 +94,6 @@ class WelcomeDashboard(View):
     @discord.ui.button(label="Test / Preview", style=discord.ButtonStyle.secondary, emoji="🧪", row=1)
     async def test_welcome(self, interaction: discord.Interaction, button: Button):
         await interaction.response.send_message("⏳ Generating preview...", ephemeral=True)
-        # Cog থেকে ফাংশন কল করা
         cog = interaction.client.get_cog("WelcomeSystem")
         if cog:
             await cog.send_welcome_card(interaction.user, interaction.channel, is_test=True)
@@ -103,28 +111,23 @@ class WelcomeDashboard(View):
         status = "🟢 Enabled" if new_state else "🔴 Disabled"
         await interaction.response.send_message(f"System is now **{status}**", ephemeral=True)
 
-# ================= 4. SYSTEM LOGIC (মেইন লজিক) =================
+# ================= 4. SYSTEM LOGIC (ইমেজ জেনারেটর) =================
 
 class WelcomeSystem(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
     async def generate_image(self, member, bg_url):
-        # ডিফল্ট ব্যাকগ্রাউন্ড যদি সেট না থাকে
         if not bg_url: 
             bg_url = "https://img.freepik.com/free-vector/abstract-blue-geometric-shapes-background_1035-17545.jpg"
 
         background = Editor(await load_image_async(bg_url)).resize((900, 400))
         profile_image = await load_image_async(member.display_avatar.url)
         
-        # প্রোফাইল ছবি গোল করা
         profile = Editor(profile_image).resize((200, 200)).circle_image()
-        
-        # ফন্ট সেটআপ
         poppins = Font.poppins(size=50, variant="bold")
         poppins_small = Font.poppins(size=30, variant="light")
 
-        # ড্রয়িং
         background.paste(profile, (350, 50))
         background.ellipse((350, 50), 200, 200, outline="white", stroke_width=5)
 
@@ -136,20 +139,11 @@ class WelcomeSystem(commands.Cog):
     async def send_welcome_card(self, member, channel, is_test=False):
         config = load_config()
         ws = config.get("welcome_settings", {})
-
-        # মেসেজ ফরম্যাট করা
         msg = ws.get("message", "Welcome {member} to {server}!")
-        msg = msg.format(
-            member=member.mention, 
-            server=member.guild.name, 
-            count=member.guild.member_count,
-            username=member.name
-        )
+        msg = msg.format(member=member.mention, server=member.guild.name, count=member.guild.member_count)
 
         try:
             file = await self.generate_image(member, ws.get("image_url"))
-            
-            # এম্বেড কালার
             color = get_theme_color(member.guild.id)
             embed = discord.Embed(description=msg, color=color)
             embed.set_image(url="attachment://welcome.jpg")
@@ -163,47 +157,30 @@ class WelcomeSystem(commands.Cog):
             print(f"Welcome Error: {e}")
             await channel.send(msg)
 
-    # --- Listener: Member Join ---
     @commands.Cog.listener()
     async def on_member_join(self, member):
         config = load_config()
         ws = config.get("welcome_settings", {})
+        if ws.get("enabled") and ws.get("channel_id"):
+            channel = member.guild.get_channel(ws["channel_id"])
+            if channel:
+                await self.send_welcome_card(member, channel)
 
-        if not ws.get("enabled", False): return
-        
-        channel_id = ws.get("channel_id")
-        if not channel_id: return
-        
-        channel = member.guild.get_channel(channel_id)
-        if channel:
-            await self.send_welcome_card(member, channel)
-
-    # --- Command: Setup Dashboard ---
     @app_commands.command(name="welcome_setup", description="🛠️ Open Welcome System Dashboard")
     @app_commands.checks.has_permissions(administrator=True)
     async def welcome_setup(self, interaction: discord.Interaction):
         config = load_config()
         ws = config.get("welcome_settings", {})
-        
         status = "🟢 ON" if ws.get("enabled") else "🔴 OFF"
-        ch_id = ws.get("channel_id")
-        ch_name = f"<#{ch_id}>" if ch_id else "Not Set"
+        ch = f"<#{ws.get('channel_id')}>" if ws.get('channel_id') else "Not Set"
         
         embed = discord.Embed(
-            title="👋 Welcome System Dashboard",
-            description=(
-                f"Use the buttons below to configure the system.\n\n"
-                f"**Current Settings:**\n"
-                f"• **Status:** {status}\n"
-                f"• **Channel:** {ch_name}\n"
-                f"• **Message:** `{ws.get('message', 'Default')}`"
-            ),
+            title="👋 Welcome Setup",
+            description=f"• **Status:** {status}\n• **Channel:** {ch}",
             color=get_theme_color(interaction.guild.id)
         )
-        embed.set_thumbnail(url=interaction.user.display_avatar.url)
-        
         await interaction.response.send_message(embed=embed, view=WelcomeDashboard())
 
 async def setup(bot):
     await bot.add_cog(WelcomeSystem(bot))
-  
+    
