@@ -5,7 +5,7 @@ from discord.ui import View, Button, RoleSelect
 import os
 from utils import load_config, save_config, get_theme_color
 
-# ================= 1. ROLE SELECT MENU (রোল সিলেক্ট করার মেনু) =================
+# ================= 1. ROLE SELECT MENU =================
 
 class AutoRoleSelect(discord.ui.RoleSelect):
     def __init__(self):
@@ -18,10 +18,10 @@ class AutoRoleSelect(discord.ui.RoleSelect):
     async def callback(self, interaction: discord.Interaction):
         role = self.values[0]
         
-        # রোল হায়ারার্কি চেক (বটের পাওয়ার রোলের চেয়ে কম হতে হবে)
+        # Check Role Hierarchy
         if role.position >= interaction.guild.me.top_role.position:
             await interaction.response.send_message(
-                f"❌ **Error:** {role.mention} রোলটি আমার রোলের উপরে! দয়া করে আমার রোলটি উপরে তুলুন।", 
+                f"❌ **Error:** {role.mention} is higher than my role! Please move my role above this role in Server Settings.", 
                 ephemeral=True
             )
             return
@@ -33,14 +33,14 @@ class AutoRoleSelect(discord.ui.RoleSelect):
         config["autorole_settings"]["enabled"] = True
         save_config(config)
         
-        await interaction.response.send_message(f"✅ Auto Role set to {role.mention} and System **ON**!", ephemeral=True)
+        await interaction.response.send_message(f"✅ Auto Role set to {role.mention} and System is now **ON**!", ephemeral=True)
 
 class RoleView(View):
     def __init__(self):
         super().__init__()
         self.add_item(AutoRoleSelect())
 
-# ================= 2. MAIN DASHBOARD (বাটন প্যানেল) =================
+# ================= 2. MAIN DASHBOARD =================
 
 class AutoRoleDashboard(View):
     def __init__(self):
@@ -78,7 +78,7 @@ class AutoRoleDashboard(View):
             ephemeral=True
         )
 
-# ================= 3. SYSTEM LOGIC (অটো রোল দেওয়া) =================
+# ================= 3. SYSTEM LOGIC =================
 
 class AutoRole(commands.Cog):
     def __init__(self, bot):
@@ -86,15 +86,15 @@ class AutoRole(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        # 1. কনফিগ লোড
+        # 1. Load Config
         config = load_config()
         ars = config.get("autorole_settings", {})
 
-        # 2. সিস্টেম অন আছে কিনা চেক
+        # 2. Check if enabled
         if not ars.get("enabled", False):
             return
 
-        # 3. রোল আইডি চেক
+        # 3. Check Role ID
         role_id = ars.get("role_id")
         if not role_id:
             return
@@ -110,7 +110,7 @@ class AutoRole(commands.Cog):
                 print(f"❌ AutoRole Error: {e}")
 
     # --- Setup Command ---
-    @app_commands.command(name="autorole_setup", description="🛡️ Setup Auto Role for new members")
+    @app_commands.command(name="autorole_setup", description="🛡️ Configure the Auto Role System")
     @app_commands.checks.has_permissions(administrator=True)
     async def autorole_setup(self, interaction: discord.Interaction):
         config = load_config()
@@ -123,11 +123,11 @@ class AutoRole(commands.Cog):
         
         embed = discord.Embed(
             title="🛡️ Auto Role Setup",
-            description=f"Configure the role to be given automatically when someone joins.\n\n• **Status:** {status}\n• **Role:** {role_text}",
+            description=f"Configure the role to be given automatically to new members.\n\n• **Status:** {status}\n• **Role:** {role_text}",
             color=get_theme_color(interaction.guild.id)
         )
         await interaction.response.send_message(embed=embed, view=AutoRoleDashboard())
 
 async def setup(bot):
     await bot.add_cog(AutoRole(bot))
-  
+    
