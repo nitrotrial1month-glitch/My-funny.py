@@ -1,37 +1,34 @@
 import discord
 from discord.ext import commands
+from discord import app_commands
 import json
 import os
 import asyncio
-from utils import load_config
-from keep_alive import keep_alive  # ওয়েব সার্ভার ইমপোর্ট
+from utils import load_config, save_config
+from keep_alive import keep_alive 
 
-# ================= 1. প্রিফিক্স সেটআপ =================
+# --- ১. ডাইনামিক প্রেফিক্স লজিক ---
 def get_prefix(bot, message):
-    try:
-        if os.path.exists('prefixes.json'):
-            with open('prefixes.json', 'r') as f:
-                prefixes = json.load(f)
-            return prefixes.get(str(message.guild.id), "!")
-    except:
-        pass
-    return "!"
+    if not message.guild:
+        return "!" # ডিফল্ট প্রেফিক্স
+    
+    config = load_config()
+    prefixes = config.get("prefixes", {})
+    return prefixes.get(str(message.guild.id), "!") # না থাকলে ডিফল্ট "!"
 
-# ================= 2. মেইন বট ক্লাস (Funny Bot) =================
+# --- ২. মেইন বট ক্লাস ---
 class FunnyBot(commands.Bot):
     def __init__(self):
         intents = discord.Intents.all()
         super().__init__(
             command_prefix=get_prefix,
             intents=intents,
-            help_command=None,   # ❌ অটো হেল্প সিস্টেম অফ করা হয়েছে
-            case_insensitive=True,
-            strip_after_prefix=True
+            help_command=None,
+            case_insensitive=True
         )
 
     async def setup_hook(self):
         print("🔄 Loading Cogs...")
-        # 'cogs' ফোল্ডারের সব ফাইল লোড করবে
         if os.path.exists('./cogs'):
             for filename in os.listdir('./cogs'):
                 if filename.endswith('.py'):
@@ -40,59 +37,40 @@ class FunnyBot(commands.Bot):
                         print(f"  ✅ Loaded: {filename}")
                     except Exception as e:
                         print(f"  ❌ Failed {filename}: {e}")
-        else:
-            print("⚠️ 'cogs' folder not found!")
 
-        print("🔄 Syncing Commands...")
-        try:
-            await self.tree.sync()
-            print("  🛰️ Slash Commands Synced!")
-        except Exception as e:
-            print(f"  ⚠️ Sync Error: {e}")
+        # কমান্ড সিঙ্ক করা (স্ল্যাশ কমান্ডের জন্য)
+        await self.tree.sync()
+        print("🛰️ Commands Synced!")
 
-# ================= 3. রানার =================
 bot = FunnyBot()
+
+# --- ৩. হাইব্রিড প্রেফিক্স সেট কমান্ড ---
+@bot.hybrid_command(name="set_prefix", description="⚙️ Set a custom prefix for this server")
+@commands.has_permissions(administrator=True)
+@app_commands.describe(new_prefix="The new prefix (e.g. $, #, .)")
+async def set_prefix(ctx, new_prefix: str):
+    config = load_config()
+    config["prefixes"][str(ctx.guild.id)] = new_prefix
+    save_config(config)
+
+    embed = discord.Embed(
+        title="✅ Prefix Updated",
+        description=f"Prefix for **{ctx.guild.name}** is now `{new_prefix}`",
+        color=discord.Color.green()
+    )
+    await ctx.send(embed=embed)
 
 @bot.event
 async def on_ready():
-    os.system('cls' if os.name == 'nt' else 'clear')
-    
-    print(f"""
-    ╔══════════════════════════════════════════════╗
-    ║            🤡 FUNNY BOT ONLINE 🤡            ║
-    ╠══════════════════════════════════════════════╣
-    ║ 🤖 Bot Name   : {bot.user.name}             
-    ║ 🆔 Bot ID     : {bot.user.id}               
-    ║ 📡 Status     : Auto Help OFF               
-    ║ 🌍 Hosting    : Render Ready                
-    ╚══════════════════════════════════════════════╝
-    """)
-    
-    await bot.change_presence(
-        activity=discord.Activity(
-            type=discord.ActivityType.playing, 
-            name="with Jokes | /help"
-        ),
-        status=discord.Status.online
-    )
+    print(f"Logged in as {bot.user.name}")
+    await bot.change_presence(activity=discord.Game(name="/help | !help"))
 
-@bot.event
-async def on_message(message):
-    if message.author.bot: return
-    await bot.process_commands(message)
-
-# ================= 4. সার্ভার স্টার্ট =================
+# --- ৪. রানার ---
 if __name__ == "__main__":
-    # ১. ওয়েব সার্ভার চালু করা (Render এর জন্য জরুরি)
-    keep_alive()
-    
-    # ২. বট রান করা (Environment Variable থেকে টোকেন নিবে)
+    keep_alive() # ওয়েব সার্ভার চালু
     token = os.getenv("DISCORD_TOKEN")
-    
     if token:
-        try:
-            bot.run(token)
-        except Exception as e:
-            print(f"❌ Login Error: {e}")
+        bot.run(token)
     else:
         print("❌ Error: DISCORD_TOKEN not found!")
+        
