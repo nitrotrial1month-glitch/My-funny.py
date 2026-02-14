@@ -41,26 +41,23 @@ class BackgroundModal(Modal, title="🖼️ Set Background Image"):
         save_config(config)
         await interaction.response.send_message(f"✅ **Background Image Updated!**", ephemeral=True)
 
-# ================= 2. CHANNEL SELECT (চ্যানেল বাছাই ফিক্সড) =================
+# ================= 2. CHANNEL SELECT (ফিক্সড ভার্সন) =================
 
-class ChannelSelectMenu(ChannelSelect):
+class ChannelSelectMenu(discord.ui.ChannelSelect):
     def __init__(self):
-        # এখানে channel_types টেক্সট চ্যানেলে লিমিট করা হয়েছে
+        # ⚠️ ফিক্স: এখানে সরাসরি ChannelSelect ক্লাস ব্যবহার করা হয়েছে
         super().__init__(
-            placeholder="📢 Select a Channel...", 
+            placeholder="📢 Select a Channel...",
             channel_types=[discord.ChannelType.text, discord.ChannelType.news],
             min_values=1,
             max_values=1
         )
-    
+
     async def callback(self, interaction: discord.Interaction):
-        # চ্যানেল সিলেক্ট করার পর যা হবে
         config = load_config()
         if "welcome_settings" not in config: config["welcome_settings"] = {}
         
-        # values[0] হলো সিলেক্ট করা চ্যানেল অবজেক্ট
         channel = self.values[0]
-        
         config["welcome_settings"]["channel_id"] = channel.id
         config["welcome_settings"]["enabled"] = True 
         save_config(config)
@@ -76,11 +73,10 @@ class ChannelView(View):
 
 class WelcomeDashboard(View):
     def __init__(self):
-        super().__init__(timeout=None) # এটি বাটনকে অনেকক্ষণ এক্টিভ রাখবে
+        super().__init__(timeout=None)
 
     @discord.ui.button(label="Set Channel", style=discord.ButtonStyle.success, emoji="📢", row=0)
     async def set_channel(self, interaction: discord.Interaction, button: Button):
-        # ফিক্স: এখন এটি সঠিক ChannelView ওপেন করবে
         await interaction.response.send_message("👇 **Select the channel below:**", view=ChannelView(), ephemeral=True)
 
     @discord.ui.button(label="Edit Message", style=discord.ButtonStyle.primary, emoji="📝", row=0)
