@@ -1,4 +1,3 @@
-
 import json
 import os
 import datetime
@@ -7,13 +6,10 @@ import discord
 CONFIG_FILE = 'config.json'
 
 def load_config():
-    """সব ফিচারের (Daily, Welcome, Premium) ডিফল্ট সেটিংস লোড করে"""
+    """সব ফিচারের ডিফল্ট সেটিংস লোড করে"""
     default_data = {
-        # --- Premium System ---
         "premium_servers": {},
         "premium_users": {},
-        
-        # --- Welcome System ---
         "welcome_settings": {
             "enabled": False,
             "channel_id": None,
@@ -22,24 +18,16 @@ def load_config():
             "accent_color": 0xFFFFFF,
             "ping_delete": False
         },
-        
-        # --- Daily & Economy ---
         "daily_settings": {
             "image_url": None,
             "message": "Here is your daily reward!"
         },
-        
-        # --- Poll System ---
         "poll_settings": {
             "title": "📊 COMMUNITY POLL",
             "emoji": "🗳️",
             "image_url": None,
             "color": 0x3498db
-        },
-        
-        # --- Legacy Features ---
-        "anti_link": {"enabled": False, "blocked_list": []},
-        "bad_words": []
+        }
     }
 
     if not os.path.exists(CONFIG_FILE):
@@ -50,7 +38,6 @@ def load_config():
     with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
         try:
             data = json.load(f)
-            # মিসিং ডাটা ফিক্স করা (যাতে এরর না আসে)
             for key, value in default_data.items():
                 if key not in data:
                     data[key] = value
@@ -74,8 +61,9 @@ def get_theme_color(guild_id):
         try:
             expiry = datetime.datetime.fromisoformat(expiry_str)
             if now < expiry:
-                return discord.Color.gold() # 🟡 Premium
+                return discord.Color.gold()
         except:
             pass 
 
-    return discord.Color.blue() # 🔵 Free
+    return discord.Color.blue()
+            
