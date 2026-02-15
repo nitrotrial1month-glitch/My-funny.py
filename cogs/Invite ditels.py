@@ -5,19 +5,19 @@ import datetime
 import math
 from utils import load_config, save_config, get_theme_color
 
-# ================= 🔘 বাটন ভিউ ক্লাস (Button View Class) =================
+# ================= 🔘 পেজ বাটন ক্লাস (Pagination View) =================
 class InvitePaginationView(discord.ui.View):
-    def __init__(self, data, title, member, guild_id):
-        super().__init__(timeout=60) # ৬০ সেকেন্ড পর বাটন কাজ করা বন্ধ করবে
+    def __init__(self, data, title, author, member_checked, guild_id):
+        super().__init__(timeout=60)
         self.data = data
         self.title = title
-        self.member = member
+        self.author = author
+        self.member_checked = member_checked
         self.guild_id = guild_id
         self.current_page = 1
         self.items_per_page = 10
         self.total_pages = math.ceil(len(data) / self.items_per_page)
 
-    # এম্বেড জেনারেট করার ফাংশন
     def create_embed(self):
         start = (self.current_page - 1) * self.items_per_page
         end = start + self.items_per_page
@@ -28,50 +28,47 @@ class InvitePaginationView(discord.ui.View):
             color=get_theme_color(self.guild_id),
             timestamp=datetime.datetime.now()
         )
-        embed.set_thumbnail(url=self.member.display_avatar.url)
+        embed.set_thumbnail(url=self.member_checked.display_avatar.url)
 
         description = ""
         for i, entry in enumerate(current_data, start=start + 1):
-            status_icon = "🔄" if entry['status'] == "Rejoined" else "🆕"
+            status_icon = "🔄" if entry.get('status') == "Rejoined" else "🆕"
+            date_str = entry.get('date', 'Unknown Date')
+            
             description += (
                 f"**{i}. {entry['name']}**\n"
                 f"├─ ID: `{entry['id']}`\n"
-                f"├─ Date: `{entry['date']}`\n"
-                f"└─ Status: **{entry['status']}** {status_icon}\n\n"
+                f"├─ Date: `{date_str}`\n"
+                f"└─ Status: **{entry.get('status', 'New Join')}** {status_icon}\n\n"
             )
         
-        embed.description = description
-        embed.set_footer(text=f"Page {self.current_page} of {self.total_pages} • Total Invites: {len(self.data)}")
+        embed.description = description or "❌ No invites found."
+        embed.set_footer(text=f"Page {self.current_page} of {self.total_pages} • Total: {len(self.data)}")
         return embed
 
-    # বাটন আপডেট ফাংশন (প্রথম বা শেষ পেজে বাটন ডিজেবল করার জন্য)
     def update_buttons(self):
         self.prev_button.disabled = (self.current_page == 1)
         self.next_button.disabled = (self.current_page == self.total_pages)
 
-    # ⬅️ আগের পেজ বাটন
-    @discord.ui.button(label="Previous", style=discord.ButtonStyle.primary, emoji="⬅️", disabled=True)
+    @discord.ui.button(label="Previous", style=discord.ButtonStyle.primary, emoji="⬅️")
     async def prev_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.current_page -= 1
         self.update_buttons()
         await interaction.response.edit_message(embed=self.create_embed(), view=self)
 
-    # ➡️ পরের পেজ বাটন
     @discord.ui.button(label="Next", style=discord.ButtonStyle.primary, emoji="➡️")
     async def next_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.current_page += 1
         self.update_buttons()
         await interaction.response.edit_message(embed=self.create_embed(), view=self)
 
-    # পারমিশন চেক (যে কমান্ড দিয়েছে শুধু সেই বাটন চাপতে পারবে)
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        if interaction.user != self.member: # এখানে member হলো কমান্ডদাতা বা যার প্রোফাইল দেখা হচ্ছে না, বরং যে কমান্ড দিয়েছে
-            await interaction.response.send_message("❌ This is not your menu!", ephemeral=True)
+        if interaction.user != self.author:
+            await interaction.response.send_message("❌ This menu is not for you!", ephemeral=True)
             return False
         return True
 
-
-# ================= ⚙️ মেইন কোগ ক্লাস =================
+# ================= ⚙️ মেইন লজিক ক্লাস =================
 class InviteDetails(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -110,11 +107,13 @@ class InviteDetails(commands.Cog):
         
         if inviter:
             gid, inviter_id = str(guild.id), str(inviter.id)
+            
+            # কনফিগারেশন চেক
             if "invite_history" not in config: config["invite_history"] = {}
             if gid not in config["invite_history"]: config["invite_history"][gid] = {}
             if inviter_id not in config["invite_history"][gid]: config["invite_history"][gid][inviter_id] = []
 
-            # Rejoin Check & Limit
+            # Rejoin চেক
             history = config["invite_history"][gid][inviter_id]
             is_rejoin = any(entry['id'] == member.id for entry in history)
             status = "Rejoined" if is_rejoin else "New Join"
@@ -123,20 +122,95 @@ class InviteDetails(commands.Cog):
                 "name": member.name,
                 "id": member.id,
                 "date": datetime.datetime.now().strftime("%d-%b-%Y %I:%M %p"),
-                "status": status
+                "status": status,
+                "invited_by_id": inviter_id
             }
             
             config["invite_history"][gid][inviter_id].insert(0, entry_data)
-            # ডাটাবেস বড় হওয়া ঠেকাতে এখানে লিমিট রাখতে পারেন (অপশনাল)
+            
+            # Who invited me ডাটা সেভ
+            if "who_invited" not in config: config["who_invited"] = {}
+            if gid not in config["who_invited"]: config["who_invited"][gid] = {}
+            
+            config["who_invited"][gid][str(member.id)] = {
+                "inviter_id": inviter_id,
+                "inviter_name": inviter.name,
+                "date": entry_data["date"]
+            }
+
             save_config(config)
 
-    # ================= 📜 বাটন সহ ইনভাইট লিস্ট কমান্ড =================
-    @commands.hybrid_command(name="invitelist", description="📜 View full invite history with buttons")
-    @app_commands.describe(member="User to check history")
-    async def invitelist(self, ctx, member: discord.Member = None):
-        target_member = member or ctx.author # যার ইনভাইট চেক করা হচ্ছে
+    # ================= 📜 ১. INVITED কমান্ড (Short forms added) =================
+    @commands.hybrid_command(
+        name="invited", 
+        aliases=["invites", "list", "il"], # শর্ট ফর্ম: !invites, !list, !il
+        description="📜 See the list of people invited by a user."
+    )
+    @app_commands.describe(member="User to check invites for")
+    async def invited(self, ctx, member: discord.Member = None):
+        target = member or ctx.author
         config = load_config()
-        gid, uid = str(ctx.guild.id), str(target_member.id)
+        gid, uid = str(ctx.guild.id), str(target.id)
         
-        history = config.get("invite_history", {}).get(gid, {}
-                                                    
+        history = config.get("invite_history", {}).get(gid, {}).get(uid, [])
+
+        if not history:
+            await ctx.send(embed=discord.Embed(
+                description=f"❌ **{target.name}** has not invited anyone yet.", 
+                color=discord.Color.red()
+            ))
+            return
+
+        view = InvitePaginationView(
+            data=history, 
+            title=f"📜 Invited by: {target.name}", 
+            author=ctx.author,
+            member_checked=target,
+            guild_id=ctx.guild.id
+        )
+        view.update_buttons()
+        await ctx.send(embed=view.create_embed(), view=view)
+
+    # ================= 🕵️ ২. INVITER কমান্ড (Short forms added) =================
+    @commands.hybrid_command(
+        name="inviter", 
+        aliases=["who", "check", "wh"], # শর্ট ফর্ম: !who, !check, !wh
+        description="🕵️ Check who invited a specific member."
+    )
+    @app_commands.describe(member="User to check invite source for")
+    async def inviter(self, ctx, member: discord.Member = None):
+        target = member or ctx.author
+        config = load_config()
+        gid, target_id = str(ctx.guild.id), str(target.id)
+
+        invite_info = config.get("who_invited", {}).get(gid, {}).get(target_id)
+
+        embed = discord.Embed(title=f"Invite Source Info", color=get_theme_color(ctx.guild.id))
+        embed.set_thumbnail(url=target.display_avatar.url)
+
+        if invite_info:
+            inviter_id = invite_info.get("inviter_id")
+            inviter_name = invite_info.get("inviter_name", "Unknown")
+            date = invite_info.get("date", "Unknown")
+            
+            inviter_member = ctx.guild.get_member(int(inviter_id))
+            inviter_mention = inviter_member.mention if inviter_member else f"@{inviter_name}"
+
+            embed.description = (
+                f"👤 **Member:** {target.mention}\n"
+                f"📨 **Invited By:** {inviter_mention} (`{inviter_id}`)\n"
+                f"📅 **Date:** `{date}`"
+            )
+        else:
+            embed.description = (
+                f"👤 **Member:** {target.mention}\n"
+                f"❓ **Invited By:** Unknown / Old Member\n"
+                f"⚠️ *Tracking started recently.*"
+            )
+
+        embed.set_footer(text=f"Requested by {ctx.author.name}", icon_url=ctx.author.display_avatar.url)
+        await ctx.send(embed=embed)
+
+async def setup(bot):
+    await bot.add_cog(InviteDetails(bot))
+            
