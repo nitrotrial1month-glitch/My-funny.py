@@ -3,90 +3,75 @@ from discord.ext import commands
 from discord import app_commands
 import aiohttp
 import re
-from typing import Union, Optional
+from typing import Optional
 
 class EmojiManager(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.hybrid_command(
+    @app_commands.command(
         name="add_emoji", 
-        description="✨ Add a high-quality emoji to your server"
+        description="✨ Add a new emoji to this server"
     )
-    @commands.has_permissions(manage_expressions=True)
     @app_commands.describe(
-        emoji="Upload an image file or paste an Emoji URL/ID",
+        emoji="Upload an image file or paste a direct image URL",
         name="The name for the emoji (Optional)"
     )
+    @app_commands.checks.has_permissions(manage_expressions=True)
     async def add_emoji(
         self, 
-        ctx, 
-        emoji: Union[discord.Attachment, str], 
+        interaction: discord.Interaction, 
+        emoji: str, 
         name: Optional[str] = None
     ):
-        await ctx.defer()
+        await interaction.response.defer() # প্রসেসিংয়ের জন্য সময় নেওয়া
         
-        image_url = ""
+        image_url = emoji
         display_name = name
 
-        # ১. ইনপুট চেক (ফাইল না কি লিঙ্ক)
-        if isinstance(emoji, discord.Attachment):
-            image_url = emoji.url
-            if not display_name:
-                # ফাইল নেম থেকে নাম নেওয়া
-                display_name = emoji.filename.rsplit('.', 1)[0]
-        else:
-            # যদি শুধু আইডি দেয়
-            if emoji.isdigit():
-                image_url = f"https://cdn.discordapp.com/emojis/{emoji}.png"
-            else:
-                image_url = emoji
-
-        # ২. নাম ক্লিনিং (স্পেস বা স্পেশাল ক্যারেক্টার বাদ দেওয়া)
+        # ১. নাম ঠিক করা (যদি ইউজার না দেয়)
         if not display_name:
+            # ইউআরএল থেকে নাম বের করার চেষ্টা
             try:
                 temp_name = image_url.split('/')[-1].split('?')[0].rsplit('.', 1)[0]
-                display_name = temp_name if len(temp_name) > 1 else "custom_emoji"
+                display_name = temp_name if len(temp_name) > 1 else "emoji"
             except:
-                display_name = "custom_emoji"
+                display_name = "emoji"
 
+        # ২. ডিসকর্ড স্ট্যান্ডার্ড অনুযায়ী নাম ক্লিন করা
         final_name = re.sub(r'[^a-zA-Z0-9_]', '', display_name)
         if len(final_name) < 2:
-            final_name = f"emoji_{ctx.author.id}"
+            final_name = f"emoji_{interaction.user.id}"
 
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(image_url) as response:
                     if response.status != 200:
-                        return await ctx.send("❌ **Error:** Unable to fetch image. Please check the link.")
+                        return await interaction.followup.send("❌ **Error:** Failed to download the image. Make sure the link is valid.")
                     
                     image_bytes = await response.read()
 
-                    # ইমোজি তৈরি করা
-                    new_emoji = await ctx.guild.create_custom_emoji(
+                    # ৩. ইমোজি তৈরি করা
+                    new_emoji = await interaction.guild.create_custom_emoji(
                         name=final_name, 
                         image=image_bytes, 
-                        reason=f"Added by {ctx.author}"
+                        reason=f"Added by {interaction.user}"
                     )
                     
-                    # স্টাইলিশ ইমবেড
+                    # স্টাইলিশ সাকসেস ইমবেড
                     embed = discord.Embed(
-                        title="<:success:1234567890> New Emoji Created!", 
-                        color=0x2F3136
+                        description=f"✅ **Emoji Added Successfully!**\n\n**Name:** `{new_emoji.name}`\n**Preview:** {new_emoji}",
+                        color=0x2b2d31
                     )
-                    embed.set_author(name=ctx.guild.name, icon_url=ctx.guild.icon.url if ctx.guild.icon else None)
-                    embed.add_field(name="📌 Name", value=f"`{new_emoji.name}`", inline=True)
-                    embed.add_field(name="🆔 ID", value=f"`{new_emoji.id}`", inline=True)
-                    embed.add_field(name="✨ Preview", value=f"{new_emoji}", inline=True)
-                    embed.set_image(url=new_emoji.url)
-                    embed.set_footer(text=f"By {ctx.author.display_name}", icon_url=ctx.author.display_avatar.url)
+                    embed.set_thumbnail(url=new_emoji.url)
+                    embed.set_footer(text=f"Requested by {interaction.user.display_name}")
                     
-                    await ctx.send(embed=embed)
+                    await interaction.followup.send(embed=embed)
 
         except discord.Forbidden:
-            await ctx.send("❌ **Error:** I don't have 'Manage Expressions' permission.")
+            await interaction.followup.send("❌ **Permission Denied:** I need 'Manage Expressions' permission.")
         except Exception as e:
-            await ctx.send(f"❌ **Error:** {str(e)}")
+            await interaction.followup.send(f"❌ **An error occurred:** `{str(e)}`")
 
 async def setup(bot):
     await bot.add_cog(EmojiManager(bot))
