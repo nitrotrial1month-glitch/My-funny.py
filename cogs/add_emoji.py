@@ -1,6 +1,6 @@
 import discord
-from discord.ext import commands
 from discord import app_commands
+from discord.ext import commands
 import aiohttp
 import re
 from typing import Optional
@@ -11,10 +11,10 @@ class EmojiManager(commands.Cog):
 
     @app_commands.command(
         name="add_emoji", 
-        description="✨ Add a new emoji to this server"
+        description="✨ Add a new emoji to the server"
     )
     @app_commands.describe(
-        emoji="Upload an image file or paste a direct image URL",
+        emoji="Paste an emoji, URL, or ID",
         name="The name for the emoji (Optional)"
     )
     @app_commands.checks.has_permissions(manage_expressions=True)
@@ -24,30 +24,42 @@ class EmojiManager(commands.Cog):
         emoji: str, 
         name: Optional[str] = None
     ):
-        await interaction.response.defer() # প্রসেসিংয়ের জন্য সময় নেওয়া
+        await interaction.response.defer()
         
-        image_url = emoji
+        image_url = ""
         display_name = name
 
-        # ১. নাম ঠিক করা (যদি ইউজার না দেয়)
+        # ১. ইমোজি ফরম্যাট থেকে আইডি বের করা (যেমন: <:name:123456789>)
+        custom_emoji_regex = re.compile(r"<a?:[a-zA-Z0-9_]+:([0-9]+)>")
+        match = custom_emoji_regex.match(emoji)
+
+        if match:
+            emoji_id = match.group(1)
+            is_animated = emoji.startswith("<a:")
+            ext = "gif" if is_animated else "png"
+            image_url = f"https://cdn.discordapp.com/emojis/{emoji_id}.{ext}"
+        elif emoji.isdigit(): # শুধু আইডি দিলে
+            image_url = f"https://cdn.discordapp.com/emojis/{emoji}.png"
+        else: # সরাসরি লিঙ্ক দিলে
+            image_url = emoji
+
+        # ২. নাম সেট করা (যদি ইউজার না দেয়)
         if not display_name:
-            # ইউআরএল থেকে নাম বের করার চেষ্টা
             try:
+                # ইউআরএল থেকে নাম বের করা
                 temp_name = image_url.split('/')[-1].split('?')[0].rsplit('.', 1)[0]
                 display_name = temp_name if len(temp_name) > 1 else "emoji"
             except:
                 display_name = "emoji"
 
-        # ২. ডিসকর্ড স্ট্যান্ডার্ড অনুযায়ী নাম ক্লিন করা
+        # নাম ক্লিন করা (ডিসকর্ড স্ট্যান্ডার্ড)
         final_name = re.sub(r'[^a-zA-Z0-9_]', '', display_name)
-        if len(final_name) < 2:
-            final_name = f"emoji_{interaction.user.id}"
 
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(image_url) as response:
                     if response.status != 200:
-                        return await interaction.followup.send("❌ **Error:** Failed to download the image. Make sure the link is valid.")
+                        return await interaction.followup.send("❌ **Error:** Could not download the image. Make sure the link/emoji is valid.")
                     
                     image_bytes = await response.read()
 
@@ -58,20 +70,18 @@ class EmojiManager(commands.Cog):
                         reason=f"Added by {interaction.user}"
                     )
                     
-                    # স্টাইলিশ সাকসেস ইমবেড
                     embed = discord.Embed(
                         description=f"✅ **Emoji Added Successfully!**\n\n**Name:** `{new_emoji.name}`\n**Preview:** {new_emoji}",
                         color=0x2b2d31
                     )
                     embed.set_thumbnail(url=new_emoji.url)
-                    embed.set_footer(text=f"Requested by {interaction.user.display_name}")
                     
                     await interaction.followup.send(embed=embed)
 
-        except discord.Forbidden:
-            await interaction.followup.send("❌ **Permission Denied:** I need 'Manage Expressions' permission.")
+        except discord.HTTPException as e:
+            await interaction.followup.send(f"❌ **Discord Error:** {e.text}")
         except Exception as e:
-            await interaction.followup.send(f"❌ **An error occurred:** `{str(e)}`")
+            await interaction.followup.send(f"❌ **An error occurred:** Please provide a valid Image URL or Emoji.")
 
 async def setup(bot):
     await bot.add_cog(EmojiManager(bot))
