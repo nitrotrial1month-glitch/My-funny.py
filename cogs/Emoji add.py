@@ -15,13 +15,13 @@ class EmojiManager(commands.Cog):
     async def addemoji(self, ctx, source: Union[discord.PartialEmoji, discord.Attachment, str], name: Optional[str] = None):
         """
         Usage:
-        1. !addemoji <emoji> [name]
-        2. !addemoji <url> [name]
-        3. !addemoji (with image attachment) [name]
+        1. !addemoji <emoji> [name] (Steal from other server)
+        2. !addemoji <url> [name] (Add from link)
+        3. !addemoji (attach image) [name] (Upload file)
         """
         await ctx.defer() # প্রসেসিংয়ের সময় নেওয়ার জন্য
 
-        image_data = None
+        image_url = None
         emoji_name = name
 
         try:
@@ -29,20 +29,20 @@ class EmojiManager(commands.Cog):
             if isinstance(source, discord.PartialEmoji):
                 image_url = source.url
                 if not emoji_name:
-                    emoji_name = source.name # নাম না দিলে ইমোজির নামই ব্যবহার হবে
+                    emoji_name = source.name
 
             # ২. যদি সোর্স হয় ফাইল আপলোড (Attachment)
             elif isinstance(source, discord.Attachment):
                 image_url = source.url
                 if not emoji_name:
-                    # ফাইলের নাম থেকে এক্সটেনশন (.png) বাদ দিয়ে নাম নেওয়া হবে
+                    # ফাইলের নাম থেকে .png বা .jpg বাদ দিয়ে নাম নেওয়া হবে
                     emoji_name = source.filename.rsplit('.', 1)[0]
 
             # ৩. যদি সোর্স হয় কোনো লিংক (String URL)
             elif isinstance(source, str):
                 image_url = source
                 if not emoji_name:
-                    emoji_name = "custom_emoji" # ডিফল্ট নাম
+                    emoji_name = "custom_emoji"
 
             # --- ইমেজ ডাউনলোড করা ---
             async with aiohttp.ClientSession() as session:
@@ -65,9 +65,10 @@ class EmojiManager(commands.Cog):
             await ctx.send(embed=embed)
 
         except discord.HTTPException as e:
-            # যদি ফাইল সাইজ ২৫৬kb এর বেশি হয় বা অন্য এরর হয়
             if "256 kb" in str(e).lower():
                 await ctx.send("❌ Image is too big! Discord only allows emojis under 256KB.")
+            elif "limit reached" in str(e).lower():
+                await ctx.send("❌ This server has reached the emoji limit!")
             else:
                 await ctx.send(f"❌ Error: {e}")
         except Exception as e:
@@ -75,4 +76,4 @@ class EmojiManager(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(EmojiManager(bot))
-  
+    
