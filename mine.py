@@ -6,31 +6,44 @@ import asyncio
 from utils import load_config, save_config
 from keep_alive import keep_alive 
 
-# --- ১. ডাইনামিক প্রেফিক্স লজিক ---
+# --- ১. মাল্টিপল প্রেফিক্স লজিক (আপডেট করা হয়েছে) ---
 def get_prefix(bot, message):
-    # যদি মেসেজটি ডাইরেক্ট মেসেজ (DM) হয়, তবে ডিফল্ট '!' ব্যবহার করবে
-    if not message.guild:
-        return "!"
+    # ডিফল্ট প্রেফিক্স লিস্ট (স্পেস সহ এবং ছাড়া)
+    prefixes = ["!", "! "]
     
-    config = load_config()
-    # কনফিগারেশন থেকে সার্ভারের প্রেফিক্স খুঁজবে, না পেলে '!' দিবে
-    return config.get("prefixes", {}).get(str(message.guild.id), "!")
+    # যদি মেসেজটি DM হয়, তবে শুধু ডিফল্টই কাজ করবে
+    if not message.guild:
+        return prefixes
+
+    # কনফিগারেশন থেকে কাস্টম প্রেফিক্স চেক করা
+    try:
+        config = load_config()
+        custom_prefix = config.get("prefixes", {}).get(str(message.guild.id))
+        
+        # যদি কাস্টম প্রেফিক্স থাকে এবং সেটি ডিফল্ট (!) থেকে আলাদা হয়
+        if custom_prefix and custom_prefix != "!":
+            prefixes.append(custom_prefix)       # কাস্টম প্রেফিক্স (যেমন: ?)
+            prefixes.append(custom_prefix + " ") # স্পেস সহ কাস্টম (যেমন: ? )
+    except:
+        pass
+
+    # এখন এই লিস্টে ডিফল্ট + কাস্টম সব প্রেফিক্স আছে
+    return prefixes
 
 # --- ২. মেইন বট ক্লাস সেটআপ ---
 class FunnyBot(commands.Bot):
     def __init__(self):
-        # সব ইনটেন্টস অন করা হয়েছে (ইনভাইট ট্র্যাকিং ও অডিট লগের জন্য জরুরি)
+        # সব ইনটেন্টস অন করা হয়েছে
         intents = discord.Intents.all() 
         super().__init__(
-            command_prefix=get_prefix,
+            command_prefix=get_prefix, # এখানে আমাদের নতুন ফাংশনটি কল হবে
             intents=intents,
-            help_command=None, # ডিফল্ট হেল্প কমান্ড বন্ধ রাখা হয়েছে
+            help_command=None, 
             case_insensitive=True
         )
 
     async def setup_hook(self):
         print("🔄 Loading Cogs...")
-        # cogs ফোল্ডার থেকে সব এক্সটেনশন লোড করবে
         if os.path.exists('./cogs'):
             for filename in os.listdir('./cogs'):
                 if filename.endswith('.py'):
@@ -40,7 +53,6 @@ class FunnyBot(commands.Bot):
                     except Exception as e:
                         print(f"  ❌ Failed to load {filename}: {e}")
         
-        # স্লাশ কমান্ডগুলো ডিসকর্ডের সাথে সিঙ্ক করবে
         try:
             synced = await self.tree.sync()
             print(f"🛰️ Synced {len(synced)} slash commands globally!")
@@ -50,47 +62,40 @@ class FunnyBot(commands.Bot):
 # বট ইনস্ট্যান্স তৈরি
 bot = FunnyBot()
 
-# --- ৩. ইভেন্টস (Events) ---
+# --- ৩. ইভেন্টস ---
 @bot.event
 async def on_ready():
     print(f"🚀 Logged in as {bot.user} (ID: {bot.user.id})")
     print("------ Ready to go! ------")
-    # বটের স্ট্যাটাস সেট করা
     await bot.change_presence(activity=discord.Game(name="/help | !help"))
 
-# --- ৪. প্রেফিক্স চেঞ্জ কমান্ড (Set Prefix) ---
-@bot.hybrid_command(name="set_prefix", description="⚙️ Change the bot prefix for this server")
+# --- ৪. প্রেফিক্স চেঞ্জ কমান্ড ---
+@bot.hybrid_command(name="set_prefix", description="⚙️ Add a custom prefix (Default '!' will ALWAYS work)")
 @commands.has_permissions(administrator=True)
-@app_commands.describe(new_prefix="Type the new prefix (e.g., !, $, #)")
+@app_commands.describe(new_prefix="Type the new prefix (e.g., ?)")
 async def set_prefix(ctx, new_prefix: str):
-    config = load_config()
+    clean_prefix = new_prefix.strip()
     
-    # কনফিগ ফাইলে prefixes সেকশন না থাকলে তৈরি করবে
+    config = load_config()
     if "prefixes" not in config:
         config["prefixes"] = {}
         
-    # নতুন প্রেফিক্স সেভ করা
-    config["prefixes"][str(ctx.guild.id)] = new_prefix
+    config["prefixes"][str(ctx.guild.id)] = clean_prefix
     save_config(config)
 
-    # কনফার্মেশন মেসেজ
     embed = discord.Embed(
-        title="✅ Prefix Updated",
-        description=f"Prefix for **{ctx.guild.name}** has been set to `{new_prefix}`",
+        title="✅ Custom Prefix Added",
+        description=f"You can now use **`{clean_prefix}`** alongside the default **`!`**\n\nExample:\n`!help` works ✅\n`{clean_prefix}help` works ✅",
         color=discord.Color.green()
     )
-    embed.set_footer(text="Funny Bot Settings", icon_url=bot.user.display_avatar.url)
     await ctx.send(embed=embed)
 
-# --- ৫. বট রান করা (Run Bot) ---
+# --- ৫. রান ---
 if __name__ == "__main__":
-    keep_alive() # ওয়েব সার্ভার চালু রাখা (Render এর জন্য)
-    
-    # এনভায়রনমেন্ট ভেরিয়েবল থেকে টোকেন নেওয়া
+    keep_alive()
     token = os.getenv("DISCORD_TOKEN")
-    
     if token:
         bot.run(token)
     else:
-        print("❌ Error: 'DISCORD_TOKEN' not found in environment variables!")
+        print("❌ Error: 'DISCORD_TOKEN' not found!")
         
