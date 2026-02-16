@@ -48,82 +48,90 @@ class Gambling(commands.Cog):
         uid = str(user.id)
         current_bal = self.get_balance(uid)
         
-        # ইউজারের ডিসপ্লে নেম (বোল্ড)
+        # ইউজারের ডিসপ্লে নেম (এরর মেসেজ ও ডিজাইনের জন্য)
         u_name = f"**{user.display_name}**"
 
-        # --- ১. ইনপুট না দিলে ---
-        if arg1 is None:
-            return await ctx.send(f"{u_name}, please specify an amount to bet.")
+        # --- ১. ইনপুট হ্যান্ডলিং (সব ফরম্যাট সাপোর্ট করার জন্য) ---
+        amount_str = None
+        pick_str = "h" # ডিফল্ট হেডস (যদি কিছু না বলে)
 
-        # --- ২. স্মার্ট ইনপুট ডিটেকশন (Smart Detection) ---
-        # আমরা খুঁজে বের করবো কোনটা এমাউন্ট আর কোনটা সাইড
+        valid_sides = ["h", "head", "heads", "t", "tail", "tails"]
+        valid_amounts = ["all", "max", "half"]
+
+        # ইনপুট ভেরিফিকেশন ফাংশন
+        def is_amount(s):
+            return s.isdigit() or s.lower() in valid_amounts
         
-        amount_raw = None
-        pick_str = "h" # ডিফল্ট সব সময় হেডস (Heads)
+        def is_side(s):
+            return s.lower() in valid_sides
 
-        # সম্ভাব্য সাইড লিস্ট
-        sides = ["h", "head", "heads", "t", "tail", "tails"]
-        # সম্ভাব্য কিওয়ার্ড
-        keywords = ["all", "max", "half"]
-
-        # ইনপুট লিস্টে নেওয়া হলো
-        inputs = []
-        if arg1: inputs.append(arg1.lower())
-        if arg2: inputs.append(arg2.lower())
-
-        for i in inputs:
-            if i in sides:
-                pick_str = i # সাইড পাওয়া গেছে
-            elif i in keywords or i.isdigit():
-                amount_raw = i # এমাউন্ট পাওয়া গেছে
-
-        # যদি ইউজার সাইড দিয়েছে কিন্তু এমাউন্ট দেয়নি (যেমন: !cf h)
-        if amount_raw is None:
-             # চেক করি arg1 কি সংখ্যা হতে পারে? (যদি isdigit চেক মিস হয়)
-            if arg1.lower() not in sides:
-                 amount_raw = arg1.lower()
+        # ইনপুট লজিক চেক
+        if arg1 and not arg2:
+            # কেস ১: শুধু একটা আর্গুমেন্ট (যেমন: !cf 100 বা !cf all)
+            if is_amount(arg1):
+                amount_str = arg1
+            elif is_side(arg1):
+                # যদি কেউ শুধু !cf h লেখে, তখন এমাউন্ট মিসিং
+                return await ctx.send(f"{u_name}, please specify an amount to bet.")
             else:
-                 return await ctx.send(f"{u_name}, please specify how much you want to bet.")
+                return await ctx.send(f"{u_name}, invalid input format.")
+                
+        elif arg1 and arg2:
+            # কেস ২: দুইটা আর্গুমেন্ট (যেমন: !cf 100 t বা !cf t 100)
+            if is_amount(arg1) and is_side(arg2):
+                amount_str = arg1
+                pick_str = arg2
+            elif is_side(arg1) and is_amount(arg2):
+                pick_str = arg1
+                amount_str = arg2
+            else:
+                 return await ctx.send(f"{u_name}, invalid input. Use `!cf <amount> <side>`.")
+        else:
+            # কেস ৩: কোনো আর্গুমেন্ট নেই (!cf)
+            return await ctx.send(f"{u_name}, please specify an amount.")
 
-        # --- ৩. এমাউন্ট ক্যালকুলেশন ---
+        # --- ২. এমাউন্ট ক্যালকুলেশন এবং লিমিট ---
         bet = 0
+        amount_str = amount_str.lower()
         
-        if amount_raw in ["all", "max"]:
+        if amount_str in ["all", "max"]:
             bet = min(current_bal, MAX_BET_LIMIT)
-        elif amount_raw == "half":
+        elif amount_str == "half":
             bet = int(current_bal / 2)
             if bet > MAX_BET_LIMIT: bet = MAX_BET_LIMIT
         else:
             try:
-                bet = int(amount_raw)
+                bet = int(amount_str)
             except ValueError:
-                # যদি কেউ 'potato' লিখে, তখন তো আর বিট হবে না
-                return await ctx.send(f"{u_name}, invalid bet amount.")
+                return await ctx.send(f"{u_name}, invalid amount.")
 
-        # --- ৪. ভ্যালিডেশন ---
+        # --- ৩. এরর চেকিং (নাম সহ) ---
         if bet <= 0:
             return await ctx.send(f"{u_name}, you cannot bet 0 coins.", ephemeral=True)
         if bet > current_bal:
             return await ctx.send(f"{u_name}, you don't have enough coins! Balance: **{current_bal}**", ephemeral=True)
         if bet > MAX_BET_LIMIT:
+            # এখানে user.display_name ইউজ করা হচ্ছে, ইমোজি নেই
             return await ctx.send(f"{u_name}, max bet limit is **250,000**!", ephemeral=True)
 
-        # --- ৫. সাইড কনফার্মেশন ---
+        # --- ৪. সাইড কনফার্মেশন ---
         user_choice_name = "HEADS"
-        if pick_str in ["t", "tail", "tails"]:
+        if pick_str.lower() in ["t", "tail", "tails"]:
             user_choice_name = "TAILS"
 
-        # --- ৬. ভিজ্যুয়ালস (GIF) ---
+        # --- ৫. ভিজ্যুয়াল সেটআপ (GIF Links) ---
         url_spin = "https://cdn.discordapp.com/emojis/1434413973759070372.gif?quality=lossless"
         
-        # GIF Links for Results
         emoji_heads = "<:heds:1470863891671027804>"
         url_heads = "https://cdn.discordapp.com/emojis/1470863891671027804.gif?quality=lossless"
         
         emoji_tails = "<:Tails:1434414186875588639>"
         url_tails = "https://cdn.discordapp.com/emojis/1434414186875588639.gif?quality=lossless"
 
-        # ৭. স্পিনিং এনিমেশন
+        # --- ৬. স্পিনিং এনিমেশন (আপনার নির্দিষ্ট ফরম্যাট) ---
+        # ফরম্যাট:
+        # **Name** spent **Amount** and chose **SIDE**
+        # **The coin spins...**
         embed_spin = discord.Embed(
             description=f"{u_name} spent **{bet}** and chose **{user_choice_name}**\n**The coin spins...**",
             color=0x2b2d31
@@ -131,16 +139,23 @@ class Gambling(commands.Cog):
         embed_spin.set_thumbnail(url=url_spin)
         msg = await ctx.send(embed=embed_spin)
 
-        # ওয়েট
+        # ২ সেকেন্ড ওয়েট
         await asyncio.sleep(2)
 
-        # ৮. ফলাফল
+        # --- ৭. ফলাফল লজিক ---
         outcome = random.choice(["HEADS", "TAILS"])
         won = (user_choice_name == outcome)
         
         final_emoji = emoji_heads if outcome == "HEADS" else emoji_tails
         final_image_url = url_heads if outcome == "HEADS" else url_tails
 
+        # --- ৮. রেজাল্ট ডিসপ্লে ---
+        # ফরম্যাট:
+        # **Name** spent **Amount** and chose **SIDE** (আগের লাইন সেইম থাকবে)
+        # ## Emoji RESULT
+        # **You won/lost Amount coins**
+        # Balance: NewBalance
+        
         if won:
             new_bal = self.update_balance(uid, bet)
             
@@ -163,4 +178,4 @@ class Gambling(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(Gambling(bot))
-                
+    
