@@ -31,10 +31,7 @@ class Gambling(commands.Cog):
     def update_balance(self, user_id, amount):
         data = self.get_data()
         uid = str(user_id)
-
-        if uid not in data:
-            data[uid] = 0
-
+        if uid not in data: data[uid] = 0
         data[uid] += amount
         self.save_data(data)
         return data[uid]
@@ -44,7 +41,6 @@ class Gambling(commands.Cog):
         return data.get(str(user_id), 0)
 
     # ---------------- Safe Send Helper ---------------- #
-
     async def safe_send(self, ctx, content=None, embed=None, ephemeral=False):
         if ctx.interaction:
             if not ctx.interaction.response.is_done():
@@ -56,11 +52,7 @@ class Gambling(commands.Cog):
 
     # ---------------- Coinflip Command ---------------- #
 
-    @commands.hybrid_command(
-        name="cf",
-        aliases=["coinflip", "flip"],
-        description="Bet coins (Max 250k)"
-    )
+    @commands.hybrid_command(name="cf", aliases=["coinflip", "flip"], description="Bet coins (Max 250k)")
     @app_commands.describe(arg1="Amount OR Side (h/t)", arg2="Side OR Amount (Optional)")
     async def cf(self, ctx: commands.Context, arg1: str, arg2: str | None = None):
 
@@ -69,8 +61,7 @@ class Gambling(commands.Cog):
         current_bal = self.get_balance(uid)
         u_name = f"**{user.display_name}**"
 
-        # -------- Input Logic -------- #
-
+        # -------- ১. ইনপুট লজিক -------- #
         amount_str = None
         pick_str = "h"
         valid_sides = ["h", "head", "heads", "t", "tail", "tails"]
@@ -87,11 +78,11 @@ class Gambling(commands.Cog):
         else:
             amount_str = a1
 
+        # এরর মেসেজ (কোনো ইমোজি ছাড়া, শুধু নাম)
         if not amount_str:
             return await self.safe_send(ctx, f"{u_name}, please specify an amount! Example: `!cf 100`", ephemeral=True)
 
-        # -------- Amount Logic -------- #
-
+        # -------- ২. এমাউন্ট লজিক -------- #
         if amount_str in ["all", "max"]:
             bet = min(current_bal, MAX_BET_LIMIT)
         elif amount_str == "half":
@@ -104,40 +95,41 @@ class Gambling(commands.Cog):
 
         if bet <= 0:
             return await self.safe_send(ctx, f"{u_name}, you cannot bet 0 or negative coins.", ephemeral=True)
-
         if bet > current_bal:
             return await self.safe_send(ctx, f"{u_name}, not enough cash! Balance: **{current_bal}**", ephemeral=True)
-
         if bet > MAX_BET_LIMIT:
             return await self.safe_send(ctx, f"{u_name}, max bet limit is **250,000**!", ephemeral=True)
 
-        # -------- Side Setup -------- #
-
+        # -------- ৩. সাইড এবং ইমোজি সেটআপ -------- #
         user_choice_name = "HEADS"
         if pick_str in ["t", "tail", "tails"]:
             user_choice_name = "TAILS"
 
-        # -------- Animation -------- #
+        # আপনার দেওয়া ইমোজিগুলো (স্ট্রিং হিসেবে)
+        emoji_spin = "<a:cf:1434413973759070372>"
+        emoji_heads = "<:heds:1470863891671027804>"
+        emoji_tails = "<:Tails:1434414186875588639>"
 
-        spin_gif = "https://cdn.discordapp.com/emojis/1434413973759070372.gif?quality=lossless"
-        heads_gif = "https://cdn.discordapp.com/emojis/1470863891671027804.gif?quality=lossless"
-        tails_gif = "https://cdn.discordapp.com/emojis/1434414186875588639.gif?quality=lossless"
-
+        # -------- ৪. স্পিনিং এনিমেশন (বড় ছবি ছাড়া) -------- #
+        
+        # এখানে set_thumbnail বাদ দেওয়া হয়েছে
         embed_spin = discord.Embed(
-            description=f"{u_name} spent **{bet}** and chose **{user_choice_name}**\n**The coin spins...**",
+            description=f"{u_name} spent **{bet}** and chose **{user_choice_name}**\n{emoji_spin} **The coin spins...**",
             color=0x2b2d31
         )
-        embed_spin.set_thumbnail(url=spin_gif)
+        
+        # মেসেজ পাঠানো এবং ভেরিয়েবলে রাখা
+        msg = await ctx.send(embed=embed_spin)
 
-        await self.safe_send(ctx, embed=embed_spin)
+        # ২ সেকেন্ড অপেক্ষা
         await asyncio.sleep(2)
 
-        # -------- Result -------- #
-
+        # -------- ৫. রেজাল্ট -------- #
         outcome = random.choice(["HEADS", "TAILS"])
         won = (user_choice_name == outcome)
-
-        final_image = heads_gif if outcome == "HEADS" else tails_gif
+        
+        # আউটকাম অনুযায়ী ইমোজি সিলেক্ট করা
+        final_emoji = emoji_heads if outcome == "HEADS" else emoji_tails
 
         if won:
             new_bal = self.update_balance(uid, bet)
@@ -148,18 +140,20 @@ class Gambling(commands.Cog):
             color = discord.Color.red()
             result_text = f"**You lost {bet} coins**"
 
+        # -------- ৬. রেজাল্ট এডিট (বড় ছবি ছাড়া) -------- #
+        
         embed_result = discord.Embed(
             description=(
                 f"{u_name} spent **{bet}** and chose **{user_choice_name}**\n"
-                f"## {outcome}\n"
+                f"## {final_emoji} {outcome}\n" # এখানে ইমোজি লেখার সাথে থাকবে
                 f"{result_text}\n"
                 f"Balance: {new_bal}"
             ),
             color=color
         )
-        embed_result.set_thumbnail(url=final_image)
+        # এখানেও set_thumbnail নেই
 
-        await ctx.send(embed=embed_result)
+        await msg.edit(embed=embed_result)
 
 # ---------------- Setup ---------------- #
 
