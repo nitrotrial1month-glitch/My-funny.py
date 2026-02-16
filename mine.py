@@ -6,10 +6,14 @@ import asyncio
 from utils import load_config, save_config
 from keep_alive import keep_alive 
 
-# --- ১. মাল্টিপল প্রেফিক্স লজিক (আপডেট করা হয়েছে) ---
+# --- ১. স্মার্ট প্রেফিক্স লজিক (আপডেটেড) ---
 def get_prefix(bot, message):
-    # ডিফল্ট প্রেফিক্স লিস্ট (স্পেস সহ এবং ছাড়া)
-    prefixes = ["!", "! "]
+    # ডিফল্ট প্রেফিক্স
+    default_prefix = "!"
+    
+    # শুরুতে শুধু ডিফল্ট প্রেফিক্সটি লিস্টে রাখা হলো
+    # নোট: এখানে আর ম্যানুয়ালি স্পেস (default_prefix + " ") যোগ করার দরকার নেই
+    prefixes = [default_prefix]
     
     # যদি মেসেজটি DM হয়, তবে শুধু ডিফল্টই কাজ করবে
     if not message.guild:
@@ -18,28 +22,29 @@ def get_prefix(bot, message):
     # কনফিগারেশন থেকে কাস্টম প্রেফিক্স চেক করা
     try:
         config = load_config()
+        # আপনার কনফিগ ফাইল থেকে সার্ভারের আইডি দিয়ে প্রেফিক্স খোঁজা হচ্ছে
         custom_prefix = config.get("prefixes", {}).get(str(message.guild.id))
         
         # যদি কাস্টম প্রেফিক্স থাকে এবং সেটি ডিফল্ট (!) থেকে আলাদা হয়
-        if custom_prefix and custom_prefix != "!":
-            prefixes.append(custom_prefix)       # কাস্টম প্রেফিক্স (যেমন: ?)
-            prefixes.append(custom_prefix + " ") # স্পেস সহ কাস্টম (যেমন: ? )
+        if custom_prefix and custom_prefix != default_prefix:
+            prefixes.append(custom_prefix) # শুধু কাস্টম প্রেফিক্সটি অ্যাড করা হলো
     except:
         pass
 
-    # এখন এই লিস্টে ডিফল্ট + কাস্টম সব প্রেফিক্স আছে
+    # এই ফাংশন এখন একটি ক্লিন লিস্ট রিটার্ন করবে। যেমন: ['!', '?']
     return prefixes
 
 # --- ২. মেইন বট ক্লাস সেটআপ ---
 class FunnyBot(commands.Bot):
     def __init__(self):
-        # সব ইনটেন্টস অন করা হয়েছে
+        # সব ইনটেন্টস অন করা জরুরি
         intents = discord.Intents.all() 
         super().__init__(
-            command_prefix=get_prefix, # এখানে আমাদের নতুন ফাংশনটি কল হবে
+            command_prefix=get_prefix,
             intents=intents,
             help_command=None, 
-            case_insensitive=True
+            case_insensitive=True,
+            strip_after_prefix=True # 🔥 ম্যাজিক লাইন: এটি অটোমেটিক স্পেস হ্যান্ডেল করবে
         )
 
     async def setup_hook(self):
@@ -74,6 +79,7 @@ async def on_ready():
 @commands.has_permissions(administrator=True)
 @app_commands.describe(new_prefix="Type the new prefix (e.g., ?)")
 async def set_prefix(ctx, new_prefix: str):
+    # ইউজার যদি ভুল করে স্পেস দেয়, তা সরিয়ে ক্লিন করা হচ্ছে
     clean_prefix = new_prefix.strip()
     
     config = load_config()
@@ -84,8 +90,8 @@ async def set_prefix(ctx, new_prefix: str):
     save_config(config)
 
     embed = discord.Embed(
-        title="✅ Custom Prefix Added",
-        description=f"You can now use **`{clean_prefix}`** alongside the default **`!`**\n\nExample:\n`!help` works ✅\n`{clean_prefix}help` works ✅",
+        title="✅ Custom Prefix Set",
+        description=f"Prefix updated to **`{clean_prefix}`**\n\n**Usage Examples:**\n✅ `{clean_prefix}help`\n✅ `{clean_prefix} help` (Space works automatically!)\n✅ `!help` (Default always active)",
         color=discord.Color.green()
     )
     await ctx.send(embed=embed)
