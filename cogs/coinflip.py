@@ -145,9 +145,7 @@ class Gambling(commands.Cog):
         embed_result = discord.Embed(
             description=(
                 f"{u_name} spent **{bet}** and chose **{user_choice_name}**\n"
-                f"## {final_emoji} {outcome}\n" # এখানে ইমোজি লেখার সাথে থাকবে
-                f"{result_text}\n"
-                f"Balance: {new_bal}"
+                f"{final_emoji} {outcome} **{result_text}**\n" # এখানে ইমোজি লেখার সাথে থাকবে
             ),
             color=color
         )
