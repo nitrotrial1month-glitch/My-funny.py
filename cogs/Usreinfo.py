@@ -8,104 +8,108 @@ class UserInfo(commands.Cog):
 
     @commands.hybrid_command(
         name="userinfo",
-        aliases=["ui", "profile"], # শর্টকাট কমান্ড
+        aliases=["ui", "whois", "profile"], 
         description="👤 Get detailed information about a user"
     )
     @app_commands.describe(member="Select a user (Leave empty for yourself)")
     async def userinfo(self, ctx, member: discord.Member = None):
-        # যদি কেউ মেনশন না করে, তবে নিজের ইনফো দেখাবে
-        if member is None:
-            member = ctx.author
+        await ctx.defer() # প্রসেসিং এর জন্য সময় নেওয়া
 
-        # --- ১. রোল প্রসেসিং ---
-        # @everyone রোল বাদ দিয়ে বাকি সব রোল লিস্ট করা
-        roles = [role.mention for role in member.roles if role.name != "@everyone"]
-        # রোলগুলো উল্টো অর্ডারে সাজানো (বড় রোল আগে)
-        roles.reverse()
-        
-        # যদি অনেক বেশি রোল থাকে, তবে ১০টার বেশি দেখাবে না
-        if len(roles) > 10:
-            role_list = ", ".join(roles[:10]) + f" and {len(roles) - 10} more..."
-        elif not roles:
-            role_list = "None"
-        else:
-            role_list = ", ".join(roles)
+        try:
+            # যদি কেউ মেনশন না করে, তবে নিজের ইনফো দেখাবে
+            if member is None:
+                member = ctx.author
 
-        # --- ২. পারমিশন চেক (Key Permissions) ---
-        key_perms = []
-        if member.guild_permissions.administrator: key_perms.append("Administrator")
-        if member.guild_permissions.manage_server: key_perms.append("Manage Server")
-        if member.guild_permissions.manage_messages: key_perms.append("Manage Messages")
-        if member.guild_permissions.kick_members: key_perms.append("Kick Members")
-        if member.guild_permissions.ban_members: key_perms.append("Ban Members")
-        
-        perms_text = ", ".join(key_perms) if key_perms else "Standard Member"
+            # ইউজারের ব্যানার পাওয়ার জন্য এপিআই থেকে ফেচ করা প্রয়োজন
+            user_data = await self.bot.fetch_user(member.id)
 
-        # --- ৩. স্টাইলিশ ইমবেড তৈরি ---
-        embed = discord.Embed(
-            title=f"👤 User Information: {member.display_name}",
-            color=member.color if member.color != discord.Color.default() else 0x2b2d31
-        )
-        
-        # থাম্বনেইল হিসেবে ইউজারের অবতার
-        embed.set_thumbnail(url=member.display_avatar.url)
-        
-        # যদি ইউজারের ব্যানার থাকে তবে সেটি দেখাবে
-        if member.banner:
-            embed.set_image(url=member.banner.url)
+            # --- ১. রোল প্রসেসিং ---
+            roles = [role.mention for role in member.roles if role.name != "@everyone"]
+            roles.reverse()
+            
+            if len(roles) > 10:
+                role_list = ", ".join(roles[:10]) + f" and {len(roles) - 10} more..."
+            elif not roles:
+                role_list = "No Roles"
+            else:
+                role_list = ", ".join(roles)
 
-        # --- ফিল্ডস ---
-        
-        # Identity
-        embed.add_field(
-            name="🆔 Identity", 
-            value=f"**Name:** {member}\n**ID:** `{member.id}`\n**Mention:** {member.mention}", 
-            inline=True
-        )
-        
-        # Status & Activity
-        status_emoji = {
-            discord.Status.online: "🟢 Online",
-            discord.Status.idle: "🌙 Idle",
-            discord.Status.dnd: "⛔ DND",
-            discord.Status.offline: "⚫ Offline"
-        }
-        # মোবাইল বা পিসি ডিটেকশন (Optional)
-        client_status = "Desktop"
-        if member.is_on_mobile(): client_status = "Mobile"
-        
-        embed.add_field(
-            name="📊 Status", 
-            value=f"**Current:** {status_emoji.get(member.status, '⚫ Offline')}\n**Device:** {client_status}\n**Bot:** {'Yes 🤖' if member.bot else 'No 👤'}", 
-            inline=True
-        )
+            # --- ২. পারমিশন চেক ---
+            key_perms = []
+            if member.guild_permissions.administrator: key_perms.append("Administrator")
+            elif member.guild_permissions.manage_guild: key_perms.append("Manage Server")
+            if member.guild_permissions.ban_members: key_perms.append("Ban Members")
+            if member.guild_permissions.kick_members: key_perms.append("Kick Members")
+            if member.guild_permissions.manage_messages: key_perms.append("Manage Messages")
+            
+            perms_text = ", ".join(key_perms) if key_perms else "Standard Member"
 
-        # Important Dates (Time Formatted)
-        embed.add_field(
-            name="📅 Important Dates", 
-            value=f"**Joined Server:** <t:{int(member.joined_at.timestamp())}:R>\n**Account Created:** <t:{int(member.created_at.timestamp())}:D>", 
-            inline=False
-        )
-        
-        # Roles
-        embed.add_field(
-            name=f"🎭 Roles [{len(roles)}]", 
-            value=role_list, 
-            inline=False
-        )
+            # --- ৩. স্টাইলিশ ইমবেড ---
+            # কালার: ইউজারের প্রোফাইল কালার অথবা রোলের কালার
+            embed_color = user_data.accent_color or member.color or discord.Color(0x2b2d31)
 
-        # Permissions
-        embed.add_field(
-            name="🛡️ Key Permissions", 
-            value=f"`{perms_text}`", 
-            inline=False
-        )
-        
-        # Footer
-        embed.set_footer(text=f"Requested by {ctx.author.name}", icon_url=ctx.author.display_avatar.url)
+            embed = discord.Embed(
+                title=f"👤 User Info: {member.display_name}",
+                color=embed_color
+            )
+            
+            embed.set_thumbnail(url=member.display_avatar.url)
+            
+            # ব্যানার সেট করা (যদি থাকে)
+            if user_data.banner:
+                embed.set_image(url=user_data.banner.url)
 
-        await ctx.send(embed=embed)
+            # --- ফিল্ডস ---
+            embed.add_field(
+                name="🆔 Identity", 
+                value=f"**Name:** {member}\n**ID:** `{member.id}`\n**Mention:** {member.mention}", 
+                inline=True
+            )
+            
+            # স্ট্যাটাস (মোবাইল/পিসি)
+            status = "Offline/Invisible"
+            if member.status != discord.Status.offline:
+                status = str(member.status).title()
+            
+            bot_status = "🤖 Bot" if member.bot else "👤 Human"
+
+            embed.add_field(
+                name="📊 Status", 
+                value=f"**Activity:** {status}\n**Type:** {bot_status}", 
+                inline=True
+            )
+
+            # ডেট ফরম্যাটিং
+            joined_at = int(member.joined_at.timestamp()) if member.joined_at else 0
+            created_at = int(member.created_at.timestamp()) if member.created_at else 0
+
+            embed.add_field(
+                name="📅 Dates", 
+                value=f"**Joined:** <t:{joined_at}:R>\n**Created:** <t:{created_at}:D>", 
+                inline=False
+            )
+            
+            embed.add_field(
+                name=f"🎭 Roles [{len(roles)}]", 
+                value=role_list, 
+                inline=False
+            )
+
+            embed.add_field(
+                name="🛡️ Key Permissions", 
+                value=f"`{perms_text}`", 
+                inline=False
+            )
+            
+            embed.set_footer(text=f"Requested by {ctx.author.name}", icon_url=ctx.author.display_avatar.url)
+
+            # মেসেজ পাঠানো (Followup ব্যবহার করা কারণ defer দেওয়া আছে)
+            await ctx.send(embed=embed)
+
+        except Exception as e:
+            # যদি কোনো এরর হয় তবে তা দেখাবে
+            await ctx.send(f"❌ **Error:** `{str(e)}`\n(Please check if 'Server Members Intent' is enabled in Developer Portal)")
 
 async def setup(bot):
     await bot.add_cog(UserInfo(bot))
-      
+        
