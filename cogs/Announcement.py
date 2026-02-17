@@ -1,78 +1,130 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-from discord.ui import Modal, TextInput
+from discord.ui import Modal, TextInput, View, Button
 import datetime
 from utils import get_theme_color
 
-# ================= 1. ANNOUNCEMENT MODAL (স্ল্যাশ কমান্ডের জন্য ফর্ম) =================
-class AnnounceModal(Modal, title="📢 Create Stylish Announcement"):
-    a_title = TextInput(label="Announcement Title", placeholder="Enter the headline here...", required=True)
-    a_desc = TextInput(label="Message Content", style=discord.TextStyle.paragraph, placeholder="Write your detailed message...", required=True)
-    a_image = TextInput(label="Large Image URL (Optional)", placeholder="https://image-link.com/photo.png", required=False)
-    a_thumb = TextInput(label="Small Thumbnail URL (Optional)", placeholder="https://icon-link.com/icon.png", required=False)
-
+# ================= 1. ANNOUNCEMENT MODAL (ফর্ম) =================
+class AnnounceModal(Modal):
     def __init__(self, ping_role=None):
-        super().__init__()
+        super().__init__(title="📢 Create Announcement")
         self.ping_role = ping_role
 
+    # ইনপুট ফিল্ডগুলো
+    a_title = TextInput(
+        label="Headline / Title", 
+        placeholder="Enter announcement title...", 
+        required=True, 
+        max_length=256
+    )
+    a_desc = TextInput(
+        label="Message Content", 
+        style=discord.TextStyle.paragraph, 
+        placeholder="Write your detailed message here...", 
+        required=True, 
+        max_length=4000
+    )
+    a_image = TextInput(
+        label="Image URL (Optional)", 
+        placeholder="https://example.com/image.png", 
+        required=False
+    )
+    a_footer = TextInput(
+        label="Footer Text (Optional)", 
+        placeholder="Custom footer text...", 
+        required=False,
+        max_length=100
+    )
+
     async def on_submit(self, interaction: discord.Interaction):
-        # এম্বেড ডিজাইন
+        # এম্বেড তৈরি করা
+        color = get_theme_color(interaction.guild.id)
+        
         embed = discord.Embed(
-            title=f"📢 {self.a_title.value}",
+            title=f"📢  {self.a_title.value}",
             description=self.a_desc.value,
-            color=get_theme_color(interaction.guild.id), # আপনার utils থেকে থিম কালার
+            color=color,
             timestamp=datetime.datetime.now()
         )
 
+        # ছবি সেট করা (যদি দেয়)
         if self.a_image.value:
             embed.set_image(url=self.a_image.value)
-        if self.a_thumb.value:
-            embed.set_thumbnail(url=self.a_thumb.value)
+        
+        # ফুটার এবং অথর সেট করা
+        footer_text = self.a_footer.value if self.a_footer.value else f"Announcement by {interaction.user.name}"
+        embed.set_footer(text=footer_text, icon_url=interaction.client.user.display_avatar.url)
+        embed.set_author(name=interaction.guild.name, icon_url=interaction.guild.icon.url if interaction.guild.icon else None)
 
-        embed.set_author(name=interaction.user.display_name, icon_url=interaction.user.display_avatar.url)
-        embed.set_footer(text="Funny Bot Announcement System", icon_url=interaction.client.user.display_avatar.url)
-
-        # পিং লজিক
+        # রোল মেনশন লজিক
         content = self.ping_role.mention if self.ping_role else None
 
+        # মেসেজ পাঠানো
+        await interaction.response.send_message("✅ Announcement sent!", ephemeral=True)
         await interaction.channel.send(content=content, embed=embed)
-        await interaction.response.send_message("✅ Announcement sent successfully!", ephemeral=True)
 
-# ================= 2. MAIN COG CLASS =================
+# ================= 2. VIEW FOR PREFIX COMMAND (বাটন সিস্টেম) =================
+class AnnouncementLauncher(View):
+    def __init__(self, role=None):
+        super().__init__(timeout=60)
+        self.role = role
+
+    @discord.ui.button(label="Click to Create Announcement", style=discord.ButtonStyle.primary, emoji="📝")
+    async def launch(self, interaction: discord.Interaction, button: Button):
+        # বাটন ক্লিক করলে মোডাল ওপেন হবে
+        await interaction.response.send_modal(AnnounceModal(self.role))
+        # বাটনটি ডিজেবল করে দেওয়া হবে
+        self.stop()
+        await interaction.message.delete() # আগের বাটন মেসেজ ডিলিট
+
+# ================= 3. MAIN COG CLASS =================
 class Announcement(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="announce", description="📢 Send a professional announcement using a stylish form")
-    @app_commands.describe(mention="Select a role to ping (Optional)")
-    @app_commands.checks.has_permissions(administrator=True)
-    async def announce(self, interaction: discord.Interaction, mention: discord.Role = None):
-        """Slash Command: Opens a form for the announcement"""
-        await interaction.response.send_modal(AnnounceModal(ping_role=mention))
-
-    # হাইব্রিড সাপোর্ট: প্রেফিক্স কমান্ডের জন্য
-    @commands.command(name="say", description="Send a simple announcement via prefix")
+    # --- Hybrid Command: Announce ---
+    @commands.hybrid_command(name="announce", description="📢 Create a stylish announcement.")
+    @app_commands.describe(role="Select a role to ping (Optional)")
     @commands.has_permissions(manage_messages=True)
-    async def say(self, ctx, *, message: str):
-        """Prefix Command: Simple text announcement"""
+    async def announce(self, ctx: commands.Context, role: discord.Role = None):
+        """
+        Slash usage: /announce [role] -> Opens Form directly
+        Prefix usage: !announce [role] -> Sends Button -> Opens Form
+        """
+        
+        # যদি স্ল্যাশ কমান্ড হয়
+        if ctx.interaction:
+            await ctx.interaction.response.send_modal(AnnounceModal(role))
+        
+        # যদি প্রেফিক্স কমান্ড হয় (!announce)
+        else:
+            embed = discord.Embed(
+                description="👇 **Click the button below to write your announcement.**",
+                color=get_theme_color(ctx.guild.id)
+            )
+            await ctx.send(embed=embed, view=AnnouncementLauncher(role))
+
+    # --- Simple Say Command (Optional) ---
+    @commands.hybrid_command(name="say", description="🗣️ Bot repeats what you say (Simple embed).")
+    @commands.has_permissions(manage_messages=True)
+    async def say(self, ctx: commands.Context, *, message: str):
+        
         embed = discord.Embed(
             description=message,
-            color=get_theme_color(ctx.guild.id),
-            timestamp=datetime.datetime.now()
+            color=get_theme_color(ctx.guild.id)
         )
-        embed.set_author(name=ctx.author.name, icon_url=ctx.author.display_avatar.url)
-        embed.set_footer(text="Funny Bot Quick Announce")
+        embed.set_footer(text=f"Sent by {ctx.author.name}")
         
-        await ctx.message.delete()
-        await ctx.send(embed=embed)
+        # অরিজিনাল মেসেজ ডিলিট (শুধু প্রেফিক্সের জন্য)
+        try:
+            if not ctx.interaction:
+                await ctx.message.delete()
+        except:
+            pass
 
-    # এরর হ্যান্ডলিং
-    @announce.error
-    async def announce_error(self, interaction: discord.Interaction, error):
-        if isinstance(error, app_commands.MissingPermissions):
-            await interaction.response.send_message("❌ Only Admins/Managers can use this command!", ephemeral=True)
+        await ctx.send(embed=embed)
 
 async def setup(bot):
     await bot.add_cog(Announcement(bot))
-  
+    
