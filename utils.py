@@ -1,100 +1,74 @@
-import json
-import os
-import datetime
 import discord
+import datetime
+# 👇 ডাটাবেস ইমপোর্ট
+from database import Database
 
-# --- কনফিগারেশন ফাইল ও আইডি ---
-CONFIG_FILE = 'config.json'
-PREMIUM_FILE = 'premium.json'  # প্রিমিয়াম ডাটা ফাইল
-
-# আপনার দেওয়া তথ্য
+# আপনার আইডি
 OWNER_ID = 1311355680640208926
 UPI_ID = "kstomh05@okicici"
 
-# --- ১. কনফিগারেশন লোড ও সেভ (আপনার আগের কোড) ---
-
+# --- ১. কনফিগারেশন লোড (ডাটাবেস থেকে) ---
 def load_config():
-    """সব ফিচারের সেটিংস লোড করে এবং নতুন কি (key) যোগ করে"""
+    """ডাটাবেস থেকে কনফিগ লোড করে, না থাকলে ডিফল্ট রিটার্ন করে"""
+    
+    # ডিফল্ট স্ট্রাকচার (যদি নতুন কোনো অপশন লাগে এখানে এড করবেন)
     default_data = {
-        "prefixes": {}, # সার্ভার অনুযায়ী প্রেফিক্স
-        "premium_servers": {},
-        "premium_users": {},
+        "prefixes": {},
         "welcome_settings": {"enabled": False, "channel_id": None},
         "ticket_settings": {"support_roles": [], "count": 0},
-        
-        # --- Live Notifications ---
         "live_settings": {
-            "channel_id": None,
-            "ping_role": None,
-            "yt_channels": [],
-            "twitch_users": [],
-            "last_notified": {}
+            "channel_id": None, "ping_role": None, 
+            "yt_channels": [], "twitch_users": [], "last_notified": {}
         },
-        
-        # --- Invite Tracker ---
         "invite_settings": {
-            "enabled": False,
-            "log_channel": None,
+            "enabled": False, "log_channel": None,
             "template": {
                 "title": "📥 New Member Joined",
                 "description": "{member} has joined **{server}**, invited by {inviter}, who now has **{invites}** invites.",
-                "image": None,
-                "footer": "Join time: {join_time}"
+                "image": None, "footer": "Join time: {join_time}"
             },
-            "milestones": {} # ইনভাইট রোলের জন্য
+            "milestones": {}
         },
-        "invite_data": {} # প্রতি ইউজারের ইনভাইট সংখ্যা সেভ রাখার জন্য
+        "invite_data": {}
     }
 
-    # ফাইল না থাকলে তৈরি করবে
-    if not os.path.exists(CONFIG_FILE):
-        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
-            json.dump(default_data, f, indent=4)
-        return default_data
+    # ডাটাবেস থেকে আনা
+    db_data = Database.get_config()
     
-    # ফাইল থাকলে সেটি পড়বে
-    with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
-        try:
-            data = json.load(f)
-            # লজিক যাতে না ভাঙে: নতুন কোনো অপশন default_data-তে থাকলে তা মেইন ফাইলে যুক্ত করবে
-            for key, value in default_data.items():
-                if key not in data:
-                    data[key] = value
-                # নেস্টেড ডিকশনারি চেক (যেমন invite_settings এর ভিতর template)
-                elif isinstance(value, dict) and isinstance(data[key], dict):
-                    for sub_key, sub_value in value.items():
-                        if sub_key not in data[key]:
-                            data[key][sub_key] = sub_value
-            return data
-        except:
-            return default_data
+    # মার্জ করা (যাতে নতুন ফিচার যোগ করলে এরর না দেয়)
+    # যদি ডাটাবেস খালি থাকে, ডিফল্ট রিটার্ন করো
+    if not db_data:
+        return default_data
+
+    # ডাটাবেসের ডাটার সাথে ডিফল্ট ডাটা মার্জ করা
+    for key, value in default_data.items():
+        if key not in db_data:
+            db_data[key] = value
+        elif isinstance(value, dict) and isinstance(db_data[key], dict):
+            for sub_key, sub_value in value.items():
+                if sub_key not in db_data[key]:
+                    db_data[key][sub_key] = sub_value
+    
+    return db_data
 
 def save_config(data):
-    """ডাটা config.json ফাইলে রাইট করবে"""
-    with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
-        json.dump(data, f, indent=4, ensure_ascii=False)
+    """ডাটাবেসে কনফিগ সেভ করে"""
+    Database.save_config(data)
 
 def get_theme_color(guild_id):
-    """বটের জন্য ডিফল্ট নীল কালার রিটার্ন করে"""
     return discord.Color.blue()
 
-
-# --- ২. নতুন যুক্ত করা হলো: প্রিমিয়াম চেকার ফাংশন ---
-
+# --- ২. প্রিমিয়াম চেকার (ডাটাবেস থেকে) ---
 def check_premium(target_id, p_type="user"):
     """
     target_id: User ID or Server ID
     p_type: "user" or "server"
     Return: True (যদি প্রিমিয়াম থাকে), False (না থাকলে)
     """
-    # ফাইল না থাকলে প্রিমিয়াম নেই
-    if not os.path.exists(PREMIUM_FILE):
-        return False
-
     try:
-        with open(PREMIUM_FILE, "r") as f:
-            data = json.load(f)
-
+        # ডাটাবেস থেকে প্রিমিয়াম লিস্ট আনা
+        data = Database.get_premium_data()
+        
         category = "users" if p_type == "user" else "servers"
         sid = str(target_id)
 
@@ -109,11 +83,10 @@ def check_premium(target_id, p_type="user"):
             if datetime.datetime.now() < expire_date:
                 return True # মেয়াদ আছে
             else:
-                return False # মেয়াদ শেষ (Expried)
+                return False # মেয়াদ শেষ (Expired)
                 
         return False # লিস্টেই নেই
 
     except Exception as e:
         print(f"Error checking premium: {e}")
         return False
-        
