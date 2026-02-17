@@ -1,4 +1,6 @@
 discord.py
+pymongo[srv]
+dnspython
 aiohttp
 flask
 easy-pil
