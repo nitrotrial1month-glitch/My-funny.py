@@ -2,3 +2,5 @@ discord.py
 pymongo[srv]
 dnspython
 certifi
+flask
+easy-pil
