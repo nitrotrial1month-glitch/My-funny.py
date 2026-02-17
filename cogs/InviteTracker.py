@@ -158,7 +158,7 @@ class InviteTracker(commands.Cog):
             )
 
     # ================= 📊 ১. INVITE STATS =================
-    @commands.hybrid_command(name="invite", aliases=["i", "inv"], description="📊 View invite stats")
+    @commands.hybrid_command(name="invite", aliases=["i"], description="📊 View invite stats")
     @app_commands.describe(member="User to check")
     async def invite(self, ctx, member: discord.Member = None):
         member = member or ctx.author
