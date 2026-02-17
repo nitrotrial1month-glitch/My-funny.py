@@ -26,30 +26,25 @@ RARITIES = ["Common", "Uncommon", "Rare", "Epic", "Mythic", "Legendary", "Gem"]
 WEIGHTS = [50, 30, 15, 8, 4, 1, 0.1]
 
 # ================= 💎 GEM CONFIGURATION =================
-# কোন জেম কি কাজ করবে
 GEM_TYPES = {
-    # 1. Tier Gems (Rarity Guarantee)
     "Common Gem": {"type": "rarity", "value": "Common"},
     "Mythic Gem": {"type": "rarity", "value": "Mythic"},
     "Legendary Gem": {"type": "rarity", "value": "Legendary"},
-    
-    # 2. Special Gems
-    "Hunting Gem": {"type": "hunting", "value": 2}, # ২-৩টি অতিরিক্ত প্রাণী
-    "Empowering Gem": {"type": "empower", "value": 2} # প্রাণী দ্বিগুণ হবে
+    "Hunting Gem": {"type": "hunting", "value": 2}, 
+    "Empowering Gem": {"type": "empower", "value": 2}
 }
 
 class HuntSystem(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    # ================= 💎 USE COMMAND (MULTI-SLOT) =================
+    # ================= 💎 USE COMMAND (UNCHANGED) =================
     @commands.hybrid_command(name="use", description="🔮 Use gems (Stackable!)")
     async def use(self, ctx: commands.Context, item: str):
         user = ctx.author
         uid = str(user.id)
-        item_name = item.title() # "hunting gem" -> "Hunting Gem"
+        item_name = item.title()
         
-        # ১. জেম ভ্যালিড কিনা চেক
         gem_data = GEM_TYPES.get(item_name)
         if not gem_data:
             return await ctx.send("❌ Invalid Item! Try: `Hunting Gem`, `Empowering Gem`, or `Mythic Gem`.")
@@ -57,21 +52,17 @@ class HuntSystem(commands.Cog):
         col = Database.get_collection("inventory")
         user_data = col.find_one({"_id": uid}) or {}
         
-        # ২. ইনভেন্টরি চেক
         if user_data.get("items", {}).get(item_name, 0) < 1:
             return await ctx.send(f"❌ You don't have **{item_name}**!")
 
-        # ৩. বাফ সেট করা (Slot অনুযায়ী)
-        buff_type = gem_data["type"] # rarity / hunting / empower
+        buff_type = gem_data["type"]
         buff_value = gem_data["value"]
 
-        # ডাটাবেস আপডেট (Slot-based)
-        # buffs.rarity, buffs.hunting, buffs.empower আলাদা আলাদা সেভ হবে
         col.update_one(
             {"_id": uid},
             {
-                "$inc": {f"items.{item_name}": -1}, # ১টা জেম কমবে
-                "$set": {f"buffs.{buff_type}": buff_value} # নির্দিষ্ট স্লটে বাফ বসবে
+                "$inc": {f"items.{item_name}": -1},
+                "$set": {f"buffs.{buff_type}": buff_value}
             },
             upsert=True
         )
@@ -82,8 +73,8 @@ class HuntSystem(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    # ================= 🏹 HUNT COMMAND (COMBO LOGIC) =================
-    @commands.hybrid_command(name="hunt", aliases=["h"], description="🐾 Hunt with Gem Combos!")
+    # ================= 🏹 HUNT COMMAND (UPDATED) =================
+    @commands.hybrid_command(name="hunt", aliases=["h"], description="🐾 Hunt animals (No Cash, XP requires Team)")
     @commands.cooldown(1, 15, commands.BucketType.user)
     async def hunt(self, ctx: commands.Context):
         user = ctx.author
@@ -94,8 +85,8 @@ class HuntSystem(commands.Cog):
         # --- ১. বাফ লোড করা ---
         buffs = user_data.get("buffs", {})
         
-        # A. Rarity Check (Tier Gem)
-        forced_rarity = buffs.get("rarity") # যেমন: Mythic
+        # A. Rarity Check
+        forced_rarity = buffs.get("rarity")
         if forced_rarity:
             chosen_rarity = forced_rarity
             rarity_msg = f"\n💎 **Rarity Gem:** Guaranteed {forced_rarity}!"
@@ -104,7 +95,6 @@ class HuntSystem(commands.Cog):
             rarity_msg = ""
 
         # B. Quantity Check (Hunting Gem)
-        # নরমাল ১টি, হান্টিং জেম থাকলে ২-৩টি
         base_qty = 1
         if buffs.get("hunting"):
             extra = random.randint(1, 2)
@@ -114,7 +104,6 @@ class HuntSystem(commands.Cog):
             hunt_msg = ""
 
         # C. Multiplier Check (Empowering Gem)
-        # এমপাওয়ার জেম থাকলে মোট সংখ্যা দ্বিগুণ
         final_qty = base_qty
         if buffs.get("empower"):
             final_qty *= 2
@@ -123,37 +112,46 @@ class HuntSystem(commands.Cog):
             emp_msg = ""
 
         # --- ২. প্রাণী জেনারেট ---
-        # একই প্রাণী বারবার না দিয়ে ওই র‍্যাংক থেকে র‍্যান্ডম প্রাণী দিবে
         caught_animals = {}
-        found_names = []
         
         for _ in range(final_qty):
             animal = random.choice(ANIMALS[chosen_rarity])
             caught_animals[animal] = caught_animals.get(animal, 0) + 1
-            found_names.append(animal)
             
-        # --- ৩. ডাটাবেস আপডেট ---
-        # সব বাফ রিমুভ করা (একবার ব্যবহারের পর)
+        # --- ৩. XP লজিক (Battle Team Check) ---
+        # ডাটাবেসে 'team' বা 'battle_team' নামে লিস্ট থাকতে হবে
+        battle_team = user_data.get("team", []) 
+        
+        xp_gain = 0
+        xp_msg = ""
+
+        if battle_team and len(battle_team) > 0:
+            # যদি টিম থাকে, তবেই XP পাবে
+            xp_gain = 20 * final_qty # প্রতি হান্টে ২০ XP (প্রাণীর সংখ্যার সাথে গুণ হবে)
+            xp_msg = f" | ✨ +{xp_gain} XP"
+        else:
+            # টিম না থাকলে
+            xp_msg = "" # XP মেসেজ দেখাবে না
+
+        # --- ৪. ডাটাবেস আপডেট ---
         update_query = {
-            "$unset": {"buffs": ""}, # সব বাফ ক্লিয়ার
+            "$unset": {"buffs": ""}, # বাফ ক্লিয়ার
             "$set": {"last_hunt": datetime.datetime.now().isoformat()}
         }
         
-        # ইনভেন্টরি আপডেট লুপ
         inc_data = {}
         for anim, qty in caught_animals.items():
             inc_data[f"zoo.{anim}"] = qty
-            
-        # টাকা এবং XP
-        total_cash = random.randint(20, 50) * final_qty
-        inc_data["balance"] = total_cash
+        
+        # শুধু XP যোগ হবে, কোনো Balance (Cash) যোগ হবে না
+        if xp_gain > 0:
+            inc_data["xp"] = xp_gain
         
         update_query["$inc"] = inc_data
         
-        col.update_one({"_id": uid}, update_query)
-        Database.update_balance(uid, total_cash) # ইকোনমি সিঙ্ক
+        col.update_one({"_id": uid}, update_query, upsert=True)
 
-        # --- ৪. রেজাল্ট এম্বেড ---
+        # --- ৫. রেজাল্ট এম্বেড ---
         unique_animals = ", ".join([f"**{k}** x{v}" for k, v in caught_animals.items()])
         
         embed = discord.Embed(
@@ -161,11 +159,18 @@ class HuntSystem(commands.Cog):
             color=get_theme_color(ctx.guild.id)
         )
         embed.set_author(name=f"{user.name}'s Hunt", icon_url=user.display_avatar.url)
-        embed.add_field(name="Rarity", value=f"{RANK_EMOJIS.get(chosen_rarity)} **{chosen_rarity}**", inline=True)
-        embed.add_field(name="Earned", value=f"💰 {total_cash}", inline=True)
         
+        # Rewards সেকশনে শুধু XP দেখাবে (যদি পায়)
+        if xp_gain > 0:
+            embed.add_field(name="Rewards", value=f"✨ +{xp_gain} XP", inline=True)
+            
+        embed.add_field(name="Rarity", value=f"{RANK_EMOJIS.get(chosen_rarity)} **{chosen_rarity}**", inline=True)
+        
+        if xp_gain == 0:
+            embed.set_footer(text="Tip: Create a battle team to earn XP from hunting!")
+
         await ctx.send(embed=embed)
 
 async def setup(bot):
     await bot.add_cog(HuntSystem(bot))
-      
+    
