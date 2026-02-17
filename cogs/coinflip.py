@@ -5,13 +5,22 @@ import random
 import asyncio
 import json
 import os
+import time  # কুলডাউন হ্যান্ডেল করার জন্য
+
+# utils.py থেকে প্রিমিয়াম চেকার ইমপোর্ট করা হচ্ছে
+# যদি আপনার ফোল্ডার স্ট্রাকচার আলাদা হয়, তবে পাথ ঠিক করে নিন
+try:
+    from utils import check_premium
+except ImportError:
+    # যদি utils না পায়, তবে বাইপাস করার জন্য ডামি ফাংশন
+    def check_premium(user_id, type): return False
 
 ECONOMY_FILE = "economy.json"
-MAX_BET_LIMIT = 250000
 
 class Gambling(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.cooldowns = {}  # কুলডাউন ডাটা সেভ রাখার জন্য ডিকশনারি
 
     # ---------------- Economy ---------------- #
 
@@ -52,16 +61,36 @@ class Gambling(commands.Cog):
 
     # ---------------- Coinflip Command ---------------- #
 
-    @commands.hybrid_command(name="cf", aliases=["coinflip", "flip"], description="Bet coins (Max 250k)")
+    @commands.hybrid_command(name="cf", aliases=["coinflip", "flip"], description="Bet coins (Normal: 250k, Premium: 500k)")
     @app_commands.describe(arg1="Amount OR Side (h/t)", arg2="Side OR Amount (Optional)")
     async def cf(self, ctx: commands.Context, arg1: str, arg2: str | None = None):
 
         user = ctx.author
         uid = str(user.id)
-        current_bal = self.get_balance(uid)
         u_name = f"**{user.display_name}**"
 
-        # -------- ১. ইনপুট লজিক -------- #
+        # -------- ১. প্রিমিয়াম চেক এবং সেটিং নির্ধারণ -------- #
+        # প্রিমিয়াম চেক করা হচ্ছে
+        is_premium = check_premium(uid, "user")
+
+        # লিমিট এবং কুলডাউন সেট করা
+        MAX_BET_LIMIT = 500000 if is_premium else 250000
+        COOLDOWN_TIME = 6 if is_premium else 15
+
+        # -------- ২. কাস্টম কুলডাউন লজিক -------- #
+        current_time = time.time()
+        
+        if uid in self.cooldowns:
+            time_passed = current_time - self.cooldowns[uid]
+            if time_passed < COOLDOWN_TIME:
+                retry_after = round(COOLDOWN_TIME - time_passed, 1)
+                return await self.safe_send(ctx, f"{u_name}, please wait **{retry_after}s** before betting again!", ephemeral=True)
+        
+        # কুলডাউন আপডেট করা (যদি ভ্যালিডেশন ফেইল না করে তবেই সেভ হবে নিচে)
+        
+        current_bal = self.get_balance(uid)
+
+        # -------- ৩. ইনপুট লজিক -------- #
         amount_str = None
         pick_str = "h"
         valid_sides = ["h", "head", "heads", "t", "tail", "tails"]
@@ -78,11 +107,11 @@ class Gambling(commands.Cog):
         else:
             amount_str = a1
 
-        # এরর মেসেজ (কোনো ইমোজি ছাড়া, শুধু নাম)
+        # এরর মেসেজ
         if not amount_str:
             return await self.safe_send(ctx, f"{u_name}, please specify an amount! Example: `!cf 100`", ephemeral=True)
 
-        # -------- ২. এমাউন্ট লজিক -------- #
+        # -------- ৪. এমাউন্ট লজিক (লিমিট সহ) -------- #
         if amount_str in ["all", "max"]:
             bet = min(current_bal, MAX_BET_LIMIT)
         elif amount_str == "half":
@@ -97,38 +126,41 @@ class Gambling(commands.Cog):
             return await self.safe_send(ctx, f"{u_name}, you cannot bet 0 or negative coins.", ephemeral=True)
         if bet > current_bal:
             return await self.safe_send(ctx, f"{u_name}, not enough cash! Balance: **{current_bal}**", ephemeral=True)
+        
+        # ডায়নামিক লিমিট চেক
         if bet > MAX_BET_LIMIT:
-            return await self.safe_send(ctx, f"{u_name}, max bet limit is **250,000**!", ephemeral=True)
+            limit_formatted = "{:,}".format(MAX_BET_LIMIT) # কমা দিয়ে সুন্দর করে দেখাবে (Eg: 500,000)
+            return await self.safe_send(ctx, f"{u_name}, your max bet limit is **{limit_formatted}**!", ephemeral=True)
 
-        # -------- ৩. সাইড এবং ইমোজি সেটআপ -------- #
+        # সব চেক ঠিক থাকলে কুলডাউন অ্যাপ্লাই করা হবে
+        self.cooldowns[uid] = current_time
+
+        # -------- ৫. সাইড এবং ইমোজি সেটআপ -------- #
         user_choice_name = "HEADS"
         if pick_str in ["t", "tail", "tails"]:
             user_choice_name = "TAILS"
 
-        # আপনার দেওয়া ইমোজিগুলো (স্ট্রিং হিসেবে)
+        # আপনার দেওয়া ইমোজি
         emoji_spin = "<a:cf:1434413973759070372>"
         emoji_heads = "<:heds:1470863891671027804>"
         emoji_tails = "<:Tails:1434414186875588639>"
 
-        # -------- ৪. স্পিনিং এনিমেশন (বড় ছবি ছাড়া) -------- #
+        # -------- ৬. স্পিনিং এনিমেশন -------- #
         
-        # এখানে set_thumbnail বাদ দেওয়া হয়েছে
         embed_spin = discord.Embed(
             description=f"{u_name} spent **{bet}** and chose **{user_choice_name}**\n{emoji_spin} **The coin spins...**",
             color=0x2b2d31
         )
         
-        # মেসেজ পাঠানো এবং ভেরিয়েবলে রাখা
         msg = await ctx.send(embed=embed_spin)
 
         # ২ সেকেন্ড অপেক্ষা
         await asyncio.sleep(2)
 
-        # -------- ৫. রেজাল্ট -------- #
+        # -------- ৭. ফলাফল -------- #
         outcome = random.choice(["HEADS", "TAILS"])
         won = (user_choice_name == outcome)
         
-        # আউটকাম অনুযায়ী ইমোজি সিলেক্ট করা
         final_emoji = emoji_heads if outcome == "HEADS" else emoji_tails
 
         if won:
@@ -140,16 +172,16 @@ class Gambling(commands.Cog):
             color = discord.Color.red()
             result_text = f"**You lost {bet} coins**"
 
-        # -------- ৬. রেজাল্ট এডিট (বড় ছবি ছাড়া) -------- #
+        # -------- ৮. রেজাল্ট এডিট -------- #
         
         embed_result = discord.Embed(
             description=(
                 f"{u_name} spent **{bet}** and chose **{user_choice_name}**\n"
-                f"{final_emoji} {outcome} **{result_text}**\n" # এখানে ইমোজি লেখার সাথে থাকবে
+                f"{final_emoji} {outcome} {result_text}\n" 
+                f"Balance: {new_bal}"
             ),
             color=color
         )
-        # এখানেও set_thumbnail নেই
 
         await msg.edit(embed=embed_result)
 
@@ -157,3 +189,4 @@ class Gambling(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(Gambling(bot))
+    
