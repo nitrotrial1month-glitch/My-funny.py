@@ -1,83 +1,141 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-import json
-import os
+import datetime
 import random
-from datetime import datetime, timedelta
+import time
+from database import Database
+from utils import get_theme_color, check_premium
 
-# ফাইল পাথ
-ECONOMY_FILE = "economy.json"
-DAILY_FILE = "daily_timer.json"
+# ================= 🎨 PROGRESS BAR FUNCTION =================
+def create_streak_bar(level, max_level=10):
+    """স্ট্রাইক অনুযায়ী একটি সুন্দর প্রোগ্রেস বার তৈরি করে"""
+    filled = min(level, max_level)
+    empty = max_level - filled
+    return "🟦" * filled + "⬛" * empty
 
-class DailyReward(commands.Cog):
+class DailySystem(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    # --- হেল্পার ফাংশন (ডাটা লোড/সেভ) ---
-    def load_json(self, filename):
-        if not os.path.exists(filename): return {}
-        try:
-            with open(filename, "r") as f: return json.load(f)
-        except: return {}
-
-    def save_json(self, filename, data):
-        with open(filename, "w") as f: json.dump(data, f, indent=4)
-
-    def update_balance(self, user_id, amount):
-        data = self.load_json(ECONOMY_FILE)
-        uid = str(user_id)
-        if uid not in data: data[uid] = 0
-        data[uid] += amount
-        self.save_json(ECONOMY_FILE, data)
-        return data[uid]
-
-    # --- মেইন ডেইলি কমান্ড ---
-    @commands.hybrid_command(name="daily", description="📅 Claim your daily free coins")
-    async def daily(self, ctx):
+    @commands.hybrid_command(name="daily", description="✨ Claim your premium daily rewards!")
+    async def daily(self, ctx: commands.Context):
         user = ctx.author
         uid = str(user.id)
         
-        # ১. কুলডাউন চেক করা
-        timers = self.load_json(DAILY_FILE)
-        
-        if uid in timers:
-            last_claim = datetime.fromisoformat(timers[uid])
-            # ২৪ ঘণ্টা যোগ করা
-            next_claim = last_claim + timedelta(days=1)
-            
-            if datetime.now() < next_claim:
-                # এখনো সময় হয়নি
-                remaining = next_claim - datetime.now()
-                # সুন্দর ফরম্যাট (ঘণ্টা ও মিনিট)
-                hours, remainder = divmod(int(remaining.total_seconds()), 3600)
-                minutes, _ = divmod(remainder, 60)
+        # ১. ডাটাবেস লোড
+        col = Database.get_collection("economy")
+        user_data = col.find_one({"_id": uid}) or {}
+        daily_info = user_data.get("daily", {})
+
+        now = datetime.datetime.now(datetime.timezone.utc)
+        last_claim_str = daily_info.get("last_claim")
+        last_claim_time = datetime.datetime.fromisoformat(last_claim_str) if last_claim_str else None
+
+        # ২. কুলডাউন চেক (২৪ ঘন্টা)
+        if last_claim_time:
+            diff = now - last_claim_time
+            if diff.total_seconds() < 86400: # ২৪ ঘন্টা
+                # সুন্দর টাইম ফরম্যাট (Unix Timestamp)
+                next_claim_ts = int(last_claim_time.timestamp() + 86400)
                 
-                embed_wait = discord.Embed(
-                    description=f"⏳ **Wait a bit!** You can claim again in **{hours}h {minutes}m**.",
+                embed = discord.Embed(
+                    description=f"⏳ **Wait!** Your daily reward refreshes <t:{next_claim_ts}:R>.",
                     color=discord.Color.red()
                 )
-                return await ctx.send(embed=embed_wait, ephemeral=True)
+                return await ctx.send(embed=embed, ephemeral=True)
 
-        # ২. টাকা দেওয়া (৫০০ থেকে ১০০০ এর মধ্যে র‍্যান্ডম)
-        amount = random.randint(500, 1000)
-        new_balance = self.update_balance(uid, amount)
-
-        # ৩. সময় সেভ করা
-        timers[uid] = datetime.now().isoformat()
-        self.save_json(DAILY_FILE, timers)
-
-        # ৪. সাকসেস মেসেজ
-        embed_success = discord.Embed(
-            title="📅 Daily Reward Claimed!",
-            description=f"You received **{amount}** coins!\n💰 **New Balance:** `{new_balance}`",
-            color=discord.Color.green()
-        )
-        embed_success.set_thumbnail(url="https://cdn-icons-png.flaticon.com/512/2953/2953363.png") # ক্যালেন্ডার আইকন
-        embed_success.set_footer(text="Come back tomorrow for more!", icon_url=user.display_avatar.url)
+        # ৩. স্ট্রাইক এবং রিওয়ার্ড ক্যালকুলেশন
+        streak = daily_info.get("streak", 0)
         
-        await ctx.send(embed=embed_success)
+        # ৪৮ ঘন্টার বেশি গ্যাপ হলে রিসেট
+        if last_claim_time and (now - last_claim_time).total_seconds() > 172800:
+            streak = 1
+            streak_status = "⚠️ **Streak Lost!** Started over."
+        else:
+            streak += 1
+            streak_status = "🔥 **Streak Active!**"
+
+        base_amount = 1000
+        streak_bonus = (streak - 1) * 500
+        total_cash = base_amount + streak_bonus
+        
+        lootboxes = random.randint(2, 3)
+
+        # ৪. প্রিমিয়াম বুস্ট
+        is_premium = check_premium(user.id)
+        premium_text = ""
+        
+        if is_premium:
+            total_cash *= 2
+            premium_text = "\n💎 **Premium Boost:** `2x Rewards`"
+        
+        # ৫. ডাটাবেস আপডেট
+        Database.update_balance(uid, total_cash)
+        
+        col.update_one(
+            {"_id": uid},
+            {
+                "$set": {
+                    "daily.last_claim": now.isoformat(),
+                    "daily.streak": streak
+                },
+                "$inc": {
+                    "inventory.lootbox": lootboxes
+                }
+            },
+            upsert=True
+        )
+
+        # ৬. 🔥 স্টাইলিশ এম্বেড ডিজাইন 🔥
+        theme_color = get_theme_color(ctx.guild.id)
+        next_claim_ts = int(time.time() + 86400) # আগামীকালের সময়
+        
+        embed = discord.Embed(title=f"📅 Daily Check-In", color=theme_color)
+        embed.set_author(name=user.display_name, icon_url=user.display_avatar.url)
+        embed.set_thumbnail(url="https://cdn-icons-png.flaticon.com/512/9496/9496016.png") # 3D Gift Icon
+
+        # মেইন ডেসক্রিপশন
+        embed.description = (
+            f"Here is your daily reward, **{user.name}**!\n"
+            f"Keep your streak alive to earn massive bonuses.\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━"
+        )
+
+        # 💰 ক্যাশ রিওয়ার্ড
+        embed.add_field(
+            name="💰 Cash Reward",
+            value=f"```yaml\n+ {total_cash:,} Coins\n``` {premium_text}",
+            inline=True
+        )
+
+        # 📦 লুটবক্স রিওয়ার্ড
+        embed.add_field(
+            name="📦 Lootboxes",
+            value=f"```fix\n+ {lootboxes} Boxes\n```",
+            inline=True
+        )
+
+        # 🔥 স্ট্রাইক প্রোগ্রেস
+        bar = create_streak_bar(streak)
+        embed.add_field(
+            name=f"🔥 Daily Streak: {streak}",
+            value=f"{bar}\n*Next Reward:* `{1000 + (streak * 500)}` Coins",
+            inline=False
+        )
+
+        # ⏰ নেক্সট ক্লেইম
+        embed.add_field(
+            name="⏰ Next Reward",
+            value=f"Refreshes **<t:{next_claim_ts}:R>**",
+            inline=True
+        )
+        
+        # ফুটার
+        embed.set_footer(text="Funny Bot Economy • Secure & Verified", icon_url=self.bot.user.display_avatar.url)
+
+        await ctx.send(embed=embed)
 
 async def setup(bot):
-    await bot.add_cog(DailyReward(bot))
-              
+    await bot.add_cog(DailySystem(bot))
+    
