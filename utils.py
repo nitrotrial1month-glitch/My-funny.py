@@ -3,7 +3,15 @@ import os
 import datetime
 import discord
 
+# --- কনফিগারেশন ফাইল ও আইডি ---
 CONFIG_FILE = 'config.json'
+PREMIUM_FILE = 'premium.json'  # প্রিমিয়াম ডাটা ফাইল
+
+# আপনার দেওয়া তথ্য
+OWNER_ID = 1311355680640208926
+UPI_ID = "kstomh05@okicici"
+
+# --- ১. কনফিগারেশন লোড ও সেভ (আপনার আগের কোড) ---
 
 def load_config():
     """সব ফিচারের সেটিংস লোড করে এবং নতুন কি (key) যোগ করে"""
@@ -14,7 +22,7 @@ def load_config():
         "welcome_settings": {"enabled": False, "channel_id": None},
         "ticket_settings": {"support_roles": [], "count": 0},
         
-        # --- নতুন অ্যাড করা হলো (Live Notifications) ---
+        # --- Live Notifications ---
         "live_settings": {
             "channel_id": None,
             "ping_role": None,
@@ -23,7 +31,7 @@ def load_config():
             "last_notified": {}
         },
         
-        # --- নতুন অ্যাড করা হলো (Invite Tracker) ---
+        # --- Invite Tracker ---
         "invite_settings": {
             "enabled": False,
             "log_channel": None,
@@ -68,4 +76,44 @@ def save_config(data):
 
 def get_theme_color(guild_id):
     """বটের জন্য ডিফল্ট নীল কালার রিটার্ন করে"""
-    return discord.Color.blue() #
+    return discord.Color.blue()
+
+
+# --- ২. নতুন যুক্ত করা হলো: প্রিমিয়াম চেকার ফাংশন ---
+
+def check_premium(target_id, p_type="user"):
+    """
+    target_id: User ID or Server ID
+    p_type: "user" or "server"
+    Return: True (যদি প্রিমিয়াম থাকে), False (না থাকলে)
+    """
+    # ফাইল না থাকলে প্রিমিয়াম নেই
+    if not os.path.exists(PREMIUM_FILE):
+        return False
+
+    try:
+        with open(PREMIUM_FILE, "r") as f:
+            data = json.load(f)
+
+        category = "users" if p_type == "user" else "servers"
+        sid = str(target_id)
+
+        # চেক করা আইডি লিস্টে আছে কিনা
+        if sid in data.get(category, {}):
+            expire_str = data[category][sid]["expire_at"]
+            
+            # তারিখ কনভার্ট করা
+            expire_date = datetime.datetime.fromisoformat(expire_str)
+
+            # বর্তমান সময়ের সাথে মেয়াদ চেক
+            if datetime.datetime.now() < expire_date:
+                return True # মেয়াদ আছে
+            else:
+                return False # মেয়াদ শেষ (Expried)
+                
+        return False # লিস্টেই নেই
+
+    except Exception as e:
+        print(f"Error checking premium: {e}")
+        return False
+        
