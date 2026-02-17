@@ -11,6 +11,7 @@ from utils import get_theme_color
 ANIMAL_IMAGES = {
     "Dragon": "https://i.imgur.com/example_dragon.png",
     "Wolf": "https://i.imgur.com/example_wolf.png",
+    # আপনার এনিমেলের ছবি এখানে লিংক করবেন
     "default": "https://media.discordapp.net/attachments/1000000000000000000/1111111111111111111/battle_scene.png"
 }
 
@@ -23,19 +24,17 @@ BASE_STATS = {
     "Legendary": {"hp": 1000, "atk": 150}
 }
 
-# এনিমেল র‍্যাংক ম্যাপ
 ANIMAL_RARITY_MAP = {
     "Worm": "Common", "Ant": "Common", "Wolf": "Rare", "Fox": "Rare",
     "Lion": "Epic", "Dragon": "Mythic", "Demon": "Legendary"
 }
 
 def calculate_stats(name, lvl):
-    """লেভেল অনুযায়ী স্ট্যাটাস ক্যালকুলেট করা"""
     clean_name = name.split(" ")[-1] if " " in name else name
     rarity = ANIMAL_RARITY_MAP.get(clean_name, "Common")
     base = BASE_STATS.get(rarity, BASE_STATS["Common"])
     
-    multiplier = 1 + (lvl * 0.1) # প্রতি লেভেলে ১০% বাড়ে
+    multiplier = 1 + (lvl * 0.1)
     return {
         "hp": int(base["hp"] * multiplier),
         "atk": int(base["atk"] * multiplier),
@@ -50,7 +49,7 @@ def get_hp_bar(current, max_hp):
     filled = int(percent * 10)
     return "🟩" * filled + "⬛" * (10 - filled)
 
-# ================= 🤖 PVE BATTLE VIEW (User vs Bot) =================
+# ================= 🤖 PVE BATTLE VIEW =================
 class PVEBattleView(View):
     def __init__(self, ctx, player, enemy):
         super().__init__(timeout=120)
@@ -60,7 +59,8 @@ class PVEBattleView(View):
         self.turn = ctx.author
         self.log = "⚔️ **Wild Encounter!** Choose your move."
 
-    async def update_board(self, interaction, ended=False):
+    # ১. এম্বেড জেনারেটর (আলাদা ফাংশন যাতে এরর না খায়)
+    def build_embed(self, ended=False):
         embed = discord.Embed(
             title="⚔️ PVE BATTLE",
             description=f"**Battle Log:**\n> {self.log}",
@@ -81,11 +81,15 @@ class PVEBattleView(View):
         )
 
         if ended:
-            self.clear_items()
             embed.set_footer(text="Battle Ended")
         else:
             embed.set_footer(text="Your Turn 👇")
-        
+        return embed
+
+    # ২. বাটন আপডেট লজিক
+    async def update_board(self, interaction, ended=False):
+        embed = self.build_embed(ended=ended)
+        if ended: self.clear_items()
         await interaction.response.edit_message(embed=embed, view=self)
 
     @discord.ui.button(label="Attack", style=discord.ButtonStyle.danger, emoji="⚔️")
@@ -124,12 +128,9 @@ class PVEBattleView(View):
             self.player['hp'] = 0
             return await self.end_game(interaction, win=False)
             
+        # এনিমি টার্নের পর মেসেজ এডিট (interaction ছাড়াই)
         try:
-            # Re-update embed
-            embed = interaction.message.embeds[0]
-            embed.description = f"**Battle Log:**\n> {self.log}"
-            embed.set_field_at(0, name=f"🛡️ YOU: {self.player['name']}", value=f"{get_hp_bar(self.player['hp'], self.player['max_hp'])}\n❤️ {self.player['hp']}/{self.player['max_hp']}", inline=True)
-            embed.set_field_at(1, name=f"💀 ENEMY: {self.enemy['name']}", value=f"{get_hp_bar(self.enemy['hp'], self.enemy['max_hp'])}\n❤️ {self.enemy['hp']}/{self.enemy['max_hp']}", inline=True)
+            embed = self.build_embed(ended=False)
             await interaction.message.edit(embed=embed)
         except: pass
 
@@ -137,31 +138,28 @@ class PVEBattleView(View):
         if win:
             xp = random.randint(30, 60)
             Database.update_balance(str(self.ctx.author.id), 50)
-            # এখানে লেভেল আপ লজিক বসাতে পারেন
             self.log += f"\n🏆 **VICTORY!** Earned 50 Coins & {xp} XP."
         else:
             self.log += "\n☠️ **DEFEAT!**"
         await self.update_board(interaction, ended=True)
 
 
-# ================= ⚔️ PVP BATTLE VIEW (User vs User) =================
+# ================= ⚔️ PVP BATTLE VIEW =================
 class PVPBattleView(View):
     def __init__(self, ctx, p1, p2):
         super().__init__(timeout=180)
         self.ctx = ctx
         self.p1 = p1
         self.p2 = p2
-        self.turn = p1['id'] # P1 starts
+        self.turn = p1['id']
         self.log = f"⚔️ **Duel Started!**\n> <@{p1['id']}>'s Turn!"
 
-    async def update_board(self, interaction, ended=False, winner=None):
+    def build_embed(self, ended=False, winner=None):
         embed = discord.Embed(
             title="⚔️ PVP ARENA",
             description=f"**Battle Log:**\n{self.log}",
             color=discord.Color.red()
         )
-        
-        # যার টার্ন তার ইমেজ
         current_p = self.p1 if self.turn == self.p1['id'] else self.p2
         img_url = ANIMAL_IMAGES.get(current_p['name_clean'], ANIMAL_IMAGES["default"])
         embed.set_image(url=img_url)
@@ -170,11 +168,14 @@ class PVPBattleView(View):
         embed.add_field(name=f"🛡️ {self.p2['user_name']}", value=f"{get_hp_bar(self.p2['hp'], self.p2['max_hp'])}\n❤️ {self.p2['hp']}/{self.p2['max_hp']}", inline=True)
 
         if ended:
-            self.clear_items()
             embed.set_footer(text=f"🏆 Winner: {winner}")
         else:
-            embed.set_footer(text=f"Waiting for current turn...")
-        
+            embed.set_footer(text="Waiting for turn...")
+        return embed
+
+    async def update_board(self, interaction, ended=False, winner=None):
+        embed = self.build_embed(ended, winner)
+        if ended: self.clear_items()
         await interaction.response.edit_message(embed=embed, view=self)
 
     @discord.ui.button(label="Attack", style=discord.ButtonStyle.danger, emoji="⚔️")
@@ -237,12 +238,11 @@ class ChallengeView(View):
         self.stop()
         await interaction.message.delete()
 
-# ================= 🚀 MAIN COG =================
+# ================= 🚀 MAIN COMMANDS =================
 class BattleSystem(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    # --- 1. TEAM COMMAND GROUP (t add / team add) ---
     @commands.hybrid_group(name="team", aliases=["t"], description="Manage your battle team")
     async def team(self, ctx):
         if ctx.invoked_subcommand is None:
@@ -254,7 +254,6 @@ class BattleSystem(commands.Cog):
         col = Database.get_collection("inventory")
         user_data = col.find_one({"_id": uid})
         
-        # নাম খোঁজা
         found_name = None
         if user_data and "zoo" in user_data:
             for anim in user_data["zoo"]:
@@ -274,15 +273,13 @@ class BattleSystem(commands.Cog):
         )
         await ctx.send(f"✅ **{found_name}** selected as your fighter!")
 
-    # --- 2. UNIFIED BATTLE COMMAND (b / battle) ---
-    @commands.hybrid_command(name="battle", aliases=["b", "fight"], description="⚔️ Start a battle (PVE or PVP)")
+    @commands.hybrid_command(name="battle", aliases=["b", "fight"], description="⚔️ Start a battle")
     @app_commands.describe(opponent="Mention a user to PVP, or leave empty for PVE")
     async def battle(self, ctx, opponent: discord.Member = None):
         uid = str(ctx.author.id)
         col = Database.get_collection("inventory")
         p1_data = col.find_one({"_id": uid})
 
-        # ১. প্লেয়ারের টিম চেক
         if not p1_data or "team_name" not in p1_data:
             return await ctx.send("❌ You need a team! Use `!t add [animal]` first.")
 
@@ -290,7 +287,7 @@ class BattleSystem(commands.Cog):
         p1_stats["id"] = ctx.author.id
         p1_stats["user_name"] = ctx.author.name
 
-        # --- CASE A: PVP (If user mentioned) ---
+        # --- PVP MODE ---
         if opponent:
             if opponent.bot or opponent == ctx.author:
                 return await ctx.send("❌ Invalid opponent!")
@@ -299,7 +296,6 @@ class BattleSystem(commands.Cog):
             if not p2_data or "team_name" not in p2_data:
                 return await ctx.send(f"❌ **{opponent.name}** doesn't have a team!")
 
-            # চ্যালেঞ্জ পাঠানো
             view = ChallengeView(ctx, opponent)
             msg = await ctx.send(f"⚔️ {opponent.mention}, **{ctx.author.name}** challenged you!", view=view)
             await view.wait()
@@ -310,23 +306,23 @@ class BattleSystem(commands.Cog):
                 p2_stats["user_name"] = opponent.name
 
                 battle_view = PVPBattleView(ctx, p1_stats, p2_stats)
-                await msg.edit(content=None, embed=discord.Embed(title="⚔️ PVP START!", color=discord.Color.red()), view=battle_view)
-                await battle_view.update_board(msg.interaction if ctx.interaction else ctx)
+                # ম্যানুয়ালি এম্বেড জেনারেট করে পাঠানো
+                embed = battle_view.build_embed()
+                await msg.edit(content=None, embed=embed, view=battle_view)
             return
 
-        # --- CASE B: PVE (Normal Battle) ---
-        # এনিমি জেনারেট
+        # --- PVE MODE (FIXED) ---
         e_lvl = random.randint(p1_data.get("team_lvl", 1), p1_data.get("team_lvl", 1) + 2)
         enemy_name = random.choice(["Dark Wolf", "Bear", "Goblin"])
-        e_stats = calculate_stats(enemy_name, e_lvl) # বেস স্ট্যাটাস ব্যবহার করবে
+        e_stats = calculate_stats(enemy_name, e_lvl)
         
-        embed = discord.Embed(title="⚔️ PVE ENCOUNTER!", color=discord.Color.orange())
-        msg = await ctx.send(embed=embed)
-        
+        # ভিউ তৈরি
         view = PVEBattleView(ctx, p1_stats, e_stats)
-        await view.update_board(msg.interaction if ctx.interaction else ctx)
-        await msg.edit(view=view)
+        # ভিউ থেকে এম্বেড নিয়ে সরাসরি send করা (আগে update_board কল করা হতো, যা ভুল ছিল)
+        embed = view.build_embed()
+        
+        await ctx.send(embed=embed, view=view)
 
 async def setup(bot):
     await bot.add_cog(BattleSystem(bot))
-    
+        
