@@ -23,11 +23,12 @@ class DailySystem(commands.Cog):
         user = ctx.author
         uid = str(user.id)
         
-        # ১. ডাটাবেস লোড
-        col = Database.get_collection("economy")
+        # ১. হান্ট সিস্টেমের সাথে মিল রেখে "inventory" কালেকশন ব্যবহার করা হয়েছে
+        col = Database.get_collection("inventory")
         user_data = col.find_one({"_id": uid}) or {}
+        
+        # ডেইলি ইনফো লোড
         daily_info = user_data.get("daily", {})
-
         now = datetime.datetime.now(datetime.timezone.utc)
         last_claim_str = daily_info.get("last_claim")
         last_claim_time = datetime.datetime.fromisoformat(last_claim_str) if last_claim_str else None
@@ -35,8 +36,7 @@ class DailySystem(commands.Cog):
         # ২. কুলডাউন চেক (২৪ ঘন্টা)
         if last_claim_time:
             diff = now - last_claim_time
-            if diff.total_seconds() < 86400: # ২৪ ঘন্টা
-                # সুন্দর টাইম ফরম্যাট (Unix Timestamp)
+            if diff.total_seconds() < 86400: # ৮৬৪০০ সেকেন্ড = ২৪ ঘন্টা
                 next_claim_ts = int(last_claim_time.timestamp() + 86400)
                 
                 embed = discord.Embed(
@@ -45,10 +45,8 @@ class DailySystem(commands.Cog):
                 )
                 return await ctx.send(embed=embed, ephemeral=True)
 
-        # ৩. স্ট্রাইক এবং রিওয়ার্ড ক্যালকুলেশন
+        # ৩. স্ট্রাইক লজিক (৪৮ ঘন্টার বেশি গ্যাপ হলে রিসেট)
         streak = daily_info.get("streak", 0)
-        
-        # ৪৮ ঘন্টার বেশি গ্যাপ হলে রিসেট
         if last_claim_time and (now - last_claim_time).total_seconds() > 172800:
             streak = 1
             streak_status = "⚠️ **Streak Lost!** Started over."
@@ -56,23 +54,24 @@ class DailySystem(commands.Cog):
             streak += 1
             streak_status = "🔥 **Streak Active!**"
 
+        # ৪. রিওয়ার্ড ক্যালকুলেশন
         base_amount = 1000
         streak_bonus = (streak - 1) * 500
         total_cash = base_amount + streak_bonus
-        
-        lootboxes = random.randint(2, 3)
+        lootboxes = random.randint(2, 3) # ২ থেকে ৩ টি লুটবক্স
 
-        # ৪. প্রিমিয়াম বুস্ট
+        # ৫. প্রিমিয়াম বুস্ট (2x Boost)
         is_premium = check_premium(user.id)
         premium_text = ""
-        
         if is_premium:
             total_cash *= 2
-            premium_text = "\n💎 **Premium Boost:** `2x Rewards`"
+            premium_text = "\n💎 **Premium Boost:** `2x Rewards Applied`"
         
-        # ৫. ডাটাবেস আপডেট
+        # ৬. ডাটাবেস আপডেট (HuntSystem এর সাথে মিলিয়ে)
+        # টাকা আপডেট
         Database.update_balance(uid, total_cash)
         
+        # ডেইলি স্ট্রাইক এবং লুটবক্স আপডেট (items.Lootbox পাথে)
         col.update_one(
             {"_id": uid},
             {
@@ -81,24 +80,23 @@ class DailySystem(commands.Cog):
                     "daily.streak": streak
                 },
                 "$inc": {
-                    "inventory.lootbox": lootboxes
+                    "items.Lootbox": lootboxes # আপনার HuntSystem এর Items.Lootbox এর সাথে মিলবে
                 }
             },
             upsert=True
         )
 
-        # ৬. 🔥 স্টাইলিশ এম্বেড ডিজাইন 🔥
+        # ৭. 🔥 স্টাইলিশ এম্বেড ডিজাইন 🔥
         theme_color = get_theme_color(ctx.guild.id)
-        next_claim_ts = int(time.time() + 86400) # আগামীকালের সময়
+        next_claim_ts = int(time.time() + 86400)
         
         embed = discord.Embed(title=f"📅 Daily Check-In", color=theme_color)
         embed.set_author(name=user.display_name, icon_url=user.display_avatar.url)
-        embed.set_thumbnail(url="https://cdn-icons-png.flaticon.com/512/9496/9496016.png") # 3D Gift Icon
+        embed.set_thumbnail(url="https://cdn-icons-png.flaticon.com/512/9496/9496016.png") # Gift Icon
 
-        # মেইন ডেসক্রিপশন
         embed.description = (
             f"Here is your daily reward, **{user.name}**!\n"
-            f"Keep your streak alive to earn massive bonuses.\n"
+            f"{streak_status}\n"
             f"━━━━━━━━━━━━━━━━━━━━━━"
         )
 
@@ -124,15 +122,14 @@ class DailySystem(commands.Cog):
             inline=False
         )
 
-        # ⏰ নেক্সট ক্লেইম
+        # ⏰ নেক্সট ক্লেইম টাইমার
         embed.add_field(
             name="⏰ Next Reward",
             value=f"Refreshes **<t:{next_claim_ts}:R>**",
             inline=True
         )
         
-        # ফুটার
-        embed.set_footer(text="Funny Bot Economy • Secure & Verified", icon_url=self.bot.user.display_avatar.url)
+        embed.set_footer(text="Economy System • Stay Active!", icon_url=self.bot.user.display_avatar.url)
 
         await ctx.send(embed=embed)
 
