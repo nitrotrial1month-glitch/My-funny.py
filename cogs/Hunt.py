@@ -55,7 +55,6 @@ GEM_TYPES = {
     "Empowering Gem": {"type": "empower", "value": 2}
 }
 
-# লোটবক্স থেকে জেম পাওয়ার চান্স
 GEM_DROPS = ["Common Gem", "Uncommon Gem", "Rare Gem", "Epic Gem", "Mythic Gem", "Legendary Gem", "Hunting Gem", "Empowering Gem"]
 DROP_WEIGHTS = [40, 25, 15, 10, 4, 1, 3, 2]
 
@@ -72,18 +71,18 @@ class HuntSystem(commands.Cog):
         data = col.find_one({"_id": uid}) or {}
         
         items = data.get("items", {})
-        # inventory.lootbox পাথ থেকে ডাটা নেওয়া
+        # আপনার ডেইলি কমান্ডের সাথে মিল রেখে inventory.lootbox থেকে চেক করবে
         lootbox_count = data.get("inventory", {}).get("lootbox", 0)
 
         if not items and lootbox_count == 0:
             return await ctx.send(f"🎒 **{target.name}**'s inventory is empty!")
 
         desc = ""
-        # ১. লুটবক্স (inventory.lootbox)
+        # ১. লুটবক্স ডিসপ্লে
         if lootbox_count > 0:
             desc += f"`50` 🎁 **Lootbox**: {lootbox_count}\n"
         
-        # ২. জেমসমূহ (items ফিল্ড)
+        # ২. জেম ডিসপ্লে (Gems are still in 'items' field)
         gem_text = ""
         for name, count in items.items():
             if count <= 0: continue
@@ -96,34 +95,6 @@ class HuntSystem(commands.Cog):
         embed.set_footer(text="Use items with /use [id]")
         await ctx.send(embed=embed)
 
-    # ================= 🦁 ZOO COMMAND =================
-    @commands.hybrid_command(name="zoo", aliases=["z"], description="🦁 View your animal collection")
-    async def zoo(self, ctx: commands.Context, member: discord.Member = None):
-        target = member or ctx.author
-        uid = str(target.id)
-        col = Database.get_collection("inventory")
-        data = col.find_one({"_id": uid}) or {}
-        zoo = data.get("zoo", {})
-
-        if not zoo or all(v == 0 for v in zoo.values()):
-            return await ctx.send(f"🦁 **{target.name}** has no animals!")
-
-        desc = ""
-        total = 0
-        for rarity in RARITIES:
-            found = []
-            for animal in ANIMALS[rarity]:
-                count = zoo.get(animal, 0)
-                if count > 0:
-                    found.append(f"{animal} `x{count}`")
-                    total += count
-            if found:
-                desc += f"{RANK_EMOJIS[rarity]} **{rarity}**\n" + ", ".join(found) + "\n\n"
-
-        embed = discord.Embed(title=f"🦁 {target.name}'s Zoo", description=desc, color=get_theme_color(ctx.guild.id))
-        embed.set_footer(text=f"Total Animals: {total}")
-        await ctx.send(embed=embed)
-
     # ================= 🎁 OPEN LOOTBOX COMMAND =================
     @commands.hybrid_command(name="lootbox", aliases=["lb", "open"], description="🎁 Open lootboxes for gems")
     async def lootbox(self, ctx: commands.Context, amount: str = "1"):
@@ -131,7 +102,7 @@ class HuntSystem(commands.Cog):
         col = Database.get_collection("inventory")
         data = col.find_one({"_id": uid}) or {}
         
-        # inventory.lootbox থেকে সংখ্যা নেওয়া
+        # inventory.lootbox থেকে বক্স সংখ্যা নেওয়া
         current_lb = data.get("inventory", {}).get("lootbox", 0)
 
         if current_lb < 1: return await ctx.send("❌ You don't have any lootboxes!")
@@ -172,12 +143,13 @@ class HuntSystem(commands.Cog):
         caught = Counter([random.choice(ANIMALS[chosen_rarity]) for _ in range(final_qty)])
         lb_drop = 1 if random.random() < 0.05 else 0
 
-        upd = {"$unset": {"buffs": ""}, "$set": {"last_hunt": datetime.datetime.now().isoformat()}, "$inc": {}}
+        upd = {"$unset": {"buffs": ""}, "$set": {"last_hunt": datetime.datetime.now(datetime.timezone.utc).isoformat()}, "$inc": {}}
         for a, q in caught.items(): upd["$inc"][f"zoo.{a}"] = q
         
-        # হান্ট এ পাওয়া বক্স inventory.lootbox পাথে যোগ হবে
+        # হান্টে পাওয়া বক্স inventory.lootbox পাথে জমা হবে
         if lb_drop: upd["$inc"]["inventory.lootbox"] = lb_drop
         
+        # XP লজিক
         battle_team = user_data.get("team", [])
         xp = (20 * final_qty) if battle_team else 0
         if xp: upd["$inc"]["xp"] = xp
@@ -188,52 +160,60 @@ class HuntSystem(commands.Cog):
         if lb_drop: res += f"\n🎁 Found **{lb_drop}** Lootbox!"
         
         embed = discord.Embed(description=res, color=get_theme_color(ctx.guild.id))
+        embed.set_author(name=f"{ctx.author.name}'s Hunt", icon_url=ctx.author.display_avatar.url)
         embed.add_field(name="Rarity", value=f"{RANK_EMOJIS[chosen_rarity]} {chosen_rarity}")
         if xp: embed.add_field(name="XP", value=f"✨ +{xp}")
         await ctx.send(embed=embed)
 
-    # --- (Sell, Use, and Error handlers remain same as provided before) ---
-    @commands.hybrid_command(name="sell", description="💰 Sell animals for cash")
+    # ================= 🦁 ZOO COMMAND =================
+    @commands.hybrid_command(name="zoo", aliases=["z"])
+    async def zoo(self, ctx: commands.Context, member: discord.Member = None):
+        target = member or ctx.author
+        uid = str(target.id)
+        col = Database.get_collection("inventory")
+        data = col.find_one({"_id": uid}) or {}
+        zoo = data.get("zoo", {})
+        if not zoo or all(v == 0 for v in zoo.values()): return await ctx.send(f"🦁 **{target.name}** has no animals!")
+        desc, total = "", 0
+        for rarity in RARITIES:
+            found = [f"{a} `x{zoo[a]}`" for a in ANIMALS[rarity] if zoo.get(a, 0) > 0]
+            if found:
+                desc += f"{RANK_EMOJIS[rarity]} **{rarity}**\n" + ", ".join(found) + "\n\n"
+                for a in ANIMALS[rarity]: total += zoo.get(a, 0)
+        embed = discord.Embed(title=f"🦁 {target.name}'s Zoo", description=desc, color=get_theme_color(ctx.guild.id))
+        embed.set_footer(text=f"Total Animals: {total}")
+        await ctx.send(embed=embed)
+
+    # ================= 💰 SELL COMMAND =================
+    @commands.hybrid_command(name="sell")
     async def sell(self, ctx: commands.Context, query: str):
-        user = ctx.author
-        uid = str(user.id)
-        query = query.lower().strip()
+        uid = str(ctx.author.id)
         col = Database.get_collection("inventory")
         user_data = col.find_one({"_id": uid})
         if not user_data or "zoo" not in user_data: return await ctx.send("❌ Empty zoo!")
         zoo = user_data["zoo"]
-        total_earnings, sold_count, update_fields = 0, 0, {}
-        if query == "all":
-            for rarity in RARITIES:
-                for animal in ANIMALS[rarity]:
-                    count = zoo.get(animal, 0)
-                    if count > 0:
-                        total_earnings += PRICES[rarity] * count
-                        sold_count += count
-                        update_fields[f"zoo.{animal}"] = ""
-        elif query.title() in RARITIES:
-            r = query.title()
-            for animal in ANIMALS[r]:
-                count = zoo.get(animal, 0)
-                if count > 0:
-                    total_earnings += PRICES[r] * count
-                    sold_count += count
-                    update_fields[f"zoo.{animal}"] = ""
+        earnings, sold, unset_fields = 0, 0, {}
+        q = query.lower().strip()
+        if q == "all":
+            for r in RARITIES:
+                for a in ANIMALS[r]:
+                    if zoo.get(a, 0) > 0: earnings += PRICES[r]*zoo[a]; sold += zoo[a]; unset_fields[f"zoo.{a}"] = ""
+        elif q.title() in RARITIES:
+            r = q.title()
+            for a in ANIMALS[r]:
+                if zoo.get(a, 0) > 0: earnings += PRICES[r]*zoo[a]; sold += zoo[a]; unset_fields[f"zoo.{a}"] = ""
         else:
-            target = None
-            for r, a_list in ANIMALS.items():
-                for a in a_list:
-                    if query in a.lower(): target, rarity = a, r; break
-            if not target or zoo.get(target, 0) <= 0: return await ctx.send("❌ Animal not found!")
-            total_earnings = PRICES[rarity] * zoo[target]
-            sold_count = zoo[target]
-            update_fields[f"zoo.{target}"] = ""
-        if sold_count == 0: return await ctx.send("❌ Nothing to sell!")
-        col.update_one({"_id": uid}, {"$unset": update_fields})
-        Database.update_balance(uid, total_earnings)
-        await ctx.send(f"💰 Sold **{sold_count}** animals for **{total_earnings}** coins!")
+            target = next((a for r in ANIMALS for a in ANIMALS[r] if q in a.lower() and zoo.get(a, 0) > 0), None)
+            if not target: return await ctx.send("❌ No such animal!")
+            rarity = next(r for r in RARITIES if target in ANIMALS[r])
+            earnings, sold, unset_fields = PRICES[rarity]*zoo[target], zoo[target], {f"zoo.{target}": ""}
+        if sold == 0: return await ctx.send("❌ Nothing to sell!")
+        col.update_one({"_id": uid}, {"$unset": unset_fields})
+        Database.update_balance(uid, earnings)
+        await ctx.send(f"💰 Sold **{sold}** animals for **{earnings}** coins!")
 
-    @commands.hybrid_command(name="use", description="🔮 Use items by Name or ID")
+    # ================= 💎 USE COMMAND =================
+    @commands.hybrid_command(name="use")
     async def use(self, ctx: commands.Context, item: str):
         uid = str(ctx.author.id)
         if item.isdigit(): item_name = ITEM_IDS.get(item)
