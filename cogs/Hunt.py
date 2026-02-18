@@ -2,189 +2,259 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 import random
+import datetime
+from collections import Counter
 from database import Database
 from utils import get_theme_color
 
-# ================= 🐾 CONFIGURATION =================
+# ================= 🐾 ANIMAL DATABASE =================
 ANIMALS = {
-    "Common": ["🐛 Worm", "🐜 Ant", "🪳 Roach", "🦟 Fly"],
+    "Common": ["🐛 Worm", "🐜 Ant", "🪳 Cockroach", "🦟 Mosquito"],
     "Uncommon": ["🐭 Mouse", "🐸 Frog", "🐍 Snake", "🦇 Bat"],
     "Rare": ["🐺 Wolf", "🦊 Fox", "🐻 Bear", "🐼 Panda"],
-    "Epic": ["🦁 Lion", "🐯 Tiger", "🦈 Shark", "🐊 Croc"],
+    "Epic": ["🦁 Lion", "🐯 Tiger", "🦈 Shark", "🐊 Crocodile"],
     "Mythic": ["🐉 Dragon", "🦄 Unicorn", "🦅 Griffin", "🦕 Dino"],
     "Legendary": ["👹 Demon", "👼 Angel", "👽 Alien", "👾 Glitch"],
-    "Special": ["💎 Gem-A", "🔮 Star-A"]
+    "Gem": ["💎 Diamond Animal", "🔮 Emerald Animal"]
 }
 
+RANK_EMOJIS = {
+    "Common": "⚪", "Uncommon": "🟢", "Rare": "🔵", 
+    "Epic": "🟣", "Mythic": "🟠", "Legendary": "🔴", "Gem": "💎"
+}
+
+RARITIES = ["Common", "Uncommon", "Rare", "Epic", "Mythic", "Legendary", "Gem"]
+WEIGHTS = [50, 30, 15, 8, 4, 1, 0.1]
+
+# ================= 💰 SELL PRICES =================
 PRICES = {
-    "Common": 10, "Uncommon": 25, "Rare": 75, 
-    "Epic": 250, "Mythic": 1200, "Legendary": 6000, "Special": 25000
+    "Common": 5, "Uncommon": 15, "Rare": 50, "Epic": 200, 
+    "Mythic": 1000, "Legendary": 5000, "Gem": 20000
 }
 
-RARITIES = list(ANIMALS.keys())
-WEIGHTS = [50, 25, 12, 7, 4, 1.5, 0.5]
-
-GEMS_CONFIG = {
-    "50": {"name": "Common Gem", "type": "luck", "boost": "Common", "dura": 5},
-    "51": {"name": "Uncommon Gem", "type": "luck", "boost": "Uncommon", "dura": 5},
-    "52": {"name": "Rare Gem", "type": "luck", "boost": "Rare", "dura": 5},
-    "53": {"name": "Hunting Gem", "type": "qty", "boost": 2, "dura": 3},
-    "54": {"name": "Lucky Gem", "type": "luck_all", "boost": 2.2, "dura": 5}
+# ================= 🆔 ITEM CONFIGURATION =================
+ITEM_IDS = {
+    "50": "Lootbox",
+    "51": "Common Gem",
+    "52": "Uncommon Gem",
+    "53": "Rare Gem",
+    "54": "Epic Gem",
+    "55": "Mythic Gem",
+    "56": "Legendary Gem",
+    "57": "Hunting Gem",
+    "58": "Empowering Gem"
 }
 
-class OwOFinalSystem(commands.Cog):
+NAME_TO_ID = {v: k for k, v in ITEM_IDS.items()}
+
+GEM_TYPES = {
+    "Common Gem": {"type": "rarity", "value": "Common"},
+    "Mythic Gem": {"type": "rarity", "value": "Mythic"},
+    "Legendary Gem": {"type": "rarity", "value": "Legendary"},
+    "Hunting Gem": {"type": "hunting", "value": 2}, 
+    "Empowering Gem": {"type": "empower", "value": 2}
+}
+
+# লোটবক্স থেকে জেম পাওয়ার চান্স
+GEM_DROPS = ["Common Gem", "Uncommon Gem", "Rare Gem", "Epic Gem", "Mythic Gem", "Legendary Gem", "Hunting Gem", "Empowering Gem"]
+DROP_WEIGHTS = [40, 25, 15, 10, 4, 1, 3, 2]
+
+class HuntSystem(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    # ================= 🏹 HUNT (h) =================
+    # ================= 🎒 INVENTORY COMMAND =================
+    @commands.hybrid_command(name="inventory", aliases=["inv"], description="🎒 Check your items and gems")
+    async def inventory(self, ctx: commands.Context, member: discord.Member = None):
+        target = member or ctx.author
+        uid = str(target.id)
+        col = Database.get_collection("inventory")
+        data = col.find_one({"_id": uid}) or {}
+        items = data.get("items", {})
+
+        if not items or all(v == 0 for v in items.values()):
+            return await ctx.send(f"🎒 **{target.name}**'s inventory is empty!")
+
+        desc = ""
+        # ১. লুটবক্স
+        if items.get("Lootbox", 0) > 0:
+            desc += f"`50` 🎁 **Lootbox**: {items['Lootbox']}\n"
+        
+        # ২. জেমসমূহ
+        gem_text = ""
+        for name, count in items.items():
+            if name == "Lootbox" or count <= 0: continue
+            iid = NAME_TO_ID.get(name, "??")
+            gem_text += f"`{iid}` **{name}**: {count}\n"
+        
+        if gem_text: desc += "\n**💎 Gems**\n" + gem_text
+
+        embed = discord.Embed(title=f"🎒 {target.name}'s Bag", description=desc, color=get_theme_color(ctx.guild.id))
+        embed.set_footer(text="Use items with /use [id]")
+        await ctx.send(embed=embed)
+
+    # ================= 🦁 ZOO COMMAND =================
+    @commands.hybrid_command(name="zoo", aliases=["z"], description="🦁 View your animal collection")
+    async def zoo(self, ctx: commands.Context, member: discord.Member = None):
+        target = member or ctx.author
+        uid = str(target.id)
+        col = Database.get_collection("inventory")
+        data = col.find_one({"_id": uid}) or {}
+        zoo = data.get("zoo", {})
+
+        if not zoo or all(v == 0 for v in zoo.values()):
+            return await ctx.send(f"🦁 **{target.name}** has no animals!")
+
+        desc = ""
+        total = 0
+        for rarity in RARITIES:
+            found = []
+            for animal in ANIMALS[rarity]:
+                count = zoo.get(animal, 0)
+                if count > 0:
+                    found.append(f"{animal} `x{count}`")
+                    total += count
+            if found:
+                desc += f"{RANK_EMOJIS[rarity]} **{rarity}**\n" + ", ".join(found) + "\n\n"
+
+        embed = discord.Embed(title=f"🦁 {target.name}'s Zoo", description=desc, color=get_theme_color(ctx.guild.id))
+        embed.set_footer(text=f"Total Animals: {total}")
+        await ctx.send(embed=embed)
+
+    # ================= 🎁 OPEN LOOTBOX COMMAND =================
+    @commands.hybrid_command(name="lootbox", aliases=["lb", "open"], description="🎁 Open lootboxes for gems")
+    async def lootbox(self, ctx: commands.Context, amount: str = "1"):
+        uid = str(ctx.author.id)
+        col = Database.get_collection("inventory")
+        data = col.find_one({"_id": uid}) or {}
+        items = data.get("items", {})
+        current_lb = items.get("Lootbox", 0)
+
+        if current_lb < 1: return await ctx.send("❌ You don't have any lootboxes!")
+
+        if amount.lower() == "all": open_count = current_lb
+        elif amount.isdigit(): open_count = min(int(amount), current_lb)
+        else: open_count = 1
+
+        rewards = random.choices(GEM_DROPS, weights=DROP_WEIGHTS, k=open_count)
+        counts = Counter(rewards)
+
+        update = {"$inc": {"items.Lootbox": -open_count}}
+        for gem, qty in counts.items():
+            update["$inc"][f"items.{gem}"] = qty
+        
+        col.update_one({"_id": uid}, update, upsert=True)
+
+        res = f"🎁 Opened **{open_count}** Lootboxes:\n"
+        for gem, qty in counts.items():
+            res += f"💎 **{gem}**: `x{qty}`\n"
+        
+        await ctx.send(embed=discord.Embed(description=res, color=discord.Color.gold()))
+
+    # ================= 💰 SELL COMMAND =================
+    @commands.hybrid_command(name="sell", description="💰 Sell animals for cash")
+    async def sell(self, ctx: commands.Context, query: str):
+        user = ctx.author
+        uid = str(user.id)
+        query = query.lower().strip()
+        col = Database.get_collection("inventory")
+        user_data = col.find_one({"_id": uid})
+        if not user_data or "zoo" not in user_data: return await ctx.send("❌ Empty zoo!")
+
+        zoo = user_data["zoo"]
+        total_earnings, sold_count, update_fields = 0, 0, {}
+
+        if query == "all":
+            for rarity in RARITIES:
+                for animal in ANIMALS[rarity]:
+                    count = zoo.get(animal, 0)
+                    if count > 0:
+                        total_earnings += PRICES[rarity] * count
+                        sold_count += count
+                        update_fields[f"zoo.{animal}"] = ""
+        elif query.title() in RARITIES:
+            r = query.title()
+            for animal in ANIMALS[r]:
+                count = zoo.get(animal, 0)
+                if count > 0:
+                    total_earnings += PRICES[r] * count
+                    sold_count += count
+                    update_fields[f"zoo.{animal}"] = ""
+        else:
+            target = None
+            for r, a_list in ANIMALS.items():
+                for a in a_list:
+                    if query in a.lower(): target, rarity = a, r; break
+            if not target or zoo.get(target, 0) <= 0: return await ctx.send("❌ Animal not found!")
+            total_earnings = PRICES[rarity] * zoo[target]
+            sold_count = zoo[target]
+            update_fields[f"zoo.{target}"] = ""
+
+        if sold_count == 0: return await ctx.send("❌ Nothing to sell!")
+        col.update_one({"_id": uid}, {"$unset": update_fields})
+        Database.update_balance(uid, total_earnings)
+        await ctx.send(f"💰 Sold **{sold_count}** animals for **{total_earnings}** coins!")
+
+    # ================= 💎 USE COMMAND =================
+    @commands.hybrid_command(name="use", description="🔮 Use items by Name or ID")
+    async def use(self, ctx: commands.Context, item: str):
+        uid = str(ctx.author.id)
+        # ID সাপোর্ট
+        if item.isdigit(): item_name = ITEM_IDS.get(item)
+        else: item_name = item.title() if "Gem" in item.title() else f"{item.title()} Gem"
+
+        if item_name not in GEM_TYPES: return await ctx.send("❌ Invalid Item!")
+
+        col = Database.get_collection("inventory")
+        user_data = col.find_one({"_id": uid}) or {}
+        if user_data.get("items", {}).get(item_name, 0) < 1: return await ctx.send(f"❌ No {item_name} found!")
+
+        buff = GEM_TYPES[item_name]
+        col.update_one({"_id": uid}, {"$inc": {f"items.{item_name}": -1}, "$set": {f"buffs.{buff['type']}": buff['value']}}, upsert=True)
+        await ctx.send(f"🔮 Activated **{item_name}**!")
+
+    # ================= 🏹 HUNT COMMAND =================
     @commands.hybrid_command(name="hunt", aliases=["h"])
     @commands.cooldown(1, 15, commands.BucketType.user)
-    async def hunt(self, ctx):
+    async def hunt(self, ctx: commands.Context):
         uid = str(ctx.author.id)
         col = Database.get_collection("inventory")
         user_data = col.find_one({"_id": uid}) or {}
+        buffs = user_data.get("buffs", {})
+
+        # জেম লজিক
+        chosen_rarity = buffs.get("rarity") if buffs.get("rarity") else random.choices(RARITIES, weights=WEIGHTS, k=1)[0]
+        base_qty = 1 + random.randint(1, 2) if buffs.get("hunting") else 1
+        final_qty = base_qty * 2 if buffs.get("empower") else base_qty
+
+        # প্রাণী ও লুটবক্স (৫% চান্স)
+        caught = Counter([random.choice(ANIMALS[chosen_rarity]) for _ in range(final_qty)])
+        lb_drop = 1 if random.random() < 0.05 else 0
+
+        # আপডেট
+        upd = {"$unset": {"buffs": ""}, "$set": {"last_hunt": datetime.datetime.now().isoformat()}, "$inc": {}}
+        for a, q in caught.items(): upd["$inc"][f"zoo.{a}"] = q
+        if lb_drop: upd["$inc"]["items.Lootbox"] = lb_drop
         
-        active_buffs = user_data.get("active_buffs", {})
-        final_weights = WEIGHTS.copy()
-        count = 1
-        buff_status = []
+        battle_team = user_data.get("team", [])
+        xp = (20 * final_qty) if battle_team else 0
+        if xp: upd["$inc"]["xp"] = xp
 
-        if active_buffs:
-            for gid, info in list(active_buffs.items()):
-                if info['type'] == "luck_all":
-                    final_weights = [w * info['boost'] for w in final_weights]
-                elif info['type'] == "luck":
-                    idx = RARITIES.index(info['boost'])
-                    final_weights[idx] *= 4 
-                elif info['type'] == "qty":
-                    count += random.randint(1, info['boost'])
-                
-                info['dura'] -= 1
-                if info['dura'] <= 0:
-                    del active_buffs[gid]
-                    buff_status.append(f"🚫 **{info['name']}** broke!")
-                else:
-                    buff_status.append(f"✨ **{info['name']}** ({info['dura']} left)")
+        col.update_one({"_id": uid}, upd, upsert=True)
 
-        caught = [random.choice(ANIMALS[random.choices(RARITIES, weights=final_weights, k=1)[0]]) for _ in range(count)]
+        res = f"🌿 Caught **{final_qty}** animals: " + ", ".join([f"**{a}** x{q}" for a, q in caught.items()])
+        if lb_drop: res += f"\n🎁 Found **{lb_drop}** Lootbox!"
         
-        inc_dict = {f"zoo.{a}": 1 for a in caught}
-        col.update_one({"_id": uid}, {"$inc": inc_dict, "$set": {"active_buffs": active_buffs}}, upsert=True)
-
-        res = " ".join([f"**{a}**" for a in caught])
-        embed = discord.Embed(
-            description=f"🌿 **{ctx.author.display_name}** | Found: {res}\n{chr(10).join(buff_status)}",
-            color=get_theme_color(ctx.guild.id)
-        )
+        embed = discord.Embed(description=res, color=get_theme_color(ctx.guild.id))
+        embed.add_field(name="Rarity", value=f"{RANK_EMOJIS[chosen_rarity]} {chosen_rarity}")
+        if xp: embed.add_field(name="XP", value=f"✨ +{xp}")
         await ctx.send(embed=embed)
 
-    # ================= 🦁 ZOO (z) =================
-    @commands.hybrid_command(name="zoo", aliases=["z"])
-    async def zoo(self, ctx, member: discord.Member = None):
-        user = member or ctx.author
-        uid = str(user.id)
-        col = Database.get_collection("inventory")
-        user_data = col.find_one({"_id": uid}) or {}
-        zoo = user_data.get("zoo", {})
-
-        if not zoo: return await ctx.send(f"❌ **{user.display_name}** has no animals!")
-
-        embed = discord.Embed(title=f"🐾 {user.display_name}'s Zoo", color=get_theme_color(ctx.guild.id))
-        for rarity in RARITIES:
-            owned = [f"{a} x{zoo[a]}" for a in ANIMALS[rarity] if a in zoo]
-            if owned: embed.add_field(name=f"--- {rarity} ---", value=" | ".join(owned), inline=False)
-        await ctx.send(embed=embed)
-
-    # ================= 💰 SELL (s) =================
-    @commands.hybrid_command(name="sell", aliases=["s"])
-    async def sell(self, ctx, query: str):
-        uid = str(ctx.author.id)
-        col = Database.get_collection("inventory")
-        user_data = col.find_one({"_id": uid}) or {}
-        zoo = user_data.get("zoo", {})
-        
-        total_gain, unset_list, q = 0, {}, query.lower()
-        for rarity in RARITIES:
-            if q == "all" or q == rarity.lower():
-                for animal in ANIMALS[rarity]:
-                    if animal in zoo:
-                        total_gain += PRICES[rarity] * zoo[animal]
-                        unset_list[f"zoo.{animal}"] = ""
-
-        if total_gain == 0: return await ctx.send("❌ Nothing to sell!")
-        col.update_one({"_id": uid}, {"$unset": unset_list})
-        Database.update_balance(uid, total_gain)
-        await ctx.send(f"💰 **{ctx.author.display_name}** | Sold for **{total_gain}** coins!")
-
-    # ================= 🎒 INVENTORY (inv) =================
-    @commands.hybrid_command(name="inventory", aliases=["inv"])
-    async def inventory(self, ctx):
-        uid = str(ctx.author.id)
-        col = Database.get_collection("inventory")
-        user_data = col.find_one({"_id": uid}) or {}
-        items = user_data.get("items", {})
-
-        content = f"📦 **Lootbox**: {items.get('Lootbox', 0)}\n\n"
-        for gid, info in GEMS_CONFIG.items():
-            count = items.get(info['name'], 0)
-            if count > 0: content += f"💎 **{info['name']}** (ID: `{gid}`): {count}\n"
-        
-        embed = discord.Embed(title=f"🎒 {ctx.author.display_name}'s Inventory", description=content or "*Empty*", color=discord.Color.blue())
-        await ctx.send(embed=embed)
-
-    # ================= 💎 USE =================
-    @commands.hybrid_command(name="use")
-    async def use(self, ctx, gem_id: str):
-        uid = str(ctx.author.id)
-        gem = GEMS_CONFIG.get(gem_id)
-        if not gem: return await ctx.send("❌ Use ID 50-54")
-
-        col = Database.get_collection("inventory")
-        user_data = col.find_one({"_id": uid}) or {}
-        if user_data.get("items", {}).get(gem['name'], 0) < 1:
-            return await ctx.send(f"❌ No **{gem['name']}**!")
-
-        active = user_data.get("active_buffs", {})
-        active[gem_id] = gem.copy()
-        col.update_one({"_id": uid}, {"$inc": {f"items.{gem['name']}": -1}, "$set": {"active_buffs": active}})
-        await ctx.send(f"💎 **{ctx.author.display_name}** | Used **{gem['name']}**!")
-
-    # ================= 📦 OPEN (op lb) =================
-    @commands.hybrid_command(name="open", aliases=["op", "lb"])
-    async def open_box(self, ctx, sub: str = None, amount: str = "1"):
-        if sub and sub.lower() != "lb": amount = sub # handle 'op 10'
-        
-        uid = str(ctx.author.id)
-        col = Database.get_collection("inventory")
-        user_data = col.find_one({"_id": uid}) or {}
-        total_lb = user_data.get("items", {}).get("Lootbox", 0)
-
-        if total_lb < 1: return await ctx.send("❌ No Lootboxes!")
-
-        # Amount নির্ধারণ
-        if amount.lower() == "all": amt = total_lb
-        else: amt = min(int(amount), total_lb) if amount.isdigit() else 1
-
-        rewards = {"animals": {}, "gems": {}}
-        for _ in range(amt):
-            if random.random() < 0.7:
-                a = random.choice(ANIMALS[random.choices(RARITIES, weights=WEIGHTS, k=1)[0]])
-                rewards["animals"][a] = rewards["animals"].get(a, 0) + 1
-            else:
-                g = random.choice(list(GEMS_CONFIG.keys()))
-                rewards["gems"][g] = rewards["gems"].get(g, 0) + 1
-
-        # DB Update
-        upd = {"$inc": {"items.Lootbox": -amt}}
-        for a, c in rewards["animals"].items(): upd["$inc"][f"zoo.{a}"] = c
-        for g, c in rewards["gems"].items(): upd["$inc"][f"items.{GEMS_CONFIG[g]['name']}"] = c
-        col.update_one({"_id": uid}, upd)
-
-        # Result String
-        res_list = [f"{a} x{c}" for a in rewards["animals"].items()] + [f"{GEMS_CONFIG[g]['name']} x{c}" for g, c in rewards["gems"].items()]
-        embed = discord.Embed(description=f"🎁 **{ctx.author.display_name}** opened {amt} boxes:\n" + ", ".join(res_list), color=discord.Color.gold())
-        await ctx.send(embed=embed)
+    @hunt.error
+    async def hunt_error(self, ctx, error):
+        if isinstance(error, commands.CommandOnCooldown):
+            await ctx.send(f"⏳ Wait `{error.retry_after:.1f}s`.", ephemeral=True)
 
 async def setup(bot):
-    await bot.add_cog(OwOFinalSystem(bot))
-        
+    await bot.add_cog(HuntSystem(bot))
+            
