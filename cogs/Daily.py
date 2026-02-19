@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands
-from discord import app_commands
 import datetime
 import random
 import time
@@ -23,11 +22,10 @@ class DailySystem(commands.Cog):
         user = ctx.author
         uid = str(user.id)
         
-        # 1. Load Database using the "inventory" collection to match hunt.py
+        # 1. Access the "inventory" collection to match your Hunt System
         col = Database.get_collection("inventory")
         user_data = col.find_one({"_id": uid}) or {}
         
-        # Load daily info
         daily_info = user_data.get("daily", {})
         now = datetime.datetime.now(datetime.timezone.utc)
         last_claim_str = daily_info.get("last_claim")
@@ -36,7 +34,7 @@ class DailySystem(commands.Cog):
         # 2. Cooldown Check (24 Hours)
         if last_claim_time:
             diff = now - last_claim_time
-            if diff.total_seconds() < 86400: # 86,400 seconds = 24 hours
+            if diff.total_seconds() < 86400:
                 next_claim_ts = int(last_claim_time.timestamp() + 86400)
                 
                 embed = discord.Embed(
@@ -45,7 +43,7 @@ class DailySystem(commands.Cog):
                 )
                 return await ctx.send(embed=embed, ephemeral=True)
 
-        # 3. Streak Logic (Reset if gap is more than 48 hours)
+        # 3. Streak Logic
         streak = daily_info.get("streak", 0)
         if last_claim_time and (now - last_claim_time).total_seconds() > 172800:
             streak = 1
@@ -54,24 +52,24 @@ class DailySystem(commands.Cog):
             streak += 1
             streak_status = "🔥 **Streak Active!**"
 
-        # 4. Reward Calculation
+        # 4. Rewards
         base_amount = 1000
         streak_bonus = (streak - 1) * 500
         total_cash = base_amount + streak_bonus
         lootboxes = random.randint(2, 3) 
 
-        # 5. Premium Boost (2x Boost)
+        # 5. Premium Boost (2x)
         is_premium = check_premium(user.id)
         premium_text = ""
         if is_premium:
             total_cash *= 2
             premium_text = "\n💎 **Premium Boost:** `2x Rewards Applied`"
         
-        # 6. Database Update (Aligned with HuntSystem)
-        # Update Balance
+        # 6. Database Update
+        # Update coins via your Database utility
         Database.update_balance(uid, total_cash)
         
-        # Update Daily info and Lootboxes in the correct path
+        # Update Daily info and Lootboxes in the standardized path
         col.update_one(
             {"_id": uid},
             {
@@ -80,20 +78,19 @@ class DailySystem(commands.Cog):
                     "daily.streak": streak
                 },
                 "$inc": {
-                    # This path MUST match inventory.lootbox from hunt.py
-                    "inventory.lootbox": lootboxes 
+                    "inventory.lootbox": lootboxes  # Matches hunt.py exactly
                 }
             },
             upsert=True
         )
 
-        # 7. Stylish Embed Design
+        # 7. Embed Response
         theme_color = get_theme_color(ctx.guild.id)
         next_claim_ts = int(time.time() + 86400)
         
         embed = discord.Embed(title=f"📅 Daily Check-In", color=theme_color)
         embed.set_author(name=user.display_name, icon_url=user.display_avatar.url)
-        embed.set_thumbnail(url="https://cdn-icons-png.flaticon.com/512/9496/9496016.png") # Gift Icon
+        embed.set_thumbnail(url="https://cdn-icons-png.flaticon.com/512/9496/9496016.png")
 
         embed.description = (
             f"Here is your daily reward, **{user.name}**!\n"
@@ -101,21 +98,18 @@ class DailySystem(commands.Cog):
             f"━━━━━━━━━━━━━━━━━━━━━━"
         )
 
-        # Cash Reward Field
         embed.add_field(
             name="💰 Cash Reward",
             value=f"```yaml\n+ {total_cash:,} Coins\n``` {premium_text}",
             inline=True
         )
 
-        # Lootbox Reward Field
         embed.add_field(
             name="📦 Lootboxes",
             value=f"```fix\n+ {lootboxes} Boxes\n```",
             inline=True
         )
 
-        # Streak Progress
         bar = create_streak_bar(streak)
         embed.add_field(
             name=f"🔥 Daily Streak: {streak}",
@@ -123,17 +117,15 @@ class DailySystem(commands.Cog):
             inline=False
         )
 
-        # Next Claim Timer
         embed.add_field(
             name="⏰ Next Reward",
             value=f"Refreshes **<t:{next_claim_ts}:R>**",
             inline=True
         )
         
-        embed.set_footer(text="Economy System • Stay Active!", icon_url=self.bot.user.display_avatar.url)
-
+        embed.set_footer(text="Economy System • Stay Active!")
         await ctx.send(embed=embed)
 
 async def setup(bot):
     await bot.add_cog(DailySystem(bot))
-        
+    
