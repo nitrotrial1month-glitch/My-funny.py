@@ -146,41 +146,64 @@ class HuntSystem(commands.Cog):
         if active_buffs: embed.add_field(name="🔮 Active Gem Life", value=active_buffs, inline=False)
         await ctx.send(embed=embed)
 
-    # ================= 🎁 OPEN LOOTBOX COMMAND =================
-    @commands.hybrid_command(name="lootbox", aliases=["lb", "open"], description="🎁 Open lootboxes")
-    async def lootbox(self, ctx, amount: str = "1"):
-        uid = str(ctx.author.id)
-        col = Database.get_collection("inventory")
-        data = col.find_one({"_id": uid}) or {}
-        current_lb = data.get("inventory", {}).get("lootbox", 0)
-
-        if current_lb < 1: return await ctx.send("❌ You don't have any Lootboxes!")
-        open_count = current_lb if amount.lower() == "all" else min(int(amount) if amount.isdigit() else 1, current_lb)
-
-        rewards = random.choices(GEM_DROPS, weights=DROP_WEIGHTS, k=open_count)
-        counts = Counter(rewards)
-
-        update = {"$inc": {"inventory.lootbox": -open_count}}
-        for gem, qty in counts.items(): update["$inc"][f"items.{gem}"] = qty
-        
-        col.update_one({"_id": uid}, update, upsert=True)
-        res = f"🎁 Opened **{open_count}** Lootbox(es):\n" + "\n".join([f"💎 **{g}**: `x{q}`" for g, q in counts.items()])
-        await ctx.send(embed=discord.Embed(description=res, color=discord.Color.gold()))
-
     # ================= 💎 USE COMMAND =================
     @commands.hybrid_command(name="use", description="🔮 Activate a gem by ID")
     async def use(self, ctx, gem_id: str):
         uid = str(ctx.author.id)
         gem = GEM_DATA.get(gem_id)
         if not gem: return await ctx.send("❌ Invalid Gem ID!")
-        
-        col = Database.get_collection("inventory")
-        user_data = col.find_one({"_id": uid}) or {}
-        if user_data.get("items", {}).get(gem["name"], 0) < 1:
-            return await ctx.send(f"❌ You don't have any **{gem['name']}**!")
+# ================= 🎲 LOOTBOX CONFIGURATION (FIXED) =================
+# We have 12 gems in total (61-64, 71-74, 81-84)
+GEM_DROPS = list(GEM_DATA.values())
+GEM_NAMES = [gem["name"] for gem in GEM_DROPS]
 
-        col.update_one({"_id": uid}, {"$inc": {f"items.{gem['name']}": -1}, "$set": {f"buffs.{gem['type']}": {"val": gem["val"], "dur": gem["dur"], "emoji": gem["emoji"]}}}, upsert=True)
-        await ctx.send(f"🔮 Activated {gem['emoji']} **{gem['name']}**! Life: `{gem['dur']}` hunts.")
+# Weights must have exactly 12 values to match the 12 gems
+# Order: Hunting (4), Forest (4), Lucky (4)
+# We keep higher rarity gems at a much lower percentage
+DROP_WEIGHTS = [
+    30, 15, 5, 1,  # Hunting Gems (C, U, R, L)
+    20, 10, 4, 1,  # Forest Gems (C, U, R, L)
+    10, 3, 0.5, 0.5 # Lucky Gems (C, U, R, L) - Very Rare!
+]
+
+# Update the lootbox command logic to use GEM_NAMES
+@commands.hybrid_command(name="lootbox", aliases=["lb", "open"], description="🎁 Open lootboxes")
+async def lootbox(self, ctx, amount: str = "1"):
+    uid = str(ctx.author.id)
+    col = Database.get_collection("inventory")
+    data = col.find_one({"_id": uid}) or {}
+    
+    # Check both potential paths to be safe
+    current_lb = data.get("inventory", {}).get("lootbox", 0)
+    old_lb = data.get("items", {}).get("Lootbox", 0)
+    total_lb = current_lb + old_lb
+
+    if total_lb < 1: 
+        return await ctx.send("❌ You don't have any Lootboxes!")
+
+    open_count = total_lb if amount.lower() == "all" else min(int(amount) if amount.isdigit() else 1, total_lb)
+
+    # FIXED LINE: Using GEM_NAMES and DROP_WEIGHTS (Length 12)
+    rewards = random.choices(GEM_NAMES, weights=DROP_WEIGHTS, k=open_count)
+    counts = Counter(rewards)
+
+    # Database update
+    update_query = {"$inc": {}}
+    if old_lb > 0:
+        if open_count <= old_lb: update_query["$inc"]["items.Lootbox"] = -open_count
+        else:
+            update_query["$inc"]["items.Lootbox"] = -old_lb
+            update_query["$inc"]["inventory.lootbox"] = -(open_count - old_lb)
+    else:
+        update_query["$inc"]["inventory.lootbox"] = -open_count
+
+    for name, qty in counts.items():
+        update_query["$inc"][f"items.{name}"] = qty
+    
+    col.update_one({"_id": uid}, update_query, upsert=True)
+
+    res = f"🎁 Opened **{open_count}** Lootbox(es):\n" + "\n".join([f"💎 **{g}**: `x{q}`" for g, q in counts.items()])
+    await ctx.send(embed=discord.Embed(description=res, color=discord.Color.gold()))
 
     # ================= 🦁 ZOO & SELL =================
     @commands.hybrid_command(name="zoo", aliases=["z"], description="🦁 View your animals")
