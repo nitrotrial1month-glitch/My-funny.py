@@ -34,8 +34,8 @@ class DailySystem(commands.Cog):
         # 2. Cooldown Check (24 Hours)
         if last_claim_time:
             diff = now - last_claim_time
-            if diff.total_seconds() < 86400:
-                next_claim_ts = int(last_claim_time.timestamp() + 86400)
+            if diff.total_seconds() < 10:
+                next_claim_ts = int(last_claim_time.timestamp() + 10)
                 
                 embed = discord.Embed(
                     description=f"⏳ **Wait!** Your daily reward refreshes <t:{next_claim_ts}:R>.",
