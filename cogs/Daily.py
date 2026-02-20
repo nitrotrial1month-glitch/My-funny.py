@@ -78,6 +78,7 @@ class DailySystem(commands.Cog):
                     "daily.streak": streak
                 },
                 "$inc": {
+                     "balance": total_cash, 
                     "inventory.lootbox": lootboxes  # Matches hunt.py exactly
                 }
             },
