@@ -27,11 +27,11 @@ class Slots(commands.Cog):
                 bet = int(amount.replace('k', '000').replace(',', ''))
             except:
                 ctx.command.reset_cooldown(ctx)
-                return await ctx.send("❌ সঠিক অ্যামাউন্ট দিন! (যেমন: `!sl 500`)", ephemeral=True)
+                return await ctx.send("❌ Enter the correct amount! (Example: `!sl 500`)", ephemeral=True)
 
         if bet <= 0 or bet > balance:
             ctx.command.reset_cooldown(ctx)
-            return await ctx.send(f"❌ আপনার পর্যাপ্ত ব্যালেন্স নেই! (ব্যালেন্স: {balance:,})", ephemeral=True)
+            return await ctx.send(f"❌ You do not have enough balance! (Balance: {balance:,})", ephemeral=True)
 
         # 👇 MongoDB থেকে টাকা কেটে নেওয়া
         Database.update_balance(user_id, -bet)
