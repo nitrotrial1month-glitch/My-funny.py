@@ -2,85 +2,104 @@ import discord
 from discord.ext import commands
 import random
 import asyncio
-from database import Database
-from utils import get_theme_color
+import database # আপনার তৈরিকৃত database.py
 
-class SlotSystem(commands.Cog):
+class Slots(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.emojis = ["🍎", "🍒", "🍇", "🍊", "🍋", "💎", "🔔", "7️⃣"]
-        self.spin_emoji = "<a:slot:1470669361155932230>"
+        self.cash_emoji = "<:Nova:1453460518764548186>"
+        self.spin_emoji = "<a:slot:1470669361155932230>" # আপনার এনিমেটেড ইমোজি
+        self.symbols = ["💎", "🍎", "🍋", "🍇", "🍒", "⭐"]
 
-    def get_balance(self, user_id):
-        col = Database.get_collection("inventory")
-        data = col.find_one({"_id": str(user_id)}) or {}
-        return data.get("balance", 0)
+    @commands.hybrid_command(name="slot", aliases=["s", "sl"], description="Play a premium slot machine!")
+    @commands.cooldown(1, 15, commands.BucketType.user)
+    async def slot(self, ctx, amount: str):
+        user_id = str(ctx.author.id)
+        balance = database.get_balance(user_id)
 
-    def update_balance(self, user_id, amount):
-        col = Database.get_collection("inventory")
-        col.update_one({"_id": str(user_id)}, {"$inc": {"balance": amount}}, upsert=True)
-
-    @commands.hybrid_command(name="slots", aliases=["s", "slot"])
-    async def slots(self, ctx: commands.Context, amount: str):
-        user = ctx.author
-        uid = str(user.id)
-        current_bal = self.get_balance(uid)
-
-        # অ্যামাউন্ট নির্ধারণ
-        if amount.lower() in ["all", "max"]: bet = current_bal
-        elif amount.lower() == "half": bet = int(current_bal / 2)
+        # বাজি ক্যালকুলেশন
+        if amount.lower() == "all":
+            bet = min(balance, 50000)
         else:
-            try: bet = int(amount)
-            except ValueError: return await ctx.send(f"❌ **{user.display_name}**, invalid amount!")
+            try:
+                bet = int(amount.replace('k', '000').replace(',', ''))
+            except:
+                ctx.command.reset_cooldown(ctx)
+                return await ctx.send("❌ সঠিক অ্যামাউন্ট দিন! (যেমন: `!sl 500`)", ephemeral=True)
 
-        if bet <= 0: return await ctx.send("❌ You can't bet 0!")
-        if bet > current_bal: return await ctx.send(f"❌ Insufficient balance! `{current_bal:,}`")
+        if bet <= 0 or bet > balance:
+            ctx.command.reset_cooldown(ctx)
+            return await ctx.send(f"❌ আপনার ব্যালেন্স নেই! (ব্যালেন্স: {balance:,})", ephemeral=True)
 
-        theme_color = get_theme_color(ctx.guild.id)
-        
-        # অ্যানিমেশন স্টেজ
-        embed = discord.Embed(color=theme_color)
-        embed.set_author(name="🎰 SLOTS 🎰")
-        embed.description = f"_SLOTS_\n║ {self.spin_emoji} {self.spin_emoji} {self.spin_emoji} ║\n**{user.display_name}** bet 💵 **{bet:,}**...\n\n`Spinning...`"
+        # বাজি কেটে নেওয়া
+        database.update_balance(user_id, -bet)
+
+        # রেজাল্ট জেনারেট (৩x৩ গ্রিড)
+        # মাঝখানের সারি (Row 2) হলো জেতার মেইন লাইন
+        if random.random() < 0.30: # ৩০% জেতার সম্ভাবনা
+            win_sym = random.choice(self.symbols)
+            mid_row = [win_sym, win_sym, win_sym]
+        else:
+            mid_row = [random.choice(self.symbols) for _ in range(3)]
+            if mid_row[0] == mid_row[1] == mid_row[2]: # ভুল করে উইন হলে রেন্ডম করা
+                mid_row[2] = random.choice([s for s in self.symbols if s != mid_row[0]])
+
+        # পুরো গ্রিড তৈরি
+        full_grid = [
+            [random.choice(self.symbols) for _ in range(3)], # Row 1
+            mid_row,                                        # Row 2 (Winning Row)
+            [random.choice(self.symbols) for _ in range(3)]  # Row 3
+        ]
+
+        # প্রাথমিক এমবেড (Spinning Phase)
+        embed = discord.Embed(title="🎰 SLOT MACHINE 🎰", color=0x5865F2)
+        embed.description = (
+            f"**{ctx.author.display_name}** bet {self.cash_emoji} **{bet:,}**\n\n"
+            f"┏━━━┳━━━┳━━━┓\n"
+            f"┃ {self.spin_emoji} ┃ {self.spin_emoji} ┃ {self.spin_emoji} ┃\n"
+            f"┃ {self.spin_emoji} ┃ {self.spin_emoji} ┃ {self.spin_emoji} ┃ ◀\n"
+            f"┃ {self.spin_emoji} ┃ {self.spin_emoji} ┃ {self.spin_emoji} ┃\n"
+            f"┗━━━┻━━━┻━━━┛\n\n"
+            "**Spinning...**"
+        )
         msg = await ctx.send(embed=embed)
 
-        await asyncio.sleep(1.2)
-        res = [random.choice(self.emojis) for _ in range(3)]
+        # এনিমেশন ইফেক্ট (Sequential reveal)
+        await asyncio.sleep(2)
         
-        # ধাপে ধাপে প্রকাশ
-        stages = [
-            f"║ {res[0]} {self.spin_emoji} {self.spin_emoji} ║",
-            f"║ {res[0]} {res[1]} {self.spin_emoji} ║"
-        ]
-        for stage in stages:
-            embed.description = f"_SLOTS_\n{stage}\n**{user.display_name}** bet 💵 **{bet:,}**...\n\n`Spinning...`"
-            await msg.edit(embed=embed)
-            await asyncio.sleep(0.8)
-
-        # ফলাফল নির্ধারণ
-        if res[0] == res[1] == res[2]:
-            multiplier = 5
-            win_text = f"and won 💵 **{int(bet*multiplier):,}** (x{multiplier}) 🎉"
-            final_color = discord.Color.green()
-        elif res[0] == res[1] or res[1] == res[2] or res[0] == res[2]:
-            multiplier = 2
-            win_text = f"and won 💵 **{int(bet*multiplier):,}** (x{multiplier}) 🎊"
-            final_color = discord.Color.green()
+        # ফলাফল ক্যালকুলেশন
+        is_win = mid_row[0] == mid_row[1] == mid_row[2]
+        if is_win:
+            mult = {"💎": 10, "⭐": 7, "🍎": 5}.get(mid_row[0], 3)
+            winnings = bet * mult
+            new_bal = database.update_balance(user_id, winnings)
+            status = f"Winner! You won {self.cash_emoji} **{winnings:,}** 🎉"
+            embed.color = 0x2ecc71 # Green for win
         else:
-            multiplier = 0
-            win_text = f"and lost it all... 💀"
-            final_color = discord.Color.red()
+            new_bal = database.get_balance(user_id)
+            status = "You lost it all... 💀"
+            embed.color = 0xe74c3c # Red for loss
 
-        # আপডেট
-        self.update_balance(uid, (bet * multiplier) - bet)
-        new_bal = self.get_balance(uid)
+        # ফাইনাল গ্রিড ডিসপ্লে
+        final_desc = (
+            f"**{ctx.author.display_name}** bet {self.cash_emoji} **{bet:,}**\n\n"
+            f"┏━━━┳━━━┳━━━┓\n"
+            f"┃ {full_grid[0][0]} ┃ {full_grid[0][1]} ┃ {full_grid[0][2]} ┃\n"
+            f"┃ {full_grid[1][0]} ┃ {full_grid[1][1]} ┃ {full_grid[1][2]} ┃ ◀\n"
+            f"┃ {full_grid[2][0]} ┃ {full_grid[2][1]} ┃ {full_grid[2][2]} ┃\n"
+            f"┗━━━┻━━━┻━━━┛\n\n"
+            f"**{status}**"
+        )
+        
+        embed.description = final_desc
+        embed.set_footer(text=f"Balance: {new_bal:,} • Economy System")
+        await msg.edit(embed=embed)
 
-        final_embed = discord.Embed(color=final_color)
-        final_embed.set_author(name="🎰 SLOTS 🎰")
-        final_embed.description = f"_SLOTS_\n║ {res[0]} {res[1]} {res[2]} ║\n**{user.display_name}** bet 💵 **{bet:,}** {win_text}"
-        final_embed.set_footer(text=f"New Balance: {new_bal:,} • Global Economy")
-        await msg.edit(embed=final_embed)
+    @slot.error
+    async def slot_error(self, ctx, error):
+        if isinstance(error, commands.CommandOnCooldown):
+            await ctx.send(f"⏱ | **{ctx.author.display_name}**, শান্ত হও! আবার চেষ্টা করো **{error.retry_after:.1f}s** পর।", delete_after=5)
 
 async def setup(bot):
-    await bot.add_cog(SlotSystem(bot))
+    await bot.add_cog(Slots(bot))
     
