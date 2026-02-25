@@ -2,103 +2,109 @@ import discord
 from discord.ext import commands
 import random
 import asyncio
-from database import Database # আপনার MongoDB Database ক্লাস ইমপোর্ট করা হলো
+from database import Database # Uses your MongoDB Database class
 
 class Slots(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        # Your specific emojis
         self.cash_emoji = "<:Nova:1453460518764548186>"
         self.spin_emoji = "<a:slot:1470669361155932230>"
-        self.symbols = ["💎", "🍎", "🍋", "🍇", "🍒", "⭐"]
+        self.symbols = ["🍒", "🍇", "🍋", "🍊", "🍎", "💎", "⭐"]
 
-    @commands.hybrid_command(name="slot", aliases=["s", "sl"], description="Play a high-quality MongoDB slots!")
+    @commands.hybrid_command(name="slot", aliases=["s", "sl"], description="Play the slots!")
     @commands.cooldown(1, 15, commands.BucketType.user)
-    async def slot(self, ctx, amount: str):
+    async def slots(self, ctx, amount: str):
+        # Isolate balance to the command user
         user_id = str(ctx.author.id)
-        
-        # 👇 MongoDB থেকে ব্যালেন্স নেওয়া
         balance = Database.get_balance(user_id)
 
-        # বাজি ক্যালকুলেশন
+        # Bet Calculation
         if amount.lower() == "all":
-            bet = min(balance, 50000)
+            bet = min(balance, 100000)
         else:
             try:
                 bet = int(amount.replace('k', '000').replace(',', ''))
-            except:
+            except ValueError:
                 ctx.command.reset_cooldown(ctx)
-                return await ctx.send("❌ Enter the correct amount! (Example: `!sl 500`)", ephemeral=True)
+                return await ctx.send(f"❌ **{ctx.author.display_name}**, usage: `!sl 100`", ephemeral=True)
 
-        if bet <= 0 or bet > balance:
+        if bet <= 0:
             ctx.command.reset_cooldown(ctx)
-            return await ctx.send(f"❌ You do not have enough balance! (Balance: {balance:,})", ephemeral=True)
+            return await ctx.send("❌ You must bet more than 0!", ephemeral=True)
+            
+        if bet > balance:
+            ctx.command.reset_cooldown(ctx)
+            return await ctx.send(f"❌ You don't have enough balance! (Balance: {balance:,})", ephemeral=True)
 
-        # 👇 MongoDB থেকে টাকা কেটে নেওয়া
+        # Deduct bet from MongoDB
         Database.update_balance(user_id, -bet)
 
-        # রেজাল্ট জেনারেট (৩x৩ গ্রিড)
-        if random.random() < 0.35: # ৩৫% জয়ের সম্ভাবনা
-            win_sym = random.choice(self.symbols)
-            mid_row = [win_sym, win_sym, win_sym]
+        # Generate result (35% Win Chance)
+        if random.random() < 0.35: 
+            winning_item = random.choice(self.symbols)
+            final_result = [winning_item, winning_item, winning_item]
+            is_win = True
         else:
-            mid_row = [random.choice(self.symbols) for _ in range(3)]
-            if mid_row[0] == mid_row[1] == mid_row[2]:
-                mid_row[2] = random.choice([s for s in self.symbols if s != mid_row[0]])
+            final_result = [random.choice(self.symbols) for _ in range(3)]
+            # Ensure no accidental wins during a loss
+            if final_result[0] == final_result[1] == final_result[2]:
+                final_result[2] = random.choice([i for i in self.symbols if i != final_result[0]])
+            is_win = False
 
-        full_grid = [
-            [random.choice(self.symbols) for _ in range(3)],
-            mid_row,
-            [random.choice(self.symbols) for _ in range(3)]
-        ]
-
-        # এমবেড এবং অ্যানিমেশন
-        embed = discord.Embed(title="🎰 MONGODB SLOTS 🎰", color=0x5865F2)
+        # --- Initial Message (Spinning Phase) ---
+        current_slots = [self.spin_emoji, self.spin_emoji, self.spin_emoji]
+        
+        embed = discord.Embed(color=0x5865F2)
         embed.description = (
-            f"**{ctx.author.display_name}** bet {self.cash_emoji} **{bet:,}**\n\n"
-            f"┏━━━┳━━━┳━━━┓\n"
-            f"┃ {self.spin_emoji} ┃ {self.spin_emoji} ┃ {self.spin_emoji} ┃\n"
-            f"┃ {self.spin_emoji} ┃ {self.spin_emoji} ┃ {self.spin_emoji} ┃ ◀\n"
-            f"┃ {self.spin_emoji} ┃ {self.spin_emoji} ┃ {self.spin_emoji} ┃\n"
-            f"┗━━━┻━━━┻━━━┛\n\n"
-            "**Spinning...**"
+            f"**___ SLOTS ___**\n"
+            f"║ {' '.join(current_slots)} ║\n"
+            f"╚═══════╝  **{ctx.author.display_name}** bet {self.cash_emoji} **{bet:,}**\n\n"
+            f"**Spinning...**"
         )
         msg = await ctx.send(embed=embed)
 
-        await asyncio.sleep(2) # ২ সেকেন্ড স্পিন হবে
-        
-        # ফলাফল ক্যালকুলেশন
-        is_win = mid_row[0] == mid_row[1] == mid_row[2]
+        # --- Sequential Reveal (1s delay per slot) ---
+        for i in range(3):
+            await asyncio.sleep(1) #
+            current_slots[i] = final_result[i]
+            
+            embed.description = (
+                f"**___ SLOTS ___**\n"
+                f"║ {' '.join(current_slots)} ║\n"
+                f"╚═══════╝  **{ctx.author.display_name}** bet {self.cash_emoji} **{bet:,}**\n\n"
+                f"**Revealing...**"
+            )
+            await msg.edit(embed=embed)
+
+        # --- Final Logic ---
         if is_win:
-            mult = {"💎": 10, "⭐": 7, "🍎": 5}.get(mid_row[0], 3)
+            # Multipliers based on items
+            mult = {"⭐": 6, "💎": 4, "🍎": 3}.get(final_result[0], 2)
             winnings = bet * mult
-            # 👇 MongoDB-তে উইনিং অ্যামাউন্ট যোগ করা
             new_bal = Database.update_balance(user_id, winnings)
-            status = f"Winner! You won {self.cash_emoji} **{winnings:,}** 🎉"
+            
+            status = f"and won {self.cash_emoji} **{winnings:,}** (x{mult}) 🎉"
             embed.color = 0x2ecc71
         else:
             new_bal = Database.get_balance(user_id)
-            status = "You lost it all... 💀"
+            status = "and won nothing... :c"
             embed.color = 0xe74c3c
 
-        final_desc = (
-            f"**{ctx.author.display_name}** bet {self.cash_emoji} **{bet:,}**\n\n"
-            f"┏━━━┳━━━┳━━━┓\n"
-            f"┃ {full_grid[0][0]} ┃ {full_grid[0][1]} ┃ {full_grid[0][2]} ┃\n"
-            f"┃ {full_grid[1][0]} ┃ {full_grid[1][1]} ┃ {full_grid[1][2]} ┃ ◀\n"
-            f"┃ {full_grid[2][0]} ┃ {full_grid[2][1]} ┃ {full_grid[2][2]} ┃\n"
-            f"┗━━━┻━━━┻━━━┛\n\n"
-            f"**{status}**"
+        embed.description = (
+            f"**___ SLOTS ___**\n"
+            f"║ {' '.join(final_result)} ║\n"
+            f"╚═══════╝  **{ctx.author.display_name}** bet {self.cash_emoji} **{bet:,}**\n\n"
+            f"{status}"
         )
-        
-        embed.description = final_desc
-        embed.set_footer(text=f"Balance: {new_bal:,} • Cloud Database")
+        embed.set_footer(text=f"Balance for {ctx.author.name}: {new_bal:,} • Economy System")
         await msg.edit(embed=embed)
 
-    @slot.error
-    async def slot_error(self, ctx, error):
+    @slots.error
+    async def slots_error(self, ctx, error):
         if isinstance(error, commands.CommandOnCooldown):
-            await ctx.send(f"⏱ | **{ctx.author.display_name}**, শান্ত হও! **{error.retry_after:.1f}s** পর চেষ্টা করো।", delete_after=5)
+            await ctx.send(f"⏱ | **{ctx.author.display_name}**! Try again in **{error.retry_after:.1f}s**", delete_after=5)
 
 async def setup(bot):
     await bot.add_cog(Slots(bot))
-        
+    
