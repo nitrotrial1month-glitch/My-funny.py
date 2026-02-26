@@ -9,7 +9,7 @@ from keep_alive import keep_alive
 # --- ১. স্মার্ট প্রেফিক্স লজিক (আপডেটেড) ---
 def get_prefix(bot, message):
     # ডিফল্ট প্রেফিক্স
-    default_prefix = "!"
+    default_prefix = "Nova"
     
     # শুরুতে শুধু ডিফল্ট প্রেফিক্সটি লিস্টে রাখা হলো
     # নোট: এখানে আর ম্যানুয়ালি স্পেস (default_prefix + " ") যোগ করার দরকার নেই
@@ -26,7 +26,7 @@ def get_prefix(bot, message):
         custom_prefix = config.get("prefixes", {}).get(str(message.guild.id))
         
         # যদি কাস্টম প্রেফিক্স থাকে এবং সেটি ডিফল্ট (!) থেকে আলাদা হয়
-        if custom_prefix and custom_prefix != default_prefix:
+        if custom_prefix and custom_prefix Nova= default_prefix:
             prefixes.append(custom_prefix) # শুধু কাস্টম প্রেফিক্সটি অ্যাড করা হলো
     except:
         pass
