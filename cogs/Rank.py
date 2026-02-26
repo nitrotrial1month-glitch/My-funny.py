@@ -127,7 +127,7 @@ class Leaderboard(commands.Cog):
         self.bot = bot
         self.cash_emoji = "<:Nova:1453460518764548186>" #
 
-    @commands.hybrid_command(name="leaderboard", aliases=["lb", "top", "rank"], description="View global rankings")
+    @commands.hybrid_command(name="leaderboard", aliases=["top", "rank"], description="View global rankings")
     async def leaderboard(self, ctx: commands.Context):
         """Displays the stylish global ranking system with automated category switching"""
         view = LeaderboardView(ctx, self.bot, self.cash_emoji)
