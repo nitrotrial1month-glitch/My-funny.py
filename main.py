@@ -3,9 +3,8 @@ from discord.ext import commands
 from discord import app_commands
 import os
 import asyncio
-from dotenv import load_dotenv # .env লোড করার জন্য এটি যোগ করা হয়েছে
+from dotenv import load_dotenv
 from utils import load_config, save_config
-# from keep_alive import keep_alive # AWS-এ keep_alive দরকার নেই, তাই কমেন্ট করে দিলাম
 
 # --- ০. এনভায়রনমেন্ট ভেরিয়েবল লোড করা ---
 load_dotenv() 
@@ -31,8 +30,13 @@ def get_prefix(bot, message):
 # --- ২. Main Bot Class Setup ---
 class FunnyBot(commands.Bot):
     def __init__(self):
-        # AWS-এ কাজ করার জন্য Intents সব ON রাখা ভালো
-        intents = discord.Intents.all() 
+        # নির্দিষ্ট ইন্টেন্টস সেটআপ (Presence বাদে বাকিগুলো অন)
+        intents = discord.Intents.default()
+        intents.members = True          # Welcome & Invite সিস্টেমের জন্য বাধ্যতামূলক
+        intents.message_content = True  # Prefix কমান্ড পড়ার জন্য বাধ্যতামূলক
+        intents.guilds = True
+        intents.presences = False       # আপনার রিকোয়েস্ট অনুযায়ী এটি OFF রাখা হলো
+
         super().__init__(
             command_prefix=get_prefix,
             intents=intents,
@@ -66,6 +70,7 @@ bot = FunnyBot()
 async def on_ready():
     print(f"🚀 Logged in as {bot.user} (ID: {bot.user.id})")
     print("------ Ready to go! ------")
+    # Presence intent অফ থাকলেও বটের নিজের স্ট্যাটাস সেট করা যায়
     await bot.change_presence(activity=discord.Game(name="/help | Nova help"))
 
 # --- ৪. Prefix Change Command ---
@@ -96,7 +101,6 @@ async def set_prefix(ctx, new_prefix: str):
 
 # --- ৫. Run ---
 if __name__ == "__main__":
-    # keep_alive() # AWS ২৪ ঘণ্টা চলে, তাই এটি আর প্রয়োজন নেই
     token = os.getenv("DISCORD_TOKEN")
     if token:
         bot.run(token)
