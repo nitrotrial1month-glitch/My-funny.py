@@ -3,27 +3,24 @@ from discord.ext import commands
 from discord import app_commands
 import os
 import asyncio
+from dotenv import load_dotenv # .env লোড করার জন্য এটি যোগ করা হয়েছে
 from utils import load_config, save_config
-from keep_alive import keep_alive 
+# from keep_alive import keep_alive # AWS-এ keep_alive দরকার নেই, তাই কমেন্ট করে দিলাম
 
-# --- 1. Smart Prefix Logic (Updated to 'Nova') ---
+# --- ০. এনভায়রনমেন্ট ভেরিয়েবল লোড করা ---
+load_dotenv() 
+
+# --- ১. Smart Prefix Logic ---
 def get_prefix(bot, message):
-    # Set default prefix to 'Nova'
     default_prefix = "Nova"
-    
     prefixes = [default_prefix]
     
-    # If the message is in a DM, only the default prefix works
     if not message.guild:
         return prefixes
 
-    # Check for custom prefix in configuration
     try:
         config = load_config()
-        # Fetch prefix for the specific server ID
         custom_prefix = config.get("prefixes", {}).get(str(message.guild.id))
-        
-        # Add custom prefix if it exists and is different from default
         if custom_prefix and custom_prefix != default_prefix:
             prefixes.append(custom_prefix)
     except:
@@ -31,16 +28,17 @@ def get_prefix(bot, message):
 
     return prefixes
 
-# --- 2. Main Bot Class Setup ---
+# --- ২. Main Bot Class Setup ---
 class FunnyBot(commands.Bot):
     def __init__(self):
+        # AWS-এ কাজ করার জন্য Intents সব ON রাখা ভালো
         intents = discord.Intents.all() 
         super().__init__(
             command_prefix=get_prefix,
             intents=intents,
             help_command=None, 
             case_insensitive=True,
-            strip_after_prefix=True # Automatically handles spaces after prefix
+            strip_after_prefix=True
         )
 
     async def setup_hook(self):
@@ -55,24 +53,23 @@ class FunnyBot(commands.Bot):
                         print(f"  ❌ Failed to load {filename}: {e}")
         
         try:
+            print("🛰️ Syncing commands, please wait...")
             synced = await self.tree.sync()
             print(f"🛰️ Synced {len(synced)} slash commands globally!")
         except Exception as e:
             print(f"❌ Failed to sync commands: {e}")
 
-# Create bot instance
 bot = FunnyBot()
 
-# --- 3. Events ---
+# --- ৩. Events ---
 @bot.event
 async def on_ready():
     print(f"🚀 Logged in as {bot.user} (ID: {bot.user.id})")
     print("------ Ready to go! ------")
-    # Updated presence to show 'Nova'
     await bot.change_presence(activity=discord.Game(name="/help | Nova help"))
 
-# --- 4. Prefix Change Command ---
-@bot.hybrid_command(name="set_prefix", description="⚙️ Add a custom prefix (Default 'Nova' will ALWAYS work)")
+# --- ৪. Prefix Change Command ---
+@bot.hybrid_command(name="set_prefix", description="⚙️ Add a custom prefix")
 @commands.has_permissions(administrator=True)
 @app_commands.describe(new_prefix="Type the new prefix (e.g., ?)")
 async def set_prefix(ctx, new_prefix: str):
@@ -91,19 +88,18 @@ async def set_prefix(ctx, new_prefix: str):
             f"Prefix updated to **`{clean_prefix}`**\n\n"
             f"**Usage Examples:**\n"
             f"✅ `{clean_prefix}help`\n"
-            f"✅ `{clean_prefix} help` (Space works automatically!)\n"
-            f"✅ `Nova help` (Default 'Nova' is always active)"
+            f"✅ `Nova help` (Always works)"
         ),
         color=discord.Color.green()
     )
     await ctx.send(embed=embed)
 
-# --- 5. Run ---
+# --- ৫. Run ---
 if __name__ == "__main__":
-    keep_alive()
+    # keep_alive() # AWS ২৪ ঘণ্টা চলে, তাই এটি আর প্রয়োজন নেই
     token = os.getenv("DISCORD_TOKEN")
     if token:
         bot.run(token)
     else:
-        print("❌ Error: 'DISCORD_TOKEN' not found!")
-    
+        print("❌ Error: 'DISCORD_TOKEN' not found in .env file!")
+        
