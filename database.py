@@ -1,30 +1,26 @@
-import os
+Import os
 import pymongo
 from pymongo import MongoClient
 import certifi
-from dotenv import load_dotenv # .env ফাইল রিড করার জন্য যোগ করা হয়েছে
 
-# ১. .env থেকে ভেরিয়েবল লোড করা
-load_dotenv()
-
-# ২. Environment থেকে URL নেওয়া
+# Render এর Environment থেকে URL নেওয়া
 MONGO_URL = os.getenv("MONGO_URL")
 
 # সার্টিফিকেট লোড করা (SSL সংযোগের জন্য বাধ্যতামূলক)
 ca = certifi.where()
 
 if not MONGO_URL:
-    print("❌ Error: MONGO_URL not found in .env file!")
+    print("❌ Error: MONGO_URL not found!")
     cluster = None
     db = None
 else:
     try:
-        # tlsCAFile=ca অংশটি ডাটাbeস সংযোগ নিশ্চিত করে
+        # tlsCAFile=ca অংশটি ডাটাবেস সংযোগ নিশ্চিত করে
         cluster = MongoClient(MONGO_URL, tlsCAFile=ca)
         db = cluster["DiscordBotDB"]
         print("✅ Connected to MongoDB successfully!")
     except Exception as e:
-        print(f"❌ Failed to connect to MongoDB: {e}")
+        print(f"❌ Failed to connect: {e}")
         cluster = None
         db = None
 
@@ -36,14 +32,19 @@ class Database:
             return db[name]
         return None
 
-    # ================= 💰 ECONOMY SYNC =================
+    # ================= 💰 ECONOMY SYNC (Fixed) =================
     
     @staticmethod
     def update_balance(user_id, amount):
+        """
+        সব কমান্ডের জন্য ব্যালেন্স আপডেট করে। 
+        কালেকশন: 'inventory', ফিল্ড: 'balance'
+        """
         col = Database.get_collection("inventory")
         if col is None: return 0
         
         uid = str(user_id)
+        # সরাসরি ইউজারের আইডিতে ব্যালেন্স ফিল্ড আপডেট করা হচ্ছে
         col.update_one(
             {"_id": uid},
             {"$inc": {"balance": amount}},
@@ -54,6 +55,7 @@ class Database:
 
     @staticmethod
     def get_balance(user_id):
+        """ডাটাবেস থেকে সঠিক ব্যালেন্সটি রিড করে"""
         col = Database.get_collection("inventory")
         if col is None: return 0
         uid = str(user_id)
@@ -66,6 +68,7 @@ class Database:
 
     @staticmethod
     def add_premium(target_id, p_type, duration_days):
+        """ইউজার বা সার্ভারকে প্রিমিয়াম লিস্টে যোগ করে"""
         col = Database.get_collection("premium")
         if col is None: return
         from datetime import datetime, timedelta
@@ -83,6 +86,7 @@ class Database:
 
     @staticmethod
     def get_premium_data():
+        """সব প্রিমিয়াম ডাটা রিটার্ন করে"""
         col = Database.get_collection("premium")
         if col is None: return {"users": {}, "servers": {}}
         data = col.find_one({"_id": "main_premium"})
@@ -90,6 +94,7 @@ class Database:
 
     @staticmethod
     def get_config():
+        """বটের গ্লোবাল কনফিগারেশন লোড করে"""
         col = Database.get_collection("config")
         if col is None: return {}
         data = col.find_one({"_id": "main_config"})
@@ -97,6 +102,7 @@ class Database:
 
     @staticmethod
     def save_config(data):
+        """বটের গ্লোবাল কনফিগারেশন সেভ করে"""
         col = Database.get_collection("config")
         if col is None: return
         col.replace_one({"_id": "main_config"}, data, upsert=True)
