@@ -6,14 +6,13 @@ from database import Database
 
 class PayView(discord.ui.View):
     def __init__(self, ctx, sender, target, amount):
-        super().__init__(timeout=60) # ৬০ সেকেন্ডের টাইমআউট
+        super().__init__(timeout=60) # ৬০ সেকেন্ড পর বাটন কাজ করা বন্ধ করবে
         self.ctx = ctx
         self.sender = sender
         self.target = target
         self.amount = amount
         self.message = None
 
-    # টাইমআউট হলে বাটনগুলো অটোমেটিক ডিজেবল হবে
     async def on_timeout(self):
         for child in self.children:
             child.disabled = True
@@ -28,7 +27,6 @@ class PayView(discord.ui.View):
         if interaction.user.id != self.sender.id:
             return await interaction.response.send_message("❌ This isn't your transaction!", ephemeral=True)
         
-        # ব্যালেন্স আবার চেক করা যাতে স্প্যাম না করতে পারে
         if Database.get_balance(self.sender.id) < self.amount:
             return await interaction.response.send_message("❌ You don't have enough balance!", ephemeral=True)
 
@@ -36,9 +34,9 @@ class PayView(discord.ui.View):
         Database.update_balance(self.sender.id, -self.amount)
         Database.update_balance(self.target.id, self.amount)
         
-        # ✅ সাকসেস এম্বেড (ছবি ২-এর মতো হুবহু)
+        # ✅ সাকসেস এম্বেড
         confirm_embed = discord.Embed(
-            color=discord.Color.green(), # সাইডে সবুজ বর্ডার
+            color=discord.Color.green(),
             description=(
                 f"---------------------------\n"
                 f"💰 transaction Amount: **{self.amount:,}** currency!!\n\n"
@@ -50,7 +48,6 @@ class PayView(discord.ui.View):
         )
         confirm_embed.set_footer(text=f"{self.sender.name}, you are about to give currency to {self.target.name}", icon_url=self.sender.display_avatar.url)
         
-        # বাটন ডিজেবল করা
         for child in self.children:
             child.disabled = True
 
@@ -62,9 +59,9 @@ class PayView(discord.ui.View):
         if interaction.user.id != self.sender.id:
             return await interaction.response.send_message("❌ This isn't your transaction!", ephemeral=True)
         
-        # ❌ ক্যানসেল এম্বেড (ছবি ৩-এর মতো হুবহু)
+        # ❌ ক্যানসেল এম্বেড
         cancel_embed = discord.Embed(
-            color=discord.Color.red(), # সাইডে লাল বর্ডার
+            color=discord.Color.red(),
             description=(
                 f"---------------------------\n"
                 f"💰 transaction Amount: **{self.amount:,}** currency!!\n\n"
@@ -76,7 +73,6 @@ class PayView(discord.ui.View):
         )
         cancel_embed.set_footer(text=f"{self.sender.name}, you are about to give currency to {self.target.name}", icon_url=self.sender.display_avatar.url)
         
-        # বাটন ডিজেবল করা এবং Cancel লেখাটিকে Cancelled-এ পরিবর্তন করা
         for child in self.children:
             child.disabled = True
             if child.custom_id == "cancel_btn":
@@ -93,57 +89,63 @@ class PaySystem(commands.Cog):
     @commands.hybrid_command(name="give", aliases=["pay", "send"], description="Give currency to another user")
     @app_commands.describe(query="Type User and Amount (e.g., @user 100 or 100 @user)")
     async def give(self, ctx: commands.Context, *, query: str = None):
-        """Intelligent Parser: give @user 100, give 100 @user, give @user all"""
+        # 🟢 স্ল্যাশ কমান্ডে "Application did not respond" ফিক্স করার জন্য defer() করা হলো
+        await ctx.defer() 
+
         if not query:
-            return await ctx.send("❌ **Usage:** `Nova give <@user> <amount>`")
+            return await ctx.send("❌ **Usage:** `/give <@user> <amount>`")
 
-        # ১. Regex দিয়ে ইউজার মেনশন আলাদা করা (<@ID>)
-        user_match = re.search(r'<@!?(\d+)>', query)
-        if not user_match:
-            return await ctx.send("❌ **Error:** Please mention a user!")
+        target = None
+        amount_str = None
 
-        target_id = int(user_match.group(1))
-        target = ctx.guild.get_member(target_id)
+        # 🟢 Smart Parser: ইনপুটকে স্পেস দিয়ে ভাগ করে ইউজার এবং অ্যামাউন্ট খুঁজবে
+        parts = query.split()
+        for part in parts:
+            try:
+                # যদি এটি কোনো ইউজার আইডি, মেনশন বা নাম হয়
+                found_member = await commands.MemberConverter().convert(ctx, part)
+                if not target:
+                    target = found_member
+                    continue
+            except commands.MemberNotFound:
+                pass
+            
+            # যদি ইউজার না হয়, তবে চেক করবে এটি অ্যামাউন্ট কিনা (100, 1k, all)
+            if re.match(r'^(\d+[kKmMbB]?|all|max|half)$', part.lower()):
+                amount_str = part.lower()
 
-        # ২. স্ট্রিং থেকে ইউজার মেনশনটা বাদ দিয়ে অ্যামাউন্ট খোঁজা
-        amount_str = query.replace(user_match.group(0), "").strip()
-        # অ্যামাউন্টে নাম্বার অথবা all, max, half, 1k, 1m কাজ করবে
-        amount_match = re.search(r'\b(\d+[kKmMbB]?)\b|(?i)\b(all|max|half)\b', amount_str)
-
-        if not amount_match:
-            return await ctx.send("❌ **Error:** Could not find a valid amount in your message.")
-
-        # ৩. ভ্যালিডেশন
-        if not target: 
-            return await ctx.send("❌ User not found in this server!")
+        # ভ্যালিডেশন
+        if not target:
+            return await ctx.send("❌ **Error:** Could not find the user. Please mention them properly.")
+        if not amount_str:
+            return await ctx.send("❌ **Error:** Please provide a valid amount (e.g., 100, 1k, all).")
         if target.id == ctx.author.id: 
             return await ctx.send("❌ You cannot pay yourself!")
         if target.bot: 
             return await ctx.send("❌ You cannot pay a bot!")
 
         sender_bal = Database.get_balance(ctx.author.id)
-        val = amount_match.group(0).lower()
 
-        # ৪. অ্যামাউন্ট ক্যালকুলেশন (all, half এবং k, m, b সাপোর্ট)
-        if val in ["all", "max"]: 
+        # অ্যামাউন্ট ক্যালকুলেশন
+        if amount_str in ["all", "max"]: 
             amount_val = sender_bal
-        elif val == "half": 
+        elif amount_str == "half": 
             amount_val = sender_bal // 2
         else:
-            if val[-1] in ['k', 'm', 'b']:
+            if amount_str[-1] in ['k', 'm', 'b']:
                 multipliers = {'k': 1000, 'm': 1000000, 'b': 1000000000}
-                amount_val = int(float(val[:-1]) * multipliers[val[-1]])
+                amount_val = int(float(amount_str[:-1]) * multipliers[amount_str[-1]])
             else:
-                amount_val = int(val)
+                amount_val = int(amount_str)
 
         if amount_val <= 0: 
             return await ctx.send("❌ Amount must be at least 1!")
         if amount_val > sender_bal: 
             return await ctx.send(f"❌ Low balance! You only have **`{sender_bal:,}`** currency.")
 
-        # ৫. মেইন পেন্ডিং এম্বেড (ছবি ১-এর মতো হুবহু)
+        # ⏳ মেইন পেন্ডিং এম্বেড
         embed = discord.Embed(
-            color=0x2b2d31, # ডিসকর্ডের ডিফল্ট ডার্ক ব্যাকগ্রাউন্ড কালার (যাতে কোনো কালার দেখা না যায়)
+            color=0x2b2d31,
             description=(
                 f"---------------------------\n"
                 f"💰 Transaction Amount: **{amount_val:,}** currency\n\n"
@@ -156,13 +158,12 @@ class PaySystem(commands.Cog):
         )
         embed.set_footer(text=f"{ctx.author.name}, you are about to give currency to {target.name}", icon_url=ctx.author.display_avatar.url)
 
-        # মেসেজ কন্টেন্ট
         msg_content = f"💳 | {ctx.author.mention} Sent **{amount_val:,}** currency to {target.mention}"
 
         view = PayView(ctx, ctx.author, target, amount_val)
-        message = await ctx.send(content=msg_content, embed=embed, view=view)
         
-        # টাইমআউট হ্যান্ডেল করার জন্য ভিউতে মেসেজের অবজেক্ট পাঠানো হলো
+        # যেহেতু defer() করা হয়েছে, তাই সরাসরি ctx.send কাজ করবে এবং মেসেজ পাঠাবে
+        message = await ctx.send(content=msg_content, embed=embed, view=view)
         view.message = message
 
 async def setup(bot):
