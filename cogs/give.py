@@ -1,35 +1,34 @@
 import discord
 from discord.ext import commands
+from discord import app_commands
+import re
 from database import Database
-from utils import get_theme_color
 
 class PayView(discord.ui.View):
-    def __init__(self, ctx, sender, target, amount, cash_emoji):
-        super().__init__(timeout=60) # ৬০ সেকেন্ড পর বাটন কাজ করা বন্ধ করবে
+    def __init__(self, ctx, sender, target, amount):
+        super().__init__(timeout=60) # ৬০ সেকেন্ডের টাইমআউট
         self.ctx = ctx
         self.sender = sender
         self.target = target
         self.amount = amount
-        self.cash_emoji = cash_emoji
-        self.message = None # Timeout এর জন্য মেসেজ রেফারেন্স
+        self.message = None
 
-    # যদি ইউজার ৬০ সেকেন্ডের মধ্যে বাটনে ক্লিক না করে
+    # টাইমআউট হলে বাটনগুলো অটোমেটিক ডিজেবল হবে
     async def on_timeout(self):
         for child in self.children:
             child.disabled = True
         try:
             if self.message:
-                await self.message.edit(content="⏳ **Transaction timed out.**", view=self)
+                await self.message.edit(view=self)
         except:
             pass
 
-    @discord.ui.button(label="Confirm", style=discord.ButtonStyle.green, emoji="✅")
+    @discord.ui.button(label="Confirm", style=discord.ButtonStyle.green, emoji="✅", custom_id="confirm_btn")
     async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
-        # অন্য কেউ ক্লিক করলে আটকে দেওয়া
         if interaction.user.id != self.sender.id:
             return await interaction.response.send_message("❌ This isn't your transaction!", ephemeral=True)
         
-        # ব্যালেন্স পুনরায় চেক করা (যাতে বাটন স্প্যাম করে গ্লিচ না করতে পারে)
+        # ব্যালেন্স আবার চেক করা যাতে স্প্যাম না করতে পারে
         if Database.get_balance(self.sender.id) < self.amount:
             return await interaction.response.send_message("❌ You don't have enough balance!", ephemeral=True)
 
@@ -37,78 +36,133 @@ class PayView(discord.ui.View):
         Database.update_balance(self.sender.id, -self.amount)
         Database.update_balance(self.target.id, self.amount)
         
-        # সাকসেস এম্বেড
+        # ✅ সাকসেস এম্বেড (ছবি ২-এর মতো হুবহু)
         confirm_embed = discord.Embed(
+            color=discord.Color.green(), # সাইডে সবুজ বর্ডার
             description=(
-                f"**{self.sender.mention} gave {self.target.mention}:**\n"
-                f"**` {self.amount:,} `** {self.cash_emoji}\n\n"
-                f"✅ *Transaction Successful*"
-            ),
-            color=discord.Color.green()
+                f"---------------------------\n"
+                f"💰 transaction Amount: **{self.amount:,}** currency!!\n\n"
+                f"⚠️ Violation Warning:\n"
+                f"Cowoncy never accepts transactions with real money, cryptocurrency, nitro, or anything similar.\n\n"
+                f"You have Confirmed the transaction, ✅ Confirmed.\n"
+                f"---------------------------"
+            )
         )
-        confirm_embed.set_author(name=f"{self.sender.name} paid {self.target.name}", icon_url=self.sender.display_avatar.url)
+        confirm_embed.set_footer(text=f"{self.sender.name}, you are about to give currency to {self.target.name}", icon_url=self.sender.display_avatar.url)
         
-        await interaction.response.edit_message(content="💳 | **Transaction Complete!**", embed=confirm_embed, view=None)
-        self.stop() # ভিউ থামিয়ে দেওয়া
+        # বাটন ডিজেবল করা
+        for child in self.children:
+            child.disabled = True
 
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, emoji="❌")
+        await interaction.response.edit_message(embed=confirm_embed, view=self)
+        self.stop()
+
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, emoji="❌", custom_id="cancel_btn")
     async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != self.sender.id:
             return await interaction.response.send_message("❌ This isn't your transaction!", ephemeral=True)
         
-        await interaction.response.edit_message(content=f"❌ | **{self.sender.mention}** declined the transaction.", embed=None, view=None)
+        # ❌ ক্যানসেল এম্বেড (ছবি ৩-এর মতো হুবহু)
+        cancel_embed = discord.Embed(
+            color=discord.Color.red(), # সাইডে লাল বর্ডার
+            description=(
+                f"---------------------------\n"
+                f"💰 transaction Amount: **{self.amount:,}** currency!!\n\n"
+                f"⚠️ Violation Warning:\n"
+                f"Cowoncy never accepts transactions with real money, cryptocurrency, nitro, or anything similar.\n\n"
+                f"You have canceled your transaction. ❌ Canceled.\n"
+                f"---------------------------"
+            )
+        )
+        cancel_embed.set_footer(text=f"{self.sender.name}, you are about to give currency to {self.target.name}", icon_url=self.sender.display_avatar.url)
+        
+        # বাটন ডিজেবল করা এবং Cancel লেখাটিকে Cancelled-এ পরিবর্তন করা
+        for child in self.children:
+            child.disabled = True
+            if child.custom_id == "cancel_btn":
+                child.label = "Cancelled"
+
+        await interaction.response.edit_message(embed=cancel_embed, view=self)
         self.stop()
+
 
 class PaySystem(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.cash_emoji = "<:Nova:1453460518764548186>"
 
-    # Hybrid কমান্ডে সরাসরি discord.Member এবং str কল করা হয়েছে
-    @commands.hybrid_command(name="give", aliases=["pay", "send"], description="Give coins to another user")
-    async def give(self, ctx: commands.Context, target: discord.Member, amount: str):
-        
-        # ১. ডাটাবেস থেকে সেন্ডারের ব্যালেন্স লোড
+    @commands.hybrid_command(name="give", aliases=["pay", "send"], description="Give currency to another user")
+    @app_commands.describe(query="Type User and Amount (e.g., @user 100 or 100 @user)")
+    async def give(self, ctx: commands.Context, *, query: str = None):
+        """Intelligent Parser: give @user 100, give 100 @user, give @user all"""
+        if not query:
+            return await ctx.send("❌ **Usage:** `Nova give <@user> <amount>`")
+
+        # ১. Regex দিয়ে ইউজার মেনশন আলাদা করা (<@ID>)
+        user_match = re.search(r'<@!?(\d+)>', query)
+        if not user_match:
+            return await ctx.send("❌ **Error:** Please mention a user!")
+
+        target_id = int(user_match.group(1))
+        target = ctx.guild.get_member(target_id)
+
+        # ২. স্ট্রিং থেকে ইউজার মেনশনটা বাদ দিয়ে অ্যামাউন্ট খোঁজা
+        amount_str = query.replace(user_match.group(0), "").strip()
+        # অ্যামাউন্টে নাম্বার অথবা all, max, half, 1k, 1m কাজ করবে
+        amount_match = re.search(r'\b(\d+[kKmMbB]?)\b|(?i)\b(all|max|half)\b', amount_str)
+
+        if not amount_match:
+            return await ctx.send("❌ **Error:** Could not find a valid amount in your message.")
+
+        # ৩. ভ্যালিডেশন
+        if not target: 
+            return await ctx.send("❌ User not found in this server!")
+        if target.id == ctx.author.id: 
+            return await ctx.send("❌ You cannot pay yourself!")
+        if target.bot: 
+            return await ctx.send("❌ You cannot pay a bot!")
+
         sender_bal = Database.get_balance(ctx.author.id)
-        
-        # ২. অ্যামাউন্ট ক্যালকুলেশন
-        val = amount.lower()
+        val = amount_match.group(0).lower()
+
+        # ৪. অ্যামাউন্ট ক্যালকুলেশন (all, half এবং k, m, b সাপোর্ট)
         if val in ["all", "max"]: 
             amount_val = sender_bal
         elif val == "half": 
             amount_val = sender_bal // 2
-        else: 
-            try:
+        else:
+            if val[-1] in ['k', 'm', 'b']:
+                multipliers = {'k': 1000, 'm': 1000000, 'b': 1000000000}
+                amount_val = int(float(val[:-1]) * multipliers[val[-1]])
+            else:
                 amount_val = int(val)
-            except ValueError:
-                return await ctx.send("❌ **Error:** Please provide a valid amount (e.g., `100`, `all`, `half`).")
 
-        # ৩. ভ্যালিডেশন চেকস
-        if target.id == ctx.author.id: 
-            return await ctx.send("❌ You cannot pay yourself!")
-        if target.bot:
-            return await ctx.send("❌ You cannot pay a bot!")
         if amount_val <= 0: 
             return await ctx.send("❌ Amount must be at least 1!")
         if amount_val > sender_bal: 
-            return await ctx.send(f"❌ Low balance! You only have {self.cash_emoji} **`{sender_bal:,}`**")
+            return await ctx.send(f"❌ Low balance! You only have **`{sender_bal:,}`** currency.")
 
-        # ৪. মেইন এম্বেড
+        # ৫. মেইন পেন্ডিং এম্বেড (ছবি ১-এর মতো হুবহু)
         embed = discord.Embed(
+            color=0x2b2d31, # ডিসকর্ডের ডিফল্ট ডার্ক ব্যাকগ্রাউন্ড কালার (যাতে কোনো কালার দেখা না যায়)
             description=(
-                f"To confirm this transaction, click ✅ Confirm.\nTo cancel, click ❌ Cancel.\n\n"
-                f"⚠️ *It is against our rules to trade coins for real money. You will be **banned** for doing so.*\n\n"
-                f"**{ctx.author.mention} will give {target.mention}:**\n**` {amount_val:,} `** {self.cash_emoji}"
-            ),
-            color=get_theme_color(ctx.guild.id)
+                f"---------------------------\n"
+                f"💰 Transaction Amount: **{amount_val:,}** currency\n\n"
+                f"⚠️ Violation Warning:\n"
+                f"Cowoncy never accepts transactions with real money, cryptocurrency, nitro, or anything similar.\n\n"
+                f"To confirm the transaction, press ✅ Confirm.\n"
+                f"To cancel the transaction, press ❌ Cancel.\n"
+                f"---------------------------"
+            )
         )
-        embed.set_author(name=f"{ctx.author.name}, verify this transaction", icon_url=ctx.author.display_avatar.url)
+        embed.set_footer(text=f"{ctx.author.name}, you are about to give currency to {target.name}", icon_url=ctx.author.display_avatar.url)
 
-        # ভিউ তৈরি এবং মেসেজ সেন্ড
-        view = PayView(ctx, ctx.author, target, amount_val, self.cash_emoji)
-        message = await ctx.send(embed=embed, view=view)
+        # মেসেজ কন্টেন্ট
+        msg_content = f"💳 | {ctx.author.mention} Sent **{amount_val:,}** currency to {target.mention}"
+
+        view = PayView(ctx, ctx.author, target, amount_val)
+        message = await ctx.send(content=msg_content, embed=embed, view=view)
         
-        # মেসেজ অবজেক্ট ভিউতে পাস করা (টাইমআউট ইভেন্টের জন্য)
+        # টাইমআউট হ্যান্ডেল করার জন্য ভিউতে মেসেজের অবজেক্ট পাঠানো হলো
         view.message = message
 
 async def setup(bot):
