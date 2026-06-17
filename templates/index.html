@@ -7,10 +7,10 @@
     <style>
         /* Red & White Theme Colors */
         :root {
-            --primary-red: #cc0000; /* গাঢ় লাল */
-            --bg-white: #ffffff;    /* সাদা */
-            --text-dark: #333333;   /* কালো টেক্সট */
-            --light-gray: #f8f9fa;  /* ব্যাকগ্রাউন্ড কালার */
+            --primary-red: #cc0000;
+            --bg-white: #ffffff;
+            --text-dark: #333333;
+            --light-gray: #f8f9fa;
         }
         
         body {
@@ -48,7 +48,7 @@
         .categories a:hover { color: var(--primary-red); }
         .filter-sec { margin-left: 30px; padding: 5px; border-radius: 5px; border: 1px solid #ccc; }
 
-        /* 3. Product Grid (Product details, Add to cart) */
+        /* 3. Product Grid */
         .container { padding: 30px; max-width: 1200px; margin: auto; }
         .section-title { text-align: center; color: var(--primary-red); margin-bottom: 30px; font-size: 28px; }
         
@@ -69,7 +69,7 @@
         .product-title { font-size: 18px; margin: 5px 0; color: var(--text-dark); }
         .price { color: var(--primary-red); font-size: 22px; font-weight: bold; margin: 10px 0; }
         
-        /* 4. Buttons (Cart & Wishlist) */
+        /* 4. Buttons */
         .btn-cart { 
             background-color: var(--primary-red); color: white; border: none; 
             padding: 12px; width: 100%; cursor: pointer; border-radius: 5px; 
@@ -84,7 +84,7 @@
         }
         .btn-wishlist:hover { background-color: #ffe6e6; }
 
-        /* 5. Footer (Secure Payment, Order Tracking) */
+        /* 5. Footer */
         footer { background-color: #1a1a1a; color: white; text-align: center; padding: 30px 20px; margin-top: 50px; }
         .footer-badges { font-size: 18px; margin-bottom: 15px; color: #4caf50; font-weight: bold; }
         footer a { color: var(--primary-red); text-decoration: none; margin: 0 15px; font-size: 15px; }
@@ -127,32 +127,20 @@
         
         <div class="product-grid">
             
-            <div class="product-card">
-                <img src="https://via.placeholder.com/260x300/cc0000/ffffff?text=Inwear+T-Shirt" alt="T-Shirt">
-                <h3 class="product-title">Classic Red Essential</h3>
-                <p style="font-size: 13px; color: #666;">100% Cotton, Comfort Fit</p>
-                <div class="price">৳ 450</div>
-                <button class="btn-cart">Add to Cart</button>
-                <button class="btn-wishlist">Add to Wishlist</button>
-            </div>
-
-            <div class="product-card">
-                <img src="https://via.placeholder.com/260x300/ffffff/cc0000?text=White+Graphic+Tee" alt="T-Shirt" style="border: 1px solid #ddd;">
-                <h3 class="product-title">White Graphic Tee</h3>
-                <p style="font-size: 13px; color: #666;">Premium Print, Oversized</p>
-                <div class="price">৳ 550</div>
-                <button class="btn-cart">Add to Cart</button>
-                <button class="btn-wishlist">Add to Wishlist</button>
-            </div>
-
-             <div class="product-card">
-                <img src="https://via.placeholder.com/260x300/1a1a1a/ffffff?text=Black+Anime+Print" alt="T-Shirt">
-                <h3 class="product-title">Black Anime Edition</h3>
-                <p style="font-size: 13px; color: #666;">Limited Edition, Glow in dark</p>
-                <div class="price">৳ 600</div>
-                <button class="btn-cart">Add to Cart</button>
-                <button class="btn-wishlist">Add to Wishlist</button>
-            </div>
+            {% if products %}
+                {% for product in products %}
+                <div class="product-card">
+                    <img src="{{ product.image }}" alt="T-Shirt">
+                    <h3 class="product-title">{{ product.name }}</h3>
+                    <p style="font-size: 13px; color: #666;">{{ product.description }}</p>
+                    <div class="price">৳ {{ product.price }}</div>
+                    <button class="btn-cart">Add to Cart</button>
+                    <button class="btn-wishlist">Add to Wishlist</button>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="text-align: center; width: 100%; color: #cc0000;">No products available right now.</p>
+            {% endif %}
 
         </div>
     </div>
