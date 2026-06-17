@@ -122,7 +122,23 @@ class Database:
         if col is None: 
             return []
         return list(col.find({}))
-
+        
+        @staticmethod
+    def add_product(name, desc, price, image):
+        """ডাটাবেসে নতুন প্রোডাক্ট যোগ করার জন্য"""
+        col = Database.get_collection("products")
+        if col is None: 
+            return
+        
+        product_data = {
+            "name": name,
+            "description": desc,
+            "price": int(price) if price else 0, # price কে সংখ্যায় রূপান্তর করছে
+            "image": image
+        }
+        col.insert_one(product_data)
+        print(f"🛍️ Product added: {name}")
+        
     @staticmethod
     def add_dummy_products():
         col = Database.get_collection("products")
