@@ -98,6 +98,10 @@ def logout():
 def run():
     port = int(os.environ.get("PORT", 8080))
     app.run(host='0.0.0.0', port=port)
+    print("--- Registered Routes ---")
+for rule in app.url_map.iter_rules():
+    print(f"Route: {rule.rule} -> Endpoint: {rule.endpoint}")
+    
 
 def keep_alive():
     server = Thread(target=run)
