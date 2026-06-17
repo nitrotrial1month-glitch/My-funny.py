@@ -124,4 +124,46 @@ class Database:
         col = Database.get_collection("config")
         if col is None: return
         col.replace_one({"_id": "main_config"}, data, upsert=True)
-        
+           
+    # ================= 👕 E-COMMERCE PRODUCTS SYNC =================
+    
+    @staticmethod
+    def get_all_products():
+        """Fetches all products from the MongoDB database"""
+        col = Database.get_collection("products")
+        if col is None: 
+            return []
+        return list(col.find({}))
+
+    @staticmethod
+    def add_dummy_products():
+        """Temporary function to insert sample t-shirts for testing"""
+        col = Database.get_collection("products")
+        if col is None: 
+            return
+            
+        # If there are no products, add these sample inwear t-shirts
+        if col.count_documents({}) == 0:
+            dummy_products = [
+                {
+                    "name": "Classic Red Essential", 
+                    "description": "100% Cotton, Comfort Fit", 
+                    "price": 450, 
+                    "image": "https://via.placeholder.com/260x300/cc0000/ffffff?text=Inwear+T-Shirt"
+                },
+                {
+                    "name": "White Graphic Tee", 
+                    "description": "Premium Print, Oversized", 
+                    "price": 550, 
+                    "image": "https://via.placeholder.com/260x300/ffffff/cc0000?text=White+Graphic+Tee"
+                },
+                {
+                    "name": "Black Anime Edition", 
+                    "description": "Limited Edition, Glow in dark", 
+                    "price": 600, 
+                    "image": "https://via.placeholder.com/260x300/1a1a1a/ffffff?text=Black+Anime+Print"
+                }
+            ]
+            col.insert_many(dummy_products)
+            print("🛍️ Dummy products added to the database!")
+            
