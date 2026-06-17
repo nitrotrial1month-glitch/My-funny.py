@@ -1,17 +1,56 @@
 <!DOCTYPE html>
-<html>
-<head><title>Owner Dashboard</title></head>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Owner Panel | inwear</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f4f9; padding: 20px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #cc0000; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+        th { background: #333; color: white; }
+        .btn-toggle { background: #4caf50; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 3px; }
+    </style>
+</head>
 <body>
-    <h1>Owner Panel - Bot Settings</h1>
-    <form method="POST">
-        <label>Bot Prefix:</label>
-        <input type="text" name="prefix" value="{{ config.prefix }}" required>
+    <div class="container">
+        <h1>👑 Owner Panel - Master Control</h1>
+
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+            <h3>Bot Settings</h3>
+            <form method="POST">
+                <label>Prefix:</label>
+                <input type="text" name="prefix" value="{{ config.prefix or '' }}" style="width: 100%; padding: 8px;">
+                <br><br>
+                <label>Status:</label>
+                <input type="text" name="status" value="{{ config.status or '' }}" style="width: 100%; padding: 8px;">
+                <br><br>
+                <button type="submit" style="background: #333; color: white; padding: 10px 20px; border: none;">Save Changes</button>
+            </form>
+        </div>
+
+        <h3>Manage User Roles</h3>
+        <table>
+            <tr>
+                <th>Discord ID</th>
+                <th>Is Seller?</th>
+                <th>Action</th>
+            </tr>
+            {% for u in all_users %}
+            <tr>
+                <td>{{ u.discord_id }}</td>
+                <td>{{ "✅ Yes" if u.seller_access else "❌ No" }}</td>
+                <td>
+                    <form action="/toggle_seller/{{ u.discord_id }}" method="POST">
+                        <button type="submit" class="btn-toggle">Toggle Role</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
         <br>
-        <label>Bot Status:</label>
-        <input type="text" name="status" value="{{ config.status }}" required>
-        <br>
-        <button type="submit">Save Changes</button>
-    </form>
-    <a href="/">Back Home</a>
+        <a href="/">⬅ Back to Home</a>
+    </div>
 </body>
 </html>
