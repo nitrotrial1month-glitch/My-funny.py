@@ -1,25 +1,45 @@
 <!DOCTYPE html>
-<html>
-<head><title>Seller Dashboard</title></head>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Seller Dashboard | inwear</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f4f9; padding: 20px; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #cc0000; }
+        form { margin-bottom: 30px; border-bottom: 2px solid #eee; padding-bottom: 20px; }
+        input { width: 100%; padding: 10px; margin: 5px 0 15px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        button { background: #cc0000; color: white; border: none; padding: 12px; width: 100%; cursor: pointer; border-radius: 5px; font-weight: bold; }
+        .product-list { display: grid; gap: 10px; }
+        .product-item { padding: 10px; border: 1px solid #ddd; border-radius: 5px; display: flex; justify-content: space-between; }
+    </style>
+</head>
 <body>
-    <h1>Seller Dashboard - Manage Products</h1>
-    
-    <h3>Add New Product</h3>
-    <form method="POST">
-        <input type="text" name="name" placeholder="Product Name" required>
-        <input type="text" name="desc" placeholder="Description">
-        <input type="text" name="price" placeholder="Price" required>
-        <input type="text" name="image" placeholder="Image URL">
-        <button type="submit">Add Product</button>
-    </form>
+    <div class="container">
+        <h1>⚙️ Seller Dashboard</h1>
+        
+        <form method="POST" enctype="multipart/form-data">
+            <h3>Add New Product</h3>
+            <input type="text" name="name" placeholder="Product Name" required>
+            <input type="text" name="desc" placeholder="Short Description">
+            <input type="number" name="price" placeholder="Price (৳)" required>
+            <label>Product Image:</label>
+            <input type="file" name="image" accept="image/*" required>
+            <button type="submit">Add Product</button>
+        </form>
 
-    <h3>Your Products</h3>
-    <ul>
-        {% for product in products %}
-            <li>{{ product.name }} - ${{ product.price }}</li>
-        {% endfor %}
-    </ul>
-    <a href="/">Back Home</a>
+        <h3>Your Products</h3>
+        <div class="product-list">
+            {% for p in products %}
+            <div class="product-item">
+                <span><strong>{{ p.name }}</strong> - ৳{{ p.price }}</span>
+            </div>
+            {% else %}
+            <p>No products found.</p>
+            {% endfor %}
+        </div>
+        <br>
+        <a href="/">⬅ Back to Home</a>
+    </div>
 </body>
 </html>
-
