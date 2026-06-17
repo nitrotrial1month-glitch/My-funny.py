@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>inwear - Premium T-Shirts</title>
+    <style>
+        /* Red & White Theme Colors */
+        :root {
+            --primary-red: #cc0000; /* গাঢ় লাল */
+            --bg-white: #ffffff;    /* সাদা */
+            --text-dark: #333333;   /* কালো টেক্সট */
+            --light-gray: #f8f9fa;  /* ব্যাকগ্রাউন্ড কালার */
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--light-gray);
+            color: var(--text-dark);
+        }
+
+        /* 1. Header (Logo, Search, Login) */
+        header {
+            background-color: var(--primary-red);
+            color: var(--bg-white);
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .logo { font-size: 32px; font-weight: bold; letter-spacing: 2px; text-transform: lowercase; }
+        .search-bar { padding: 10px; border-radius: 20px; border: none; width: 300px; outline: none; }
+        .nav-links a { color: var(--bg-white); text-decoration: none; margin-left: 20px; font-weight: bold; font-size: 15px; }
+        .nav-links a:hover { text-decoration: underline; }
+        
+        /* 2. Categories & Filters */
+        .categories {
+            background-color: var(--bg-white);
+            padding: 15px;
+            text-align: center;
+            border-bottom: 2px solid var(--primary-red);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .categories a { margin: 0 15px; color: var(--text-dark); text-decoration: none; font-weight: bold; }
+        .categories a:hover { color: var(--primary-red); }
+        .filter-sec { margin-left: 30px; padding: 5px; border-radius: 5px; border: 1px solid #ccc; }
+
+        /* 3. Product Grid (Product details, Add to cart) */
+        .container { padding: 30px; max-width: 1200px; margin: auto; }
+        .section-title { text-align: center; color: var(--primary-red); margin-bottom: 30px; font-size: 28px; }
+        
+        .product-grid { display: flex; gap: 25px; justify-content: center; flex-wrap: wrap; }
+        .product-card {
+            background-color: var(--bg-white);
+            border: 1px solid #ddd;
+            padding: 15px;
+            width: 260px;
+            text-align: center;
+            border-radius: 10px;
+            transition: 0.3s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
+        .product-card:hover { transform: translateY(-5px); box-shadow: 0 6px 12px rgba(204, 0, 0, 0.15); }
+        .product-card img { width: 100%; height: 250px; object-fit: cover; border-radius: 5px; margin-bottom: 15px; background-color: #ffe6e6;}
+        
+        .product-title { font-size: 18px; margin: 5px 0; color: var(--text-dark); }
+        .price { color: var(--primary-red); font-size: 22px; font-weight: bold; margin: 10px 0; }
+        
+        /* 4. Buttons (Cart & Wishlist) */
+        .btn-cart { 
+            background-color: var(--primary-red); color: white; border: none; 
+            padding: 12px; width: 100%; cursor: pointer; border-radius: 5px; 
+            font-weight: bold; margin-bottom: 10px; font-size: 15px; transition: 0.2s;
+        }
+        .btn-cart:hover { background-color: #a30000; }
+        
+        .btn-wishlist { 
+            background-color: white; color: var(--primary-red); border: 2px solid var(--primary-red); 
+            padding: 10px; width: 100%; cursor: pointer; border-radius: 5px; 
+            font-weight: bold; font-size: 14px; transition: 0.2s;
+        }
+        .btn-wishlist:hover { background-color: #ffe6e6; }
+
+        /* 5. Footer (Secure Payment, Order Tracking) */
+        footer { background-color: #1a1a1a; color: white; text-align: center; padding: 30px 20px; margin-top: 50px; }
+        .footer-badges { font-size: 18px; margin-bottom: 15px; color: #4caf50; font-weight: bold; }
+        footer a { color: var(--primary-red); text-decoration: none; margin: 0 15px; font-size: 15px; }
+        footer a:hover { color: white; text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">inwear</div>
+        <div>
+            <input type="search" class="search-bar" placeholder="Search for t-shirts, anime prints...">
+        </div>
+        <div class="nav-links">
+            <a href="#">❤️ Wishlist</a>
+            <a href="#">🛒 Cart (0)</a>
+            <a href="#">👤 Login / Sign Up</a>
+        </div>
+    </header>
+
+    <div class="categories">
+        <span><strong>Shop By:</strong></span>
+        <a href="#">Men</a>
+        <a href="#">Women</a>
+        <a href="#">Oversized</a>
+        <a href="#">Anime Collection</a>
+        <a href="#">Custom Prints</a>
+        
+        <span style="margin-left:30px;"><strong>Sort:</strong> 
+            <select class="filter-sec">
+                <option>New Arrivals</option>
+                <option>Price: Low to High</option>
+                <option>Price: High to Low</option>
+            </select>
+        </span>
+    </div>
+
+    <div class="container">
+        <h2 class="section-title">New Arrivals</h2>
+        
+        <div class="product-grid">
+            
+            <div class="product-card">
+                <img src="https://via.placeholder.com/260x300/cc0000/ffffff?text=Inwear+T-Shirt" alt="T-Shirt">
+                <h3 class="product-title">Classic Red Essential</h3>
+                <p style="font-size: 13px; color: #666;">100% Cotton, Comfort Fit</p>
+                <div class="price">৳ 450</div>
+                <button class="btn-cart">Add to Cart</button>
+                <button class="btn-wishlist">Add to Wishlist</button>
+            </div>
+
+            <div class="product-card">
+                <img src="https://via.placeholder.com/260x300/ffffff/cc0000?text=White+Graphic+Tee" alt="T-Shirt" style="border: 1px solid #ddd;">
+                <h3 class="product-title">White Graphic Tee</h3>
+                <p style="font-size: 13px; color: #666;">Premium Print, Oversized</p>
+                <div class="price">৳ 550</div>
+                <button class="btn-cart">Add to Cart</button>
+                <button class="btn-wishlist">Add to Wishlist</button>
+            </div>
+
+             <div class="product-card">
+                <img src="https://via.placeholder.com/260x300/1a1a1a/ffffff?text=Black+Anime+Print" alt="T-Shirt">
+                <h3 class="product-title">Black Anime Edition</h3>
+                <p style="font-size: 13px; color: #666;">Limited Edition, Glow in dark</p>
+                <div class="price">৳ 600</div>
+                <button class="btn-cart">Add to Cart</button>
+                <button class="btn-wishlist">Add to Wishlist</button>
+            </div>
+
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-badges">
+            🔒 100% Secure Payment | 🚚 All India Fast Delivery
+        </div>
+        <p>
+            <a href="#">📍 Track Order</a> | 
+            <a href="#">💳 Payment Methods</a> | 
+            <a href="#">📞 Customer Support</a> |
+            <a href="#">↩️ Return Policy</a>
+        </p>
+        <p style="font-size: 13px; color: #888; margin-top: 20px;">&copy; 2026 inwear. All rights reserved.</p>
+    </footer>
+
+</body>
+</html>
