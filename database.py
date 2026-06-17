@@ -3,48 +3,63 @@ import pymongo
 from pymongo import MongoClient
 import certifi
 
-# Render এর Environment থেকে URL নেওয়া
+# Fetch URL from Render Environment Variables
 MONGO_URL = os.getenv("MONGO_URL")
 
-# সার্টিফিকেট লোড করা (SSL সংযোগের জন্য বাধ্যতামূলক)
+# Load certificate for secure SSL connection
 ca = certifi.where()
 
 if not MONGO_URL:
-    print("❌ Error: MONGO_URL not found!")
+    print("Error: MONGO_URL not found!")
     cluster = None
     db = None
 else:
     try:
-        # tlsCAFile=ca অংশটি ডাটাবেস সংযোগ নিশ্চিত করে
+        # tlsCAFile=ca ensures a secure connection to MongoDB Atlas
         cluster = MongoClient(MONGO_URL, tlsCAFile=ca)
         db = cluster["DiscordBotDB"]
-        print("✅ Connected to MongoDB successfully!")
+        print("Connected to MongoDB successfully!")
     except Exception as e:
-        print(f"❌ Failed to connect: {e}")
+        print(f"Failed to connect to MongoDB: {e}")
         cluster = None
         db = None
 
 class Database:
     @staticmethod
     def get_collection(name):
-        """ডাটাবেস কালেকশন রিটার্ন করে"""
+        """Returns the specified database collection"""
         if db is not None:
             return db[name]
         return None
 
-    # ================= 💰 ECONOMY SYNC (Fixed) =================
+    # ================= E-COMMERCE SELLER SYNC =================
+    
+    @staticmethod
+    def set_seller_access(user_id: str, username: str, status: bool):
+        """Grants or revokes seller access on the website based on Discord roles"""
+        col = Database.get_collection("users")
+        if col is None: 
+            return
+        
+        # Updates the user's status in the database
+        col.update_one(
+            {"discord_id": str(user_id)},
+            {"$set": {
+                "username": username, 
+                "seller_access": status
+            }},
+            upsert=True
+        )
+
+    # ================= ECONOMY SYNC =================
     
     @staticmethod
     def update_balance(user_id, amount):
-        """
-        সব কমান্ডের জন্য ব্যালেন্স আপডেট করে। 
-        কালেকশন: 'inventory', ফিল্ড: 'balance'
-        """
+        """Updates user balance for all economy commands"""
         col = Database.get_collection("inventory")
         if col is None: return 0
         
         uid = str(user_id)
-        # সরাসরি ইউজারের আইডিতে ব্যালেন্স ফিল্ড আপডেট করা হচ্ছে
         col.update_one(
             {"_id": uid},
             {"$inc": {"balance": amount}},
@@ -55,25 +70,28 @@ class Database:
 
     @staticmethod
     def get_balance(user_id):
-        """ডাটাবেস থেকে সঠিক ব্যালেন্সটি রিড করে"""
+        """Reads the exact balance from the database"""
         col = Database.get_collection("inventory")
         if col is None: return 0
+        
         uid = str(user_id)
         data = col.find_one({"_id": uid})
         if data:
             return data.get("balance", 0)
         return 0
 
-    # ================= 💎 PREMIUM & CONFIG =================
+    # ================= PREMIUM & CONFIG =================
 
     @staticmethod
     def add_premium(target_id, p_type, duration_days):
-        """ইউজার বা সার্ভারকে প্রিমিয়াম লিস্টে যোগ করে"""
+        """Adds a user or server to the premium list"""
         col = Database.get_collection("premium")
         if col is None: return
         from datetime import datetime, timedelta
+        
         expire_date = datetime.now() + timedelta(days=duration_days)
         category = "users" if p_type.lower() == "user" else "servers"
+        
         col.update_one(
             {"_id": "main_premium"},
             {"$set": {f"{category}.{str(target_id)}": {
@@ -86,7 +104,7 @@ class Database:
 
     @staticmethod
     def get_premium_data():
-        """সব প্রিমিয়াম ডাটা রিটার্ন করে"""
+        """Returns all premium data"""
         col = Database.get_collection("premium")
         if col is None: return {"users": {}, "servers": {}}
         data = col.find_one({"_id": "main_premium"})
@@ -94,7 +112,7 @@ class Database:
 
     @staticmethod
     def get_config():
-        """বটের গ্লোবাল কনফিগারেশন লোড করে"""
+        """Loads global configuration for the bot"""
         col = Database.get_collection("config")
         if col is None: return {}
         data = col.find_one({"_id": "main_config"})
@@ -102,7 +120,7 @@ class Database:
 
     @staticmethod
     def save_config(data):
-        """বটের গ্লোবাল কনফিগারেশন সেভ করে"""
+        """Saves global configuration for the bot"""
         col = Database.get_collection("config")
         if col is None: return
         col.replace_one({"_id": "main_config"}, data, upsert=True)
