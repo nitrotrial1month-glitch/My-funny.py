@@ -4,5 +4,5 @@ dnspython
 certifi
 flask
 easy-pil
-pip install Flask-Dance
-pip install requests
+Flask-Dance
+requests
