@@ -13,7 +13,7 @@ DISCORD_CLIENT_ID = "1431675966807343388"
 DISCORD_CLIENT_SECRET = "AtCC606CiJo5BZwRdqHM-Qj6GQGAELo9"
 
 # Redirect URI (এটি আপনার লোকাল বা লাইভ ওয়েবসাইটের লিংক হবে)
-DISCORD_REDIRECT_URI = "http://127.0.0.1:8080/discord/callback" 
+DISCORD_REDIRECT_URI = "https://my-funny-py.onrender.com/discord/callback"
 # রেন্ডারে লাইভ করার সময় এটি "https://your-render-url.com/discord/callback" করে দেবেন
 
 DISCORD_API_BASE_URL = "https://discord.com/api"
