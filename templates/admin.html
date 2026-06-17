@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <h1>Admin Panel</h1>
+    <a href="/">Back to Home</a>
+    <hr>
+    <form method="POST">
+        <input type="hidden" name="action" value="add">
+        <input type="text" name="name" placeholder="Product Name" required>
+        <input type="text" name="desc" placeholder="Description" required>
+        <input type="number" name="price" placeholder="Price" required>
+        <input type="text" name="image" placeholder="Image URL" required>
+        <button type="submit">Add Product</button>
+    </form>
+
+    <h2>Current Products</h2>
+    {% for p in products %}
+    <div>
+        <p>{{ p.name }} - ${{ p.price }}</p>
+        <form method="POST">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="product_id" value="{{ p._id }}">
+            <button type="submit" style="color:red;">Delete</button>
+        </form>
+    </div>
+    {% endfor %}
+</body>
+</html>
+
