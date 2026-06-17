@@ -4,17 +4,25 @@ from threading import Thread
 import requests
 from database import Database  
 
+# নতুন বানানো লগইন ফাইলগুলো ইমপোর্ট করা হলো
+from google_auth import google_bp
+from facebook_auth import facebook_bp
+from apple_auth import apple_bp
+
 app = Flask(__name__)
-# Session-এর জন্য একটি সিক্রেট কি (এটি যেকোনো কিছু হতে পারে)
+# Session-এর জন্য একটি সিক্রেট কি
 app.secret_key = "inwear_super_secret_key_2026"
 
-# ⚠️ Discord OAuth2 Credentials (এখানে আপনার তথ্য দিন)
+# আলাদা ফাইলগুলোকে ওয়েবসাইটের সাথে কানেক্ট করা হলো
+app.register_blueprint(google_bp)
+app.register_blueprint(facebook_bp)
+app.register_blueprint(apple_bp)
+
+# ⚠️ Discord OAuth2 Credentials
 DISCORD_CLIENT_ID = "1431675966807343388"
 DISCORD_CLIENT_SECRET = "AtCC606CiJo5BZwRdqHM-Qj6GQGAELo9"
 
-# Redirect URI (এটি আপনার লোকাল বা লাইভ ওয়েবসাইটের লিংক হবে)
 DISCORD_REDIRECT_URI = "https://my-funny-py.onrender.com/discord/callback"
-# রেন্ডারে লাইভ করার সময় এটি "https://your-render-url.com/discord/callback" করে দেবেন
 
 DISCORD_API_BASE_URL = "https://discord.com/api"
 AUTHORIZATION_BASE_URL = f"{DISCORD_API_BASE_URL}/oauth2/authorize"
@@ -25,7 +33,6 @@ TOKEN_URL = f"{DISCORD_API_BASE_URL}/oauth2/token"
 @app.route('/')
 def home():
     products = Database.get_all_products()
-    # ইউজারের সেশন থেকে নাম নেওয়া (লগইন করা থাকলে নাম দেখাবে)
     user_data = session.get('user')
     return render_template('index.html', products=products, user=user_data)
 
@@ -33,18 +40,15 @@ def home():
 # --- Discord Login Routes ---
 @app.route('/login/discord')
 def login_discord():
-    """ইউজারকে ডিসকর্ডের লগইন পেজে পাঠাবে"""
     auth_url = f"{AUTHORIZATION_BASE_URL}?client_id={DISCORD_CLIENT_ID}&redirect_uri={DISCORD_REDIRECT_URI}&response_type=code&scope=identify%20guilds"
     return redirect(auth_url)
 
 @app.route('/discord/callback')
 def discord_callback():
-    """ডিসকর্ড থেকে লগইন করার পর ইউজার এই পেজে ফিরে আসবে"""
     code = request.args.get('code')
     if not code:
         return "Login failed! <a href='/'>Go Home</a>"
 
-    # কোড এক্সচেঞ্জ করে টোকেন নেওয়া
     data = {
         'client_id': DISCORD_CLIENT_ID,
         'client_secret': DISCORD_CLIENT_SECRET,
@@ -62,24 +66,29 @@ def discord_callback():
 
     access_token = token_json['access_token']
 
-    # ইউজারের ডিসকর্ড প্রোফাইলের তথ্য আনা
     user_response = requests.get(f"{DISCORD_API_BASE_URL}/users/@me", headers={'Authorization': f'Bearer {access_token}'})
     user_info = user_response.json()
 
-    # সেশনে ইউজারের তথ্য সেভ করা
+    # ডাটাবেস থেকে Seller এবং Owner স্ট্যাটাস চেক করা
+    col = Database.get_collection("users")
+    db_user = col.find_one({"discord_id": str(user_info.get('id'))}) if col is not None else None
+    
+    is_seller = db_user.get("seller_access", False) if db_user else False
+    is_owner = db_user.get("owner_access", False) if db_user else False
+
     session['user'] = {
         'id': user_info.get('id'),
         'username': user_info.get('username'),
-        'avatar': f"https://cdn.discordapp.com/avatars/{user_info.get('id')}/{user_info.get('avatar')}.png"
+        'avatar': f"https://cdn.discordapp.com/avatars/{user_info.get('id')}/{user_info.get('avatar')}.png",
+        'is_seller': is_seller,
+        'is_owner': is_owner
     }
 
-    # সফল লগইনের পর হোমপেজে পাঠিয়ে দেওয়া
     return redirect(url_for('home'))
 
 
 @app.route('/logout')
 def logout():
-    """ইউজারকে লগআউট করার সিস্টেম"""
     session.pop('user', None)
     return redirect(url_for('home'))
 
