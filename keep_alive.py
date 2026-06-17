@@ -9,8 +9,8 @@ app = Flask(__name__)
 app.secret_key = "inwear_super_secret_key_2026"
 
 # ⚠️ Discord OAuth2 Credentials (এখানে আপনার তথ্য দিন)
-DISCORD_CLIENT_ID = "আপনার_ডিসকর্ড_ক্লায়েন্ট_আইডি_এখানে_দিন"
-DISCORD_CLIENT_SECRET = "আপনার_ডিসকর্ড_ক্লায়েন্ট_সিক্রেট_এখানে_দিন"
+DISCORD_CLIENT_ID = "1431675966807343388"
+DISCORD_CLIENT_SECRET = "AtCC606CiJo5BZwRdqHM-Qj6GQGAELo9"
 
 # Redirect URI (এটি আপনার লোকাল বা লাইভ ওয়েবসাইটের লিংক হবে)
 DISCORD_REDIRECT_URI = "http://127.0.0.1:8080/discord/callback" 
