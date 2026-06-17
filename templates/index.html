@@ -158,12 +158,13 @@
             <a href="#" style="color: #4caf50;">👋 Hello, {{ user.username }}</a>
             
             {% if user.is_owner %}
-                <a href="/admin" style="color: #ffd700;">👑 Owner Panel</a>
-            {% endif %}
-            
-            {% if user.is_seller or user.is_owner %}
-                <a href="/dashboard">⚙️ Seller Dashboard</a>
-            {% endif %}
+    <a href="/owner" style="color: #ffd700;">👑 Owner Panel</a>
+{% endif %}
+
+{% if user.is_seller or user.is_owner %}
+    <a href="/seller">⚙️ Seller Dashboard</a>
+{% endif %}
+                
             
             <a href="/logout" style="color: #cc0000;">🚪 Logout</a>
         {% else %}
