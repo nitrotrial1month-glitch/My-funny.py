@@ -36,8 +36,8 @@ class FunnyBot(commands.Bot):
         )
         
         # ⚠️ আপনার আসল ডিসকর্ড রোলের আইডিগুলো এখানে বসিয়ে নেবেন
-        self.SELLER_ROLE_ID = 123456789012345678 
-        self.OWNER_ROLE_ID = 987654321098765432 # <-- ওনার রোলের আইডি এখানে দিন
+        self.SELLER_ROLE_ID = 1516716499107315792 
+        self.OWNER_ROLE_ID = 1509737313561870518 # <-- ওনার রোলের আইডি এখানে দিন
 
     async def setup_hook(self):
         print("Loading Cogs...")
