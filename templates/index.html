@@ -150,14 +150,22 @@
         </div>
     </header>
 
-    <div id="mySidebar" class="sidebar">
+        <div id="mySidebar" class="sidebar">
         <button class="close-btn" onclick="closeNav()">×</button>
         <a href="/">🏠 Home</a>
-        <a href="/login">👤 Login with Discord</a>
-        <a href="/dashboard">⚙️ Seller Dashboard</a>
+        
+        {% if user %}
+            <a href="#" style="color: #4caf50;">👋 Hello, {{ user.username }}</a>
+            <a href="/dashboard">⚙️ Seller Dashboard</a>
+            <a href="/logout" style="color: #cc0000;">🚪 Logout</a>
+        {% else %}
+            <a href="/login/discord">👤 Login with Discord</a>
+        {% endif %}
+        
         <a href="#">❤️ Wishlist</a>
         <a href="#">🛒 Cart (0)</a>
-    </div>
+        </div>
+    
 
     <div class="categories">
         <span><strong>Shop By:</strong></span>
