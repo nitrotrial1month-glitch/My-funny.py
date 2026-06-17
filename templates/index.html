@@ -21,7 +21,7 @@
             color: var(--text-dark);
         }
 
-        /* 1. Header (Logo, Search, Login) */
+        /* 1. Header & Menu Icon */
         header {
             background-color: var(--primary-red);
             color: var(--bg-white);
@@ -33,10 +33,26 @@
         }
         .logo { font-size: 32px; font-weight: bold; letter-spacing: 2px; text-transform: lowercase; }
         .search-bar { padding: 10px; border-radius: 20px; border: none; width: 300px; outline: none; }
-        .nav-links a { color: var(--bg-white); text-decoration: none; margin-left: 20px; font-weight: bold; font-size: 15px; }
-        .nav-links a:hover { text-decoration: underline; }
         
-        /* 2. Categories & Filters */
+        /* 2. Sidebar Menu (Hamburger) */
+        .menu-icon { font-size: 30px; cursor: pointer; color: white; }
+        .sidebar {
+            height: 100%; width: 0; position: fixed; z-index: 100;
+            top: 0; right: 0; background-color: #1a1a1a; overflow-x: hidden;
+            transition: 0.4s; padding-top: 60px; box-shadow: -5px 0 15px rgba(0,0,0,0.5);
+        }
+        .sidebar a {
+            padding: 15px 25px; text-decoration: none; font-size: 18px;
+            color: white; display: block; transition: 0.3s; border-bottom: 1px solid #333;
+        }
+        .sidebar a:hover { background-color: var(--primary-red); color: white; padding-left: 35px; }
+        .sidebar .close-btn {
+            position: absolute; top: 10px; right: 25px; font-size: 36px; border: none;
+            background: none; color: white; margin-left: 50px; cursor: pointer; padding: 0;
+        }
+        .sidebar .close-btn:hover { background-color: transparent; color: var(--primary-red); }
+
+        /* 3. Categories & Filters */
         .categories {
             background-color: var(--bg-white);
             padding: 15px;
@@ -48,8 +64,8 @@
         .categories a:hover { color: var(--primary-red); }
         .filter-sec { margin-left: 30px; padding: 5px; border-radius: 5px; border: 1px solid #ccc; }
 
-        /* 3. Product Grid */
-        .container { padding: 30px; max-width: 1200px; margin: auto; }
+        /* 4. Product Grid */
+        .container { padding: 30px; max-width: 1200px; margin: auto; min-height: 50vh; }
         .section-title { text-align: center; color: var(--primary-red); margin-bottom: 30px; font-size: 28px; }
         
         .product-grid { display: flex; gap: 25px; justify-content: center; flex-wrap: wrap; }
@@ -69,7 +85,7 @@
         .product-title { font-size: 18px; margin: 5px 0; color: var(--text-dark); }
         .price { color: var(--primary-red); font-size: 22px; font-weight: bold; margin: 10px 0; }
         
-        /* 4. Buttons */
+        /* 5. Buttons */
         .btn-cart { 
             background-color: var(--primary-red); color: white; border: none; 
             padding: 12px; width: 100%; cursor: pointer; border-radius: 5px; 
@@ -84,7 +100,7 @@
         }
         .btn-wishlist:hover { background-color: #ffe6e6; }
 
-        /* 5. Footer */
+        /* 6. Footer */
         footer { background-color: #1a1a1a; color: white; text-align: center; padding: 30px 20px; margin-top: 50px; }
         .footer-badges { font-size: 18px; margin-bottom: 15px; color: #4caf50; font-weight: bold; }
         footer a { color: var(--primary-red); text-decoration: none; margin: 0 15px; font-size: 15px; }
@@ -98,12 +114,17 @@
         <div>
             <input type="search" class="search-bar" placeholder="Search for t-shirts, anime prints...">
         </div>
-        <div class="nav-links">
-            <a href="#">❤️ Wishlist</a>
-            <a href="#">🛒 Cart (0)</a>
-            <a href="#">👤 Login / Sign Up</a>
-        </div>
+        <span class="menu-icon" onclick="openNav()">☰</span>
     </header>
+
+    <div id="mySidebar" class="sidebar">
+        <button class="close-btn" onclick="closeNav()">×</button>
+        <a href="/">🏠 Home</a>
+        <a href="/login">👤 Login with Discord</a>
+        <a href="/dashboard">⚙️ Seller Dashboard</a>
+        <a href="#">❤️ Wishlist</a>
+        <a href="#">🛒 Cart (0)</a>
+    </div>
 
     <div class="categories">
         <span><strong>Shop By:</strong></span>
@@ -126,7 +147,6 @@
         <h2 class="section-title">New Arrivals</h2>
         
         <div class="product-grid">
-            
             {% if products %}
                 {% for product in products %}
                 <div class="product-card">
@@ -139,9 +159,8 @@
                 </div>
                 {% endfor %}
             {% else %}
-                <p style="text-align: center; width: 100%; color: #cc0000;">No products available right now.</p>
+                <p style="text-align: center; width: 100%; color: #cc0000; font-weight: bold; font-size: 20px;">No products available right now.</p>
             {% endif %}
-
         </div>
     </div>
 
@@ -157,6 +176,15 @@
         </p>
         <p style="font-size: 13px; color: #888; margin-top: 20px;">&copy; 2026 inwear. All rights reserved.</p>
     </footer>
+
+    <script>
+        function openNav() {
+            document.getElementById("mySidebar").style.width = "250px";
+        }
+        function closeNav() {
+            document.getElementById("mySidebar").style.width = "0";
+        }
+    </script>
 
 </body>
 </html>
