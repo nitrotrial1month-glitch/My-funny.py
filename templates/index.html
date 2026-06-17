@@ -21,21 +21,49 @@
             color: var(--text-dark);
         }
 
-        /* 1. Header & Menu Icon */
+        /* 1. Header & Menu Icon (Responsive Fix) */
         header {
             background-color: var(--primary-red);
             color: var(--bg-white);
-            padding: 15px 40px;
+            padding: 15px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            flex-wrap: wrap; 
         }
-        .logo { font-size: 32px; font-weight: bold; letter-spacing: 2px; text-transform: lowercase; }
-        .search-bar { padding: 10px; border-radius: 20px; border: none; width: 300px; outline: none; }
+        .logo { 
+            font-size: 28px; 
+            font-weight: bold; 
+            letter-spacing: 2px; 
+            text-transform: lowercase; 
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px; 
+            flex: 1;
+            justify-content: flex-end;
+        }
+
+        .search-bar { 
+            padding: 10px; 
+            border-radius: 20px; 
+            border: none; 
+            width: 100%; 
+            max-width: 300px; 
+            outline: none; 
+        }
         
         /* 2. Sidebar Menu (Hamburger) */
-        .menu-icon { font-size: 30px; cursor: pointer; color: white; }
+        .menu-icon { 
+            font-size: 28px; 
+            cursor: pointer; 
+            color: white; 
+            display: block; 
+        }
+        
         .sidebar {
             height: 100%; width: 0; position: fixed; z-index: 100;
             top: 0; right: 0; background-color: #1a1a1a; overflow-x: hidden;
@@ -59,21 +87,26 @@
             text-align: center;
             border-bottom: 2px solid var(--primary-red);
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
         }
-        .categories a { margin: 0 15px; color: var(--text-dark); text-decoration: none; font-weight: bold; }
+        .categories a { margin: 0 10px; color: var(--text-dark); text-decoration: none; font-weight: bold; }
         .categories a:hover { color: var(--primary-red); }
-        .filter-sec { margin-left: 30px; padding: 5px; border-radius: 5px; border: 1px solid #ccc; }
+        .filter-sec { padding: 5px; border-radius: 5px; border: 1px solid #ccc; }
 
         /* 4. Product Grid */
-        .container { padding: 30px; max-width: 1200px; margin: auto; min-height: 50vh; }
+        .container { padding: 30px 15px; max-width: 1200px; margin: auto; min-height: 50vh; }
         .section-title { text-align: center; color: var(--primary-red); margin-bottom: 30px; font-size: 28px; }
         
-        .product-grid { display: flex; gap: 25px; justify-content: center; flex-wrap: wrap; }
+        .product-grid { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
         .product-card {
             background-color: var(--bg-white);
             border: 1px solid #ddd;
             padding: 15px;
-            width: 260px;
+            width: 250px;
             text-align: center;
             border-radius: 10px;
             transition: 0.3s;
@@ -103,7 +136,7 @@
         /* 6. Footer */
         footer { background-color: #1a1a1a; color: white; text-align: center; padding: 30px 20px; margin-top: 50px; }
         .footer-badges { font-size: 18px; margin-bottom: 15px; color: #4caf50; font-weight: bold; }
-        footer a { color: var(--primary-red); text-decoration: none; margin: 0 15px; font-size: 15px; }
+        footer a { color: var(--primary-red); text-decoration: none; margin: 0 10px; font-size: 15px; }
         footer a:hover { color: white; text-decoration: underline; }
     </style>
 </head>
@@ -111,10 +144,10 @@
 
     <header>
         <div class="logo">inwear</div>
-        <div>
-            <input type="search" class="search-bar" placeholder="Search for t-shirts, anime prints...">
+        <div class="header-right">
+            <input type="search" class="search-bar" placeholder="Search t-shirts...">
+            <span class="menu-icon" onclick="openNav()">☰</span>
         </div>
-        <span class="menu-icon" onclick="openNav()">☰</span>
     </header>
 
     <div id="mySidebar" class="sidebar">
@@ -131,10 +164,9 @@
         <a href="#">Men</a>
         <a href="#">Women</a>
         <a href="#">Oversized</a>
-        <a href="#">Anime Collection</a>
-        <a href="#">Custom Prints</a>
+        <a href="#">Anime</a>
         
-        <span style="margin-left:30px;"><strong>Sort:</strong> 
+        <span style="margin-left:20px;"><strong>Sort:</strong> 
             <select class="filter-sec">
                 <option>New Arrivals</option>
                 <option>Price: Low to High</option>
