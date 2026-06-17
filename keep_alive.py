@@ -3,7 +3,8 @@ from flask import Flask, render_template, redirect, url_for, session, request
 from threading import Thread
 import requests
 from database import Database  
-
+# ইমপোর্ট সেকশনে
+from dashboard import dashboard_bp 
 # নতুন বানানো লগইন ফাইলগুলো ইমপোর্ট করা হলো
 from google_auth import google_bp
 from facebook_auth import facebook_bp
@@ -17,7 +18,7 @@ app.secret_key = "inwear_super_secret_key_2026"
 app.register_blueprint(google_bp)
 app.register_blueprint(facebook_bp)
 app.register_blueprint(apple_bp)
-
+app.register_blueprint(dashboard_bp)
 # ⚠️ Discord OAuth2 Credentials
 DISCORD_CLIENT_ID = "1431675966807343388"
 DISCORD_CLIENT_SECRET = "AtCC606CiJo5BZwRdqHM-Qj6GQGAELo9"
