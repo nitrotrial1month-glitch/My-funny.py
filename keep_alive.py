@@ -1,18 +1,22 @@
-# keep_alive.py
+import os
 from flask import Flask
 from threading import Thread
 
-app = Flask('')
+app = Flask(__name__)
 
+# This route serves your website's home page
 @app.route('/')
 def home():
-    return "Bot is alive and running!"
+    # You can later replace this text with your actual HTML template
+    return "Nova E-commerce Website and Discord Bot are running perfectly!"
 
 def run():
-    # রেন্ডার যেকোনো পোর্ট অ্যাসাইন করতে পারে, তবে ডিফল্ট হিসেবে ৮০৮০ রাখা হলো
-    app.run(host='0.0.0.0', port=8080)
+    # Render assigns a dynamic port, so we fetch it from the environment variables
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host='0.0.0.0', port=port)
 
 def keep_alive():
-    t = Thread(target=run)
-    t.start()
-  
+    """Starts the web server on a separate thread to keep the bot alive"""
+    server = Thread(target=run)
+    server.start()
+    
