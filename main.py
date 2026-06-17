@@ -6,22 +6,17 @@ from utils import load_config, save_config
 from database import Database
 from keep_alive import keep_alive  
 
-# --- 1. Smart Prefix Logic ---
 def get_prefix(bot, message):
-    # Set default prefix to 'Nova'
     default_prefix = "Nova"
     prefixes = [default_prefix]
     
-    # If the message is in a DM, only the default prefix works
     if not message.guild:
         return prefixes
 
-    # Check for custom prefix in configuration
     try:
         config = load_config()
         custom_prefix = config.get("prefixes", {}).get(str(message.guild.id))
         
-        # Add custom prefix if it exists and is different from default
         if custom_prefix and custom_prefix != default_prefix:
             prefixes.append(custom_prefix)
     except:
@@ -29,10 +24,8 @@ def get_prefix(bot, message):
 
     return prefixes
 
-# --- 2. Main Bot Class Setup ---
 class FunnyBot(commands.Bot):
     def __init__(self):
-        # Intents.all() allows the bot to monitor role updates (Server Members Intent)
         intents = discord.Intents.all() 
         super().__init__(
             command_prefix=get_prefix,
@@ -42,8 +35,9 @@ class FunnyBot(commands.Bot):
             strip_after_prefix=True
         )
         
-        # IMPORTANT: Replace this ID with your actual Discord "Seller" Role ID
+        # ⚠️ আপনার আসল ডিসকর্ড রোলের আইডিগুলো এখানে বসিয়ে নেবেন
         self.SELLER_ROLE_ID = 123456789012345678 
+        self.OWNER_ROLE_ID = 987654321098765432 # <-- ওনার রোলের আইডি এখানে দিন
 
     async def setup_hook(self):
         print("Loading Cogs...")
@@ -64,36 +58,40 @@ class FunnyBot(commands.Bot):
 
     # --- Role Syncing Logic (E-commerce) ---
     async def on_member_update(self, before, after):
-        """Triggers automatically when a member's role changes"""
         if before.roles != after.roles:
+            is_seller = any(role.id == self.SELLER_ROLE_ID for role in after.roles)
+            is_owner = any(role.id == self.OWNER_ROLE_ID for role in after.roles)
+
+            # ডাটাবেসে একসাথে Seller এবং Owner স্ট্যাটাস সেভ করে দেওয়া হলো
+            Database.update_website_roles(after.id, after.name, is_seller, is_owner)
+            
             seller_role_before = discord.utils.get(before.roles, id=self.SELLER_ROLE_ID)
             seller_role_after = discord.utils.get(after.roles, id=self.SELLER_ROLE_ID)
+            owner_role_before = discord.utils.get(before.roles, id=self.OWNER_ROLE_ID)
+            owner_role_after = discord.utils.get(after.roles, id=self.OWNER_ROLE_ID)
 
-            # If Seller role was ADDED
             if not seller_role_before and seller_role_after:
                 print(f"Granting website seller access to: {after.name}")
-                Database.set_seller_access(after.id, after.name, True)
                 try:
                     await after.send("Congratulations! You now have Seller access on the website.")
                 except discord.Forbidden:
                     pass
 
-            # If Seller role was REMOVED
-            elif seller_role_before and not seller_role_after:
-                print(f"Revoking website seller access from: {after.name}")
-                Database.set_seller_access(after.id, after.name, False)
+            if not owner_role_before and owner_role_after:
+                print(f"Granting website OWNER access to: {after.name}")
+                try:
+                    await after.send("Congratulations! You now have Owner access on the website.")
+                except discord.Forbidden:
+                    pass
 
-# Create bot instance
 bot = FunnyBot()
 
-# --- 3. Events ---
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user} (ID: {bot.user.id})")
     print("------ Ready to go! ------")
     await bot.change_presence(activity=discord.Game(name="/help | Nova help"))
 
-# --- 4. Prefix Change Command ---
 @bot.hybrid_command(name="set_prefix", description="Add a custom prefix (Default 'Nova' will ALWAYS work)")
 @commands.has_permissions(administrator=True)
 @app_commands.describe(new_prefix="Type the new prefix (e.g., ?)")
@@ -120,15 +118,12 @@ async def set_prefix(ctx, new_prefix: str):
     )
     await ctx.send(embed=embed)
 
-# --- 5. Run Bot and Web Server ---
 if __name__ == "__main__":
-    # 1. Start the web server (keep_alive)
     keep_alive()
     
-    # 2. Start the Discord bot
     token = os.getenv("DISCORD_TOKEN")
     if token:
         bot.run(token)
     else:
         print("Error: 'DISCORD_TOKEN' not found!")
-        
+                    
