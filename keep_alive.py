@@ -1,22 +1,26 @@
 import os
-from flask import Flask
+from flask import Flask, render_template
 from threading import Thread
+from database import Database  # Importing the database
 
 app = Flask(__name__)
 
-# This route serves your website's home page
 @app.route('/')
 def home():
-    # You can later replace this text with your actual HTML template
-    return "Nova E-commerce Website and Discord Bot are running perfectly!"
+    # 1. Add dummy products if the database is empty (only runs once)
+    Database.add_dummy_products()
+    
+    # 2. Fetch all products from MongoDB
+    products = Database.get_all_products()
+    
+    # 3. Send the products to the HTML page
+    return render_template('index.html', products=products)
 
 def run():
-    # Render assigns a dynamic port, so we fetch it from the environment variables
     port = int(os.environ.get("PORT", 8080))
     app.run(host='0.0.0.0', port=port)
 
 def keep_alive():
-    """Starts the web server on a separate thread to keep the bot alive"""
     server = Thread(target=run)
     server.start()
     
