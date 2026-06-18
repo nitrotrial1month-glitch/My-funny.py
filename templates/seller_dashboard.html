@@ -1,45 +1,46 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Seller Dashboard | inwear</title>
+    <title>Seller Dashboard</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f4f9; padding: 20px; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1 { color: #cc0000; }
-        form { margin-bottom: 30px; border-bottom: 2px solid #eee; padding-bottom: 20px; }
+        body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 10px; }
         input { width: 100%; padding: 10px; margin: 5px 0 15px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
-        button { background: #cc0000; color: white; border: none; padding: 12px; width: 100%; cursor: pointer; border-radius: 5px; font-weight: bold; }
-        .product-list { display: grid; gap: 10px; }
-        .product-item { padding: 10px; border: 1px solid #ddd; border-radius: 5px; display: flex; justify-content: space-between; }
+        button[type="submit"] { background: #cc0000; color: white; border: none; padding: 12px; width: 100%; cursor: pointer; border-radius: 5px; font-weight: bold; }
+        .product-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; padding: 15px 0; }
+        .btn-del { background: #ff4d4d; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 3px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>⚙️ Seller Dashboard</h1>
+        <h1 style="color: #cc0000;">⚙️ Seller Dashboard</h1>
         
         <form method="POST" enctype="multipart/form-data">
             <h3>Add New Product</h3>
             <input type="text" name="name" placeholder="Product Name" required>
             <input type="text" name="desc" placeholder="Short Description">
             <input type="number" name="price" placeholder="Price (৳)" required>
-            <label>Product Image:</label>
+            <label style="font-weight: bold; color: #555;">Product Image:</label>
             <input type="file" name="image" accept="image/*" required>
-            <button type="submit">Add Product</button>
+            <button type="submit">Upload Product</button>
+            <small style="color: green; display: block; margin-top: 5px;">*Your product will be reviewed by the owner before going live.</small>
         </form>
 
-        <h3>Your Products</h3>
-        <div class="product-list">
-            {% for p in products %}
-            <div class="product-item">
-                <span><strong>{{ p.name }}</strong> - ৳{{ p.price }}</span>
+        <h3>Your Uploaded Products</h3>
+        {% for p in products %}
+        <div class="product-item">
+            <div>
+                <strong>{{ p.name }}</strong> - ৳{{ p.price }} <br>
+                <small style="color: {{ 'green' if p.status == 'Approved' else '#ff9800' }}; font-weight: bold;">
+                    Status: {{ p.status or 'Pending' }}
+                </small>
             </div>
-            {% else %}
-            <p>No products found.</p>
-            {% endfor %}
+            <form action="/delete_product/{{ p._id }}" method="POST">
+                <button type="submit" class="btn-del">Delete</button>
+            </form>
         </div>
-        <br>
-        <a href="/">⬅ Back to Home</a>
+        {% endfor %}
+        <br><a href="/" style="color: #cc0000; font-weight: bold; text-decoration: none;">⬅ Back to Home</a>
     </div>
 </body>
 </html>
