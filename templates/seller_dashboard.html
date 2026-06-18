@@ -6,7 +6,7 @@
     <title>Seller Dashboard | inwear</title>
     <style>
         :root { --primary: #cc0000; --bg: #f4f6f9; --card-bg: #fff; --text: #333; }
-        body { background: var(--bg); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin:0; padding:20px; color: var(--text); }
+        body { background: var(--bg); font-family: 'Segoe UI', sans-serif; margin:0; padding:20px; color: var(--text); }
         .container { max-width: 800px; margin: 0 auto; }
         .header { text-align: center; margin-bottom: 30px; }
         .header h1 { color: var(--primary); margin-bottom: 5px; }
@@ -14,23 +14,19 @@
         .card { background: var(--card-bg); border-radius: 12px; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
         .card h3 { margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; color: #444; }
         
-        input, textarea { width: 100%; padding: 12px; margin: 8px 0 15px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-family: inherit; }
+        input, textarea { width: 100%; padding: 12px; margin: 8px 0 15px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
         
-        .btn { background: var(--primary); color: white; padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; font-size: 15px; transition: 0.3s; }
+        .btn { background: var(--primary); color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; font-size: 15px; }
         .btn:hover { opacity: 0.9; }
         
         .product-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #eee; }
-        .product-info { display: flex; flex-direction: column; gap: 5px; }
-        .product-title { font-weight: bold; font-size: 16px; }
-        .product-price { color: #555; font-size: 14px; }
+        .product-info { display: flex; flex-direction: column; gap: 4px; }
+        .badge { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; color: white; display: inline-block; width: max-content; }
+        .pending { background: #ff9800; }
+        .approved { background: #28a745; }
         
-        .badge { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; color: white; display: inline-block; width: max-content;}
-        .badge.pending { background: #ff9800; }
-        .badge.approved { background: #28a745; }
-        
-        .btn-delete { background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+        .btn-delete { background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
         .notice { background: #e8f4fd; color: #0056b3; padding: 15px; border-radius: 6px; margin-bottom: 20px; font-size: 14px; border-left: 4px solid #0056b3; }
-        
         .back-link { display: block; text-align: center; margin-top: 20px; color: var(--text); text-decoration: none; font-weight: bold; }
     </style>
 </head>
@@ -42,18 +38,23 @@
         </div>
 
         <div class="notice">
-            <strong>ℹ️ Verification Required:</strong> All products uploaded here will be sent to the Owner for approval. Once approved, they will appear on the main store.
+            <strong>ℹ️ Verification Required:</strong> All products uploaded here will be reviewed. Please provide detailed fabric and warranty info.
         </div>
 
         <div class="card">
             <h3>Upload New Product</h3>
             <form method="POST" enctype="multipart/form-data">
                 <input type="text" name="name" placeholder="Product Name" required>
-                <textarea name="desc" placeholder="Brief description..." rows="2"></textarea>
-                <input type="number" name="price" placeholder="Selling Price (₹)" required>
+                <textarea name="desc" placeholder="Full Details: Fabric, Warranty, Features..." rows="4" required></textarea>
                 
-                <label style="font-size: 14px; font-weight: 600; color: #555; display: block; margin-bottom: 5px;">Product Image:</label>
-                <input type="file" name="image" accept="image/*" required>
+                <label>Available Sizes (Comma separated):</label>
+                <input type="text" name="sizes" placeholder="e.g. S, M, L, XL, 32, 34" required>
+                
+                <input type="number" name="original_price" placeholder="Original Price (₹)" required>
+                <input type="number" name="discount" placeholder="Discount Percentage (%)" min="0" max="100">
+                
+                <label>Product Image Link:</label>
+                <input type="text" name="image" placeholder="Image URL" required>
                 
                 <button type="submit" class="btn">Submit for Review</button>
             </form>
@@ -64,10 +65,10 @@
             {% for p in products %}
             <div class="product-item">
                 <div class="product-info">
-                    <span class="product-title">{{ p.name }}</span>
-                    <span class="product-price">Price: ₹{{ p.price }}</span>
+                    <span style="font-weight:bold;">{{ p.name }}</span>
+                    <span>Price: ₹{{ p.price }} <small style="text-decoration:line-through; color:gray;">(₹{{ p.original_price }})</small></span>
                     <span class="badge {{ 'approved' if p.status == 'Approved' else 'pending' }}">
-                        Status: {{ p.status or 'Pending' }}
+                        {{ p.status or 'Pending' }}
                     </span>
                 </div>
                 <form action="/delete_product/{{ p._id }}" method="POST">
@@ -76,7 +77,7 @@
             </div>
             {% endfor %}
             {% if not products %}
-                <p style="text-align: center; color: #888; padding: 20px 0;">You haven't uploaded any products yet.</p>
+                <p style="text-align: center; color: #888;">No products uploaded yet.</p>
             {% endif %}
         </div>
         
