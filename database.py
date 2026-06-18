@@ -148,24 +148,20 @@ class Database:
             print(f"🛍️ Owner uploaded a product. Auto-approved: {name}")
             return
             
-                # সেলার আপলোড করলে ডিসকর্ডে Webhook পাঠানো
+        # সেলার আপলোড করলে ডিসকর্ডে Webhook পাঠানো
         webhook_url = "https://discord.com/api/webhooks/1517038233559633980/ynh7QyKkWQXbiey9js7iWs27v0k2lW4En7Sna2TKwz4ZkXwED_aBKSPSp_e7CMPtYu-a"
         
         if webhook_url:
             embed = {
                 "title": "🟡 New Product Pending Verification",
-                "description": f"**Product:** {name}\n**Price:** {price}৳\n\n*Seller: Please reply to this message with a short video of the product. Owner will react to verify.*",
+                "description": f"**Product:** {name}\n**Price:** {price}৳\n\n*Seller: Please reply to this message with a short video of the product.*\n*Owner: React with ✅ or ❌ to verify.*",
                 "color": 16753920,
-                "thumbnail": {"url": image},
+                # ছবির লাইনটি (thumbnail) এখান থেকে বাদ দেওয়া হয়েছে
                 "footer": {"text": f"ID: {product_id}"}
             }
             try:
                 import requests
-                response = requests.post(webhook_url, json={"embeds": [embed]})
-                if response.status_code == 204:
-                    print(f"✅ Webhook sent successfully for {name}")
-                else:
-                    print(f"❌ Webhook Failed! Status Code: {response.status_code}")
+                requests.post(webhook_url, json={"embeds": [embed]})
             except Exception as e:
                 print(f"Webhook Exception Error: {e}")
                 
