@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | inwear</title>
+    <style>
+        :root { --bg: #f1f2f4; --white: #ffffff; --text: #212121; --gray: #666; --border: #e0e0e0; }
+        body { background-color: var(--bg); font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .login-card { background: var(--white); width: 100%; max-width: 400px; padding: 40px 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; margin: 15px; }
+        .logo { font-size: 28px; font-weight: bold; color: #cc0000; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        p { color: var(--gray); font-size: 14px; margin-bottom: 30px; }
+        
+        /* Login Buttons */
+        .login-btn { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; padding: 14px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 15px; font-weight: 600; text-decoration: none; box-sizing: border-box; transition: 0.2s; }
+        
+        .btn-google { background: #fff; color: #444; }
+        .btn-google:hover { background: #f7f7f7; }
+        
+        .btn-discord { background: #5865F2; color: #fff; border: none; }
+        .btn-discord:hover { background: #4752C4; }
+        
+        .btn-facebook { background: #1877F2; color: #fff; border: none; }
+        .btn-facebook:hover { background: #166FE5; }
+        
+        .footer-text { font-size: 12px; color: #999; margin-top: 25px; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="logo">inwear</div>
+        <p>Sign in to sync your orders, wishlist, and rewards across platforms.</p>
+        
+        <a href="/login/google" class="login-btn btn-google">
+            <img src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/web-2x/copy_of_googleg_standard_color_64dp.png" width="18" alt="Google">
+            Continue with Google
+        </a>
+        
+        <a href="/login/discord" class="login-btn btn-discord">
+            <img src="https://assets-global.website-files.com/6257adef93867e50d84d30e2/636e0a6a49cf127bf92de1e2_icon_clyde_blurple_RGB.png" width="20" alt="Discord">
+            Continue with Discord
+        </a>
+        
+        <a href="/login/facebook" class="login-btn btn-facebook">
+            <span style="font-size: 20px; font-weight: bold;">f</span>
+            Continue with Facebook
+        </a>
+        
+        <div class="footer-text">By continuing, you agree to our Terms & Conditions.</div>
+    </div>
+</body>
+</html>
+
