@@ -1,11 +1,10 @@
 import os
+import traceback
 from flask import Flask, render_template, redirect, url_for, session, request
 from threading import Thread
 import requests
 from database import Database  
-# ইমপোর্ট সেকশনে
 from dashboard import dashboard_bp 
-# নতুন বানানো লগইন ফাইলগুলো ইমপোর্ট করা হলো
 from google_auth import google_bp
 from facebook_auth import facebook_bp
 from apple_auth import apple_bp
@@ -19,10 +18,10 @@ app.register_blueprint(google_bp)
 app.register_blueprint(facebook_bp)
 app.register_blueprint(apple_bp)
 app.register_blueprint(dashboard_bp)
+
 # ⚠️ Discord OAuth2 Credentials
 DISCORD_CLIENT_ID = "1431675966807343388"
 DISCORD_CLIENT_SECRET = "AtCC606CiJo5BZwRdqHM-Qj6GQGAELo9"
-
 DISCORD_REDIRECT_URI = "https://my-funny-py.onrender.com/discord/callback"
 
 DISCORD_API_BASE_URL = "https://discord.com/api"
@@ -88,6 +87,23 @@ def discord_callback():
     return redirect(url_for('home'))
 
 
+# --- Account & Logout Routes ---
+@app.route('/account')
+def account_page():
+    try:
+        user_data = session.get('user')
+        
+        # ইউজার লগইন না থাকলে login.html দেখাবে
+        if not user_data:
+            return render_template('login.html')
+            
+        # লগইন থাকলে account.html দেখাবে
+        return render_template('account.html', user=user_data)
+        
+    except Exception as e:
+        return f"<div style='padding:20px; font-family:sans-serif;'><h2 style='color:#cc0000;'>⚠️ Account Page Error</h2><p><b>Error:</b> {str(e)}</p><pre style='background:#f4f4f4; padding:15px; border-radius:5px; overflow-x:auto;'>{traceback.format_exc()}</pre></div>"
+
+
 @app.route('/logout')
 def logout():
     session.pop('user', None)
@@ -97,11 +113,11 @@ def logout():
 # --- Server Setup ---
 def run():
     port = int(os.environ.get("PORT", 8080))
-    app.run(host='0.0.0.0', port=port)
     print("--- Registered Routes ---")
-for rule in app.url_map.iter_rules():
-    print(f"Route: {rule.rule} -> Endpoint: {rule.endpoint}")
-    
+    for rule in app.url_map.iter_rules():
+        print(f"Route: {rule.rule} -> Endpoint: {rule.endpoint}")
+    app.run(host='0.0.0.0', port=port)
+
 
 def keep_alive():
     server = Thread(target=run)
