@@ -135,6 +135,25 @@ def remove_from_cart(product_id):
     if user:
         Database.remove_from_cart(user['id'], product_id)
     return redirect('/cart')
+
+# --- Order Routes ---
+@app.route('/orders')
+def orders():
+    user = session.get('user')
+    if not user:
+        return redirect('/account')
+    orders = Database.get_user_orders(user['id'])
+    return render_template('orders.html', orders=orders)
+
+@app.route('/checkout')
+def checkout():
+    user = session.get('user')
+    if not user: return redirect('/account')
+    # এখানে কার্টের আইটেমগুলো নিয়ে অর্ডার প্লেস হবে
+    cart_items = Database.get_user_cart(user['id'])
+    total = sum(float(item['price']) for item in cart_items)
+    Database.place_order(user['id'], cart_items, total)
+    return redirect('/orders')
     
 # --- Server Setup ---
 def run():
