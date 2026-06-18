@@ -109,7 +109,33 @@ def logout():
     session.pop('user', None)
     return redirect(url_for('home'))
 
+# --- Cart Routes ---
+@app.route('/cart')
+def cart():
+    # ইউজার আইডি অনুযায়ী ডাটাবেস থেকে কার্ট আইটেম আনবে
+    user = session.get('user')
+    if not user:
+        return redirect('/account')
+    
+    # Database.get_user_cart(user['id']) ফাংশনটি আপনার database.py তে থাকতে হবে
+    cart_items = Database.get_user_cart(user['id']) 
+    total = sum(float(item['price']) for item in cart_items)
+    return render_template('cart.html', cart_items=cart_items, total_price=total)
 
+@app.route('/add_to_cart/<product_id>')
+def add_to_cart(product_id):
+    user = session.get('user')
+    if user:
+        Database.add_to_cart(user['id'], product_id)
+    return redirect('/cart')
+
+@app.route('/remove_from_cart/<product_id>')
+def remove_from_cart(product_id):
+    user = session.get('user')
+    if user:
+        Database.remove_from_cart(user['id'], product_id)
+    return redirect('/cart')
+    
 # --- Server Setup ---
 def run():
     port = int(os.environ.get("PORT", 8080))
