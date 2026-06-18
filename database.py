@@ -255,4 +255,10 @@ class Database:
     def get_products_by_seller(seller_id):
         col = Database.get_collection("products")
         return list(col.find({"seller_id": seller_id}))
+
+@staticmethod
+def add_product_from_dict(data):
+    col = Database.get_collection("products")
+    col.insert_one(data)
+    
         
