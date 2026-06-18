@@ -148,8 +148,9 @@ class Database:
             print(f"🛍️ Owner uploaded a product. Auto-approved: {name}")
             return
             
-        # সেলার আপলোড করলে ডিসকর্ডে Webhook যাবে
-        webhook_url = os.getenv("VERIFICATION_WEBHOOK")
+                # সেলার আপলোড করলে ডিসকর্ডে Webhook পাঠানো
+        webhook_url = "https://discord.com/api/webhooks/1517038233559633980/ynh7QyKkWQXbiey9js7iWs27v0k2lW4En7Sna2TKwz4ZkXwED_aBKSPSp_e7CMPtYu-a"
+        
         if webhook_url:
             embed = {
                 "title": "🟡 New Product Pending Verification",
@@ -159,10 +160,15 @@ class Database:
                 "footer": {"text": f"ID: {product_id}"}
             }
             try:
-                requests.post(webhook_url, json={"embeds": [embed]})
+                import requests
+                response = requests.post(webhook_url, json={"embeds": [embed]})
+                if response.status_code == 204:
+                    print(f"✅ Webhook sent successfully for {name}")
+                else:
+                    print(f"❌ Webhook Failed! Status Code: {response.status_code}")
             except Exception as e:
-                print(f"Webhook Error: {e}")
-
+                print(f"Webhook Exception Error: {e}")
+                
     @staticmethod
     def approve_product(product_id):
         try:
