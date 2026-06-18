@@ -124,7 +124,7 @@ class Database:
         col = Database.get_collection("products")
         return list(col.find({})) if col is not None else []
 
-        @staticmethod
+    @staticmethod
     def add_product(name, desc, price, image, is_owner=False, seller_id=None):
         col = Database.get_collection("products")
         if col is None: return
@@ -167,7 +167,7 @@ class Database:
                 requests.post(webhook_url, json=payload)
             except Exception as e:
                 print(f"Webhook Exception Error: {e}")
-                
+
     @staticmethod
     def approve_product(product_id):
         try:
