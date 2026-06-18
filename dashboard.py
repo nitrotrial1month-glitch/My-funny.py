@@ -15,7 +15,6 @@ dashboard_bp = Blueprint('dashboard', __name__)
 def seller_dashboard():
     try:
         user = session.get('user')
-        # ইউজার লগইন না থাকলে বা ডাটা ঠিক না থাকলে সরাসরি হোমপেজে পাঠাবে
         if not user or not isinstance(user, dict) or not (user.get('is_seller') or user.get('is_owner')):
             return redirect('/')
 
@@ -27,13 +26,16 @@ def seller_dashboard():
                 file.save(os.path.join(UPLOAD_FOLDER, filename))
                 image_path = f"/static/uploads/{filename}"
 
+            # 💡 ফিক্স করা হয়েছে: id এবং discord_id দুটোই চেক করবে
+            seller_discord_id = user.get('discord_id') or user.get('id')
+
             Database.add_product(
                 name=request.form.get('name'),
                 desc=request.form.get('desc'),
                 price=request.form.get('price'),
                 image=image_path,
                 is_owner=user.get('is_owner', False),
-                seller_id=user.get('discord_id') # <--- এই লাইনটি নতুন যোগ হলো
+                seller_id=seller_discord_id  # <--- এই আইডিটি ডাটাবেসে পাঠানো হচ্ছে
             )
             return redirect('/seller')
 
@@ -41,7 +43,6 @@ def seller_dashboard():
         return render_template('seller_dashboard.html', products=products, user=user)
     
     except Exception as e:
-        # কোনো সমস্যা হলে 500 এরর না দেখিয়ে স্ক্রিনে প্রপার কারণটি প্রিন্ট করবে
         return f"<div style='padding:20px; font-family:sans-serif;'><h2 style='color:#cc0000;'>⚠️ Dashboard Error</h2><p><b>Error:</b> {str(e)}</p><pre style='background:#f4f4f4; padding:15px; border-radius:5px; overflow-x:auto;'>{traceback.format_exc()}</pre></div>"
 
 
