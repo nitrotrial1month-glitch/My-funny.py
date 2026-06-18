@@ -231,3 +231,23 @@ class Database:
             {"$pull": {"items": str(product_id)}}
         )
         
+    # ================= 📦 ORDER SYSTEM =================
+    @staticmethod
+    def place_order(user_id, cart_items, total_price):
+        col = Database.get_collection("orders")
+        order_data = {
+            "user_id": str(user_id),
+            "items": cart_items,
+            "total": total_price,
+            "status": "Pending",
+            "date": datetime.now().isoformat()
+        }
+        col.insert_one(order_data)
+        # কার্ট খালি করে দিন
+        Database.get_collection("cart").delete_one({"user_id": str(user_id)})
+
+    @staticmethod
+    def get_user_orders(user_id):
+        col = Database.get_collection("orders")
+        return list(col.find({"user_id": str(user_id)}).sort("date", -1))
+        
