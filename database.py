@@ -3,6 +3,8 @@ import pymongo
 from pymongo import MongoClient
 import certifi
 from datetime import datetime, timedelta
+import requests
+from bson import ObjectId
 
 MONGO_URL = os.getenv("MONGO_URL")
 ca = certifi.where()
@@ -96,6 +98,13 @@ class Database:
         )
 
     @staticmethod
+    def get_premium_data():
+        col = Database.get_collection("premium")
+        if col is None: return {"users": {}, "servers": {}}
+        data = col.find_one({"_id": "main_premium"})
+        return data if data else {"users": {}, "servers": {}}
+
+    @staticmethod
     def get_config():
         col = Database.get_collection("config")
         if col is None: return {"prefix": "Nova", "status": "Online"}
@@ -106,7 +115,6 @@ class Database:
     def save_config(data):
         col = Database.get_collection("config")
         if col is None: return
-        # ডাটা সেভ করার সময় id ঠিক রেখে আপডেট করা
         data["_id"] = "main_config"
         col.replace_one({"_id": "main_config"}, data, upsert=True)
            
@@ -117,17 +125,61 @@ class Database:
         return list(col.find({})) if col is not None else []
 
     @staticmethod
-    def add_product(name, desc, price, image):
+    def add_product(name, desc, price, image, is_owner=False):
         col = Database.get_collection("products")
         if col is None: return
+        
+        # ওনার হলে সরাসরি Approved, সেলার হলে Pending
+        status = "Approved" if is_owner else "Pending"
+        
         product_data = {
             "name": name,
             "description": desc,
             "price": int(price) if price else 0,
-            "image": image
+            "image": image,
+            "status": status
         }
-        col.insert_one(product_data)
-        print(f"🛍️ Product added: {name}")
+        
+        result = col.insert_one(product_data)
+        product_id = str(result.inserted_id)
+        
+        # ওনার আপলোড করলে ডিসকর্ডে ভেরিফিকেশনের মেসেজ পাঠানোর দরকার নেই
+        if is_owner:
+            print(f"🛍️ Owner uploaded a product. Auto-approved: {name}")
+            return
+            
+        # সেলার আপলোড করলে ডিসকর্ডে Webhook যাবে
+        webhook_url = os.getenv("VERIFICATION_WEBHOOK")
+        if webhook_url:
+            embed = {
+                "title": "🟡 New Product Pending Verification",
+                "description": f"**Product:** {name}\n**Price:** {price}৳\n\n*Seller: Please reply to this message with a short video of the product. Owner will react to verify.*",
+                "color": 16753920,
+                "thumbnail": {"url": image},
+                "footer": {"text": f"ID: {product_id}"}
+            }
+            try:
+                requests.post(webhook_url, json={"embeds": [embed]})
+            except Exception as e:
+                print(f"Webhook Error: {e}")
+
+    @staticmethod
+    def approve_product(product_id):
+        try:
+            col = Database.get_collection("products")
+            if col is not None:
+                col.update_one({"_id": ObjectId(product_id)}, {"$set": {"status": "Approved"}})
+        except Exception as e:
+            print(f"Error approving product: {e}")
+
+    @staticmethod
+    def delete_product(product_id):
+        try:
+            col = Database.get_collection("products")
+            if col is not None:
+                col.delete_one({"_id": ObjectId(product_id)})
+        except Exception as e:
+            print(f"Error deleting product: {e}")
 
     @staticmethod
     def add_dummy_products():
@@ -135,7 +187,7 @@ class Database:
         if col is None: return
         if col.count_documents({}) == 0:
             dummy_products = [
-                {"name": "Classic Red Essential", "description": "100% Cotton", "price": 450, "image": "..."}
+                {"name": "Classic Red Essential", "description": "100% Cotton", "price": 450, "image": "...", "status": "Approved"}
             ]
             col.insert_many(dummy_products)
             
