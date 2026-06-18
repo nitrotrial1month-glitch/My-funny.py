@@ -2,20 +2,58 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ product.name }} | inwear</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #f9f9f9; }
-        .product-img { width: 100%; max-width: 400px; display: block; margin: auto; border-radius: 10px; }
+        body { font-family: sans-serif; background: #f9f9f9; margin: 0; padding-bottom: 80px; }
+        .product-img { width: 100%; }
+        .details { padding: 20px; background: white; }
         .price { color: #cc0000; font-size: 24px; font-weight: bold; }
-        .buy-btn { background: #cc0000; color: white; padding: 15px; text-align: center; display: block; border-radius: 8px; text-decoration: none; margin-top: 20px; }
+        
+        /* সাইজ সিলেকশন */
+        .size-selector { margin: 20px 0; }
+        .size-btn { padding: 10px 15px; border: 1px solid #ccc; margin-right: 10px; cursor: pointer; }
+        
+        /* বাটন সেকশন */
+        .action-btns { display: flex; gap: 10px; margin-top: 20px; }
+        .btn { flex: 1; padding: 15px; border: none; border-radius: 5px; font-weight: bold; text-align: center; cursor: pointer; }
+        .add-cart { background: #ff9800; color: white; }
+        .buy-now { background: #cc0000; color: white; }
+        
+        /* সেকশন হেডার */
+        .section-title { padding: 20px 20px 10px; font-weight: bold; color: #555; }
+        .product-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 10px; }
     </style>
 </head>
 <body>
     <img src="{{ product.image }}" class="product-img">
-    <h2>{{ product.name }}</h2>
-    <p>{{ product.description }}</p>
-    <div class="price">₹{{ product.price }}</div>
-    <a href="/add_to_cart/{{ product._id }}" class="buy-btn">Add to Cart</a>
+    
+    <div class="details">
+        <h2>{{ product.name }}</h2>
+        <p>{{ product.description }}</p>
+        <div class="price">₹{{ product.price }}</div>
+
+        <div class="size-selector">
+            <p>Select Size:</p>
+            <button class="size-btn">S</button>
+            <button class="size-btn">M</button>
+            <button class="size-btn">L</button>
+            <button class="size-btn">XL</button>
+        </div>
+
+        <div class="action-btns">
+            <a href="/add_to_cart/{{ product._id }}" class="btn add-cart">Add to Cart</a>
+            <a href="/checkout/{{ product._id }}" class="btn buy-now">Buy Now</a>
+        </div>
+        <button class="btn" style="background:#eee; margin-top:10px;">❤️ Add to Wishlist</button>
+    </div>
+
+    <div class="section-title">Similar Products</div>
+    <div class="product-grid">
+        </div>
+
+    <div class="section-title">More from this Seller</div>
+    <div class="product-grid">
+        </div>
 </body>
 </html>
-
