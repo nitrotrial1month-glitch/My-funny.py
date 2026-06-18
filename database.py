@@ -251,3 +251,8 @@ class Database:
         col = Database.get_collection("orders")
         return list(col.find({"user_id": str(user_id)}).sort("date", -1))
         
+    @staticmethod
+    def get_products_by_seller(seller_id):
+        col = Database.get_collection("products")
+        return list(col.find({"seller_id": seller_id}))
+        
