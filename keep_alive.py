@@ -154,6 +154,17 @@ def checkout():
     total = sum(float(item['price']) for item in cart_items)
     Database.place_order(user['id'], cart_items, total)
     return redirect('/orders')
+
+@app.route('/product/<product_id>')
+def product_details(product_id):
+    # ডাটাবেস থেকে প্রোডাক্টের ডিটেইলস আনা
+    col = Database.get_collection("products")
+    product = col.find_one({"_id": ObjectId(product_id)})
+    
+    if not product:
+        return "Product not found!", 404
+        
+    return render_template('product.html', product=product)
     
 # --- Server Setup ---
 def run():
