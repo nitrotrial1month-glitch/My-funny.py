@@ -152,7 +152,7 @@ class Database:
         if webhook_url:
             embed = {
                 "title": "🟡 New Product Pending Verification",
-                "description": f"**Product:** {name}\n**Price:** {price}৳\n\n*Seller: Please **REPLY** to this message with a short video of the product.*\n*Owner: React with ✅ or ❌ on this message to verify.*",
+                "description": f"**Product:** {name}\n**Price:** {price}₹\n\n*Seller: Please **REPLY** to this message with a short video of the product.*\n*Owner: React with ✅ or ❌ on this message to verify.*",
                 "color": 16753920,
                 "footer": {"text": f"ID: {product_id}"}
             }
