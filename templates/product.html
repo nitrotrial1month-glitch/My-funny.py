@@ -5,55 +5,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ product.name }} | inwear</title>
     <style>
-        body { font-family: sans-serif; background: #f9f9f9; margin: 0; padding-bottom: 80px; }
-        .product-img { width: 100%; }
-        .details { padding: 20px; background: white; }
-        .price { color: #cc0000; font-size: 24px; font-weight: bold; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f9f9f9; margin: 0; padding-bottom: 80px; }
+        .product-img { width: 100%; aspect-ratio: 1/1; object-fit: cover; }
         
-        /* সাইজ সিলেকশন */
-        .size-selector { margin: 20px 0; }
-        .size-btn { padding: 10px 15px; border: 1px solid #ccc; margin-right: 10px; cursor: pointer; }
+        .details-container { padding: 20px; background: white; }
+        .price-section { margin: 15px 0; }
+        .current-price { color: #cc0000; font-size: 28px; font-weight: bold; }
+        .old-price { color: #888; text-decoration: line-through; margin-left: 10px; }
         
-        /* বাটন সেকশন */
-        .action-btns { display: flex; gap: 10px; margin-top: 20px; }
-        .btn { flex: 1; padding: 15px; border: none; border-radius: 5px; font-weight: bold; text-align: center; cursor: pointer; }
+        .section-label { font-weight: bold; margin-top: 20px; display: block; color: #444; }
+        
+        /* সাইজ বাটন */
+        .size-container { display: flex; gap: 10px; margin-top: 10px; }
+        .size-btn { padding: 10px 18px; border: 1px solid #ddd; border-radius: 5px; background: white; cursor: pointer; }
+        .size-btn:hover { border-color: #cc0000; }
+        
+        /* অ্যাকশন বাটন */
+        .action-btns { display: flex; gap: 10px; margin-top: 25px; }
+        .btn { flex: 1; padding: 15px; border: none; border-radius: 6px; font-weight: bold; text-align: center; cursor: pointer; text-decoration: none; }
         .add-cart { background: #ff9800; color: white; }
         .buy-now { background: #cc0000; color: white; }
-        
-        /* সেকশন হেডার */
-        .section-title { padding: 20px 20px 10px; font-weight: bold; color: #555; }
-        .product-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 10px; }
     </style>
 </head>
 <body>
-    <img src="{{ product.image }}" class="product-img">
+    <img src="{{ product.image_path }}" class="product-img" alt="{{ product.name }}">
     
-    <div class="details">
+    <div class="details-container">
         <h2>{{ product.name }}</h2>
-        <p>{{ product.description }}</p>
-        <div class="price">₹{{ product.price }}</div>
-
-        <div class="size-selector">
-            <p>Select Size:</p>
-            <button class="size-btn">S</button>
-            <button class="size-btn">M</button>
-            <button class="size-btn">L</button>
-            <button class="size-btn">XL</button>
+        <p style="color: #666;">{{ product.short_desc }}</p>
+        
+        <div class="price-section">
+            <span class="current-price">₹{{ product.price }}</span>
+            <span class="old-price">₹{{ product.original_price }}</span>
         </div>
+
+        <span class="section-label">Select Size:</span>
+        <div class="size-container">
+            {% for size in product.sizes %}
+                <button class="size-btn">{{ size }}</button>
+            {% endfor %}
+        </div>
+
+        <span class="section-label">Product Details:</span>
+        <p style="white-space: pre-wrap; line-height: 1.6;">{{ product.full_details }}</p>
 
         <div class="action-btns">
             <a href="/add_to_cart/{{ product._id }}" class="btn add-cart">Add to Cart</a>
             <a href="/checkout/{{ product._id }}" class="btn buy-now">Buy Now</a>
         </div>
-        <button class="btn" style="background:#eee; margin-top:10px;">❤️ Add to Wishlist</button>
     </div>
-
-    <div class="section-title">Similar Products</div>
-    <div class="product-grid">
-        </div>
-
-    <div class="section-title">More from this Seller</div>
-    <div class="product-grid">
-        </div>
 </body>
 </html>
