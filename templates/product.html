@@ -6,34 +6,18 @@
     <title>{{ product.name }} | inwear</title>
     <style>
         :root { --primary: #cc0000; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f9f9f9; margin: 0; padding-bottom: 80px; color: #333; }
-        
-        /* ইমেজ সেকশন */
-        .product-img { width: 100%; aspect-ratio: 1/1; object-fit: cover; background: #eee; }
-        
-        .details-container { padding: 20px; background: white; border-radius: 20px 20px 0 0; margin-top: -20px; }
-        
-        /* প্রাইস সেকশন */
+        body { font-family: sans-serif; background: #f9f9f9; margin: 0; padding-bottom: 80px; }
+        .product-img { width: 100%; aspect-ratio: 1/1; object-fit: cover; }
+        .details-container { padding: 20px; background: white; }
         .price-section { margin: 15px 0; }
         .current-price { color: var(--primary); font-size: 28px; font-weight: bold; }
         .old-price { color: #888; text-decoration: line-through; margin-left: 10px; font-size: 18px; }
-        
-        /* সাইজ সিলেকশন */
-        .section-label { font-weight: bold; margin-top: 20px; display: block; color: #555; }
+        .section-label { font-weight: bold; margin-top: 20px; display: block; color: #444; }
         .size-container { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
-        .size-btn { padding: 10px 18px; border: 1px solid #ddd; border-radius: 8px; background: white; cursor: pointer; font-weight: 600; }
-        .size-btn:hover { border-color: var(--primary); color: var(--primary); }
-        
-        /* বাটন সেকশন */
-        .action-btns { display: flex; gap: 10px; margin-top: 25px; }
-        .btn { flex: 1; padding: 15px; border: none; border-radius: 10px; font-weight: bold; text-align: center; cursor: pointer; text-decoration: none; }
-        .add-cart { background: #ff9800; color: white; }
-        .buy-now { background: var(--primary); color: white; }
-        
-        /* রিলেটেড প্রোডাক্ট গ্রিড */
-        .section-title { padding: 20px 20px 10px; font-weight: bold; color: #555; }
-        .product-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 0 15px; }
-        .product-card { background: white; padding: 10px; border-radius: 10px; text-decoration: none; color: #333; }
+        .size-btn { padding: 10px 18px; border: 1px solid #ddd; border-radius: 8px; background: white; cursor: pointer; }
+        .btn { flex: 1; padding: 15px; border: none; border-radius: 10px; font-weight: bold; text-align: center; cursor: pointer; text-decoration: none; display: block; }
+        .add-cart { background: #ff9800; color: white; margin-top: 20px; }
+        .buy-now { background: var(--primary); color: white; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -46,36 +30,37 @@
         
         <div class="price-section">
             <span class="current-price">₹{{ product.price }}</span>
-            {% if product.original_price > product.price %}
+            {% if product.original_price and product.original_price > product.price %}
                 <span class="old-price">₹{{ product.original_price }}</span>
             {% endif %}
         </div>
 
+        {% if product.sizes %}
         <span class="section-label">Select Size:</span>
         <div class="size-container">
             {% for size in product.sizes %}
                 <button class="size-btn">{{ size }}</button>
             {% endfor %}
         </div>
+        {% endif %}
 
+        {% if product.full_details %}
         <span class="section-label">Product Details:</span>
         <p style="white-space: pre-wrap; line-height: 1.6; font-size: 14px;">{{ product.full_details }}</p>
+        {% endif %}
 
-        <div class="action-btns">
-            <a href="/add_to_cart/{{ product._id }}" class="btn add-cart">Add to Cart</a>
-            <a href="/checkout/{{ product._id }}" class="btn buy-now">Buy Now</a>
-        </div>
+        <a href="/add_to_cart/{{ product._id }}" class="btn add-cart">Add to Cart</a>
+        <a href="/checkout/{{ product._id }}" class="btn buy-now">Buy Now</a>
     </div>
 
     {% if seller_products %}
-    <div class="section-title">More from this Seller</div>
-    <div class="product-grid">
+    <div style="padding: 20px; font-weight: bold; color: #555;">More from this Seller</div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 0 15px;">
         {% for sp in seller_products %}
             {% if sp._id|string != product._id|string %}
-                <a href="/product/{{ sp._id }}" class="product-card">
+                <a href="/product/{{ sp._id }}" style="text-decoration:none; color:#333;">
                     <img src="{{ sp.image }}" style="width:100%; border-radius:8px; aspect-ratio:1/1; object-fit:cover;">
-                    <p style="margin: 10px 0 0; font-size: 14px; font-weight: bold;">{{ sp.name }}</p>
-                    <p style="color:var(--primary); font-weight:bold;">₹{{ sp.price }}</p>
+                    <p style="margin: 5px 0; font-size: 14px;">{{ sp.name }}</p>
                 </a>
             {% endif %}
         {% endfor %}
