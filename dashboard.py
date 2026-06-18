@@ -32,7 +32,8 @@ def seller_dashboard():
                 desc=request.form.get('desc'),
                 price=request.form.get('price'),
                 image=image_path,
-                is_owner=user.get('is_owner', False)
+                is_owner=user.get('is_owner', False),
+                seller_id=user.get('discord_id') # <--- এই লাইনটি নতুন যোগ হলো
             )
             return redirect('/seller')
 
