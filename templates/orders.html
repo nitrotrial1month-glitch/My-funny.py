@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Orders</title>
+    <style>
+        body { background: #f1f2f4; font-family: sans-serif; padding: 20px; }
+        .order-card { background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; }
+        .status-pending { color: orange; font-weight: bold; }
+        .back-link { display: inline-block; margin-bottom: 15px; color: #cc0000; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <a href="/account" class="back-link">← Back to Account</a>
+    <h2>My Orders</h2>
+    {% for order in orders %}
+    <div class="order-card">
+        <div><strong>Date:</strong> {{ order.date[:10] }}</div>
+        <div><strong>Total:</strong> ₹{{ order.total }}</div>
+        <div><strong>Status:</strong> <span class="status-pending">{{ order.status }}</span></div>
+        <hr>
+        {% for item in order.items %}
+            <p>{{ item.name }} - ₹{{ item.price }}</p>
+        {% endfor %}
+    </div>
+    {% else %}
+        <p>No orders placed yet.</p>
+    {% endfor %}
+</body>
+</html>
+
