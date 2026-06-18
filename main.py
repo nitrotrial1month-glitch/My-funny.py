@@ -35,9 +35,9 @@ class FunnyBot(commands.Bot):
             strip_after_prefix=True
         )
         
-        # ⚠️ আপনার আসল ডিসকর্ড রোলের আইডিগুলো এখানে বসিয়ে নেবেন
+        # ⚠️ Role IDs
         self.SELLER_ROLE_ID = 1516716499107315792 
-        self.OWNER_ROLE_ID = 1509737313561870518 # <-- ওনার রোলের আইডি এখানে দিন
+        self.OWNER_ROLE_ID = 1509737313561870518 
 
     async def setup_hook(self):
         print("Loading Cogs...")
@@ -62,7 +62,6 @@ class FunnyBot(commands.Bot):
             is_seller = any(role.id == self.SELLER_ROLE_ID for role in after.roles)
             is_owner = any(role.id == self.OWNER_ROLE_ID for role in after.roles)
 
-            # ডাটাবেসে একসাথে Seller এবং Owner স্ট্যাটাস সেভ করে দেওয়া হলো
             Database.update_website_roles(after.id, after.name, is_seller, is_owner)
             
             seller_role_before = discord.utils.get(before.roles, id=self.SELLER_ROLE_ID)
@@ -91,6 +90,52 @@ async def on_ready():
     print(f"Logged in as {bot.user} (ID: {bot.user.id})")
     print("------ Ready to go! ------")
     await bot.change_presence(activity=discord.Game(name="/help | Nova help"))
+
+# ================= REACTION VERIFICATION SYSTEM =================
+@bot.event
+async def on_raw_reaction_add(payload):
+    # ⚠️ নিচে ১২৩৪৫৬৭৮৯০ কেটে আপনার নিজের ডিসকর্ড ইউজার আইডিটি বসিয়ে দিন
+    OWNER_USER_ID = 1234567890 
+    
+    if payload.user_id != OWNER_USER_ID:
+        return
+
+    emoji = str(payload.emoji)
+    if emoji not in ['✅', '❌']:
+        return
+
+    channel = bot.get_channel(payload.channel_id)
+    if not channel:
+        return
+
+    try:
+        message = await channel.fetch_message(payload.message_id)
+    except:
+        return
+
+    if not message.embeds:
+        return
+    
+    embed = message.embeds[0]
+    if embed.footer and embed.footer.text and embed.footer.text.startswith("ID: "):
+        product_id = embed.footer.text.split("ID: ")[1]
+        
+        if emoji == '✅':
+            Database.approve_product(product_id)
+            new_embed = embed.copy()
+            new_embed.color = 65280 # Green
+            new_embed.title = "🟢 Product Approved"
+            await message.edit(embed=new_embed)
+            await channel.send(f"✅ Product `{product_id}` has been successfully verified and is now live on the website!")
+            
+        elif emoji == '❌':
+            Database.delete_product(product_id)
+            new_embed = embed.copy()
+            new_embed.color = 16711680 # Red
+            new_embed.title = "🔴 Product Declined"
+            await message.edit(embed=new_embed)
+            await channel.send(f"❌ Product `{product_id}` has been rejected and deleted.")
+# ================================================================
 
 @bot.hybrid_command(name="set_prefix", description="Add a custom prefix (Default 'Nova' will ALWAYS work)")
 @commands.has_permissions(administrator=True)
@@ -126,4 +171,4 @@ if __name__ == "__main__":
         bot.run(token)
     else:
         print("Error: 'DISCORD_TOKEN' not found!")
-                    
+        
