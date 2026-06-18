@@ -269,11 +269,11 @@
     </div>
 
     <div class="main-content">
-        <div class="product-grid">
+                <div class="product-grid">
             {% if products %}
                 {% for p in products %}
                 {% if p.status == 'Approved' %}
-                <div class="product-card">
+                <a href="/product/{{ p._id }}" class="product-card" style="text-decoration: none; color: inherit;">
                     <div class="wishlist-btn">♡</div>
                     
                     <div class="product-img-container">
@@ -284,11 +284,11 @@
                         <div class="product-title">{{ p.name }}</div>
                         <div class="product-price">₹{{ p.price }} <span>₹999</span></div>
                     </div>
-                </div>
+                </a>
                 {% endif %}
                 {% endfor %}
             {% else %}
-                <p style="text-align: center; width: 200%; padding: 20px;">No products available right now.</p>
+                <p style="text-align: center; width: 100%; padding: 20px;">No products available right now.</p>
             {% endif %}
         </div>
     </div>
