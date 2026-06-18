@@ -1,6 +1,7 @@
 import os
 import traceback
 from flask import Flask, render_template, redirect, url_for, session, request
+from werkzeug.utils import secure_filename
 from threading import Thread
 import requests
 from bson import ObjectId
@@ -158,15 +159,20 @@ def checkout():
 
 @app.route('/product/<product_id>')
 def product_details(product_id):
-    # ডাটাবেস থেকে প্রোডাক্টের ডিটেইলস আনা
     col = Database.get_collection("products")
+    # ObjectId ব্যবহার করার সময় খেয়াল রাখবেন
     product = col.find_one({"_id": ObjectId(product_id)})
     
     if not product:
         return "Product not found!", 404
         
-    return render_template('product.html', product=product)
-
+    # সেলারের অন্যান্য প্রোডাক্ট আনার ফাংশন যদি থাকে তবে আনুন, না থাকলে খালি লিস্ট
+    seller_products = []
+    if 'seller_id' in product:
+        seller_products = Database.get_products_by_seller(product['seller_id'])
+        
+    return render_template('product.html', product=product, seller_products=seller_products)
+    
 @app.route('/seller/upload', methods=['POST'])
 def upload_product():
     user = session.get('user')
