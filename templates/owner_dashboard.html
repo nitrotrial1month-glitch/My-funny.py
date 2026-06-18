@@ -1,42 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Owner Panel | inwear</title>
+    <title>Master Control | Owner Panel</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f4f9; padding: 20px; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1 { color: #cc0000; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        body { font-family: sans-serif; background: #f9f9f9; padding: 20px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h1, h2 { color: #cc0000; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 40px; }
         th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
         th { background: #333; color: white; }
-        .btn-toggle { background: #4caf50; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 3px; }
+        
+        /* Buttons */
+        .btn-del { background: #ff4d4d; color: white; border: none; padding: 6px 12px; cursor: pointer; border-radius: 4px; }
+        .btn-approve { background: #008CBA; color: white; border: none; padding: 6px 12px; cursor: pointer; border-radius: 4px; margin-right: 5px; }
+        .btn-toggle { background: #4caf50; color: white; border: none; padding: 6px 12px; cursor: pointer; border-radius: 4px; }
+        
+        /* Badges */
+        .badge-pending { background: #ff9800; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        .badge-approved { background: #4caf50; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>👑 Owner Panel - Master Control</h1>
-
-        <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-            <h3>Bot Settings</h3>
-            <form method="POST">
-                <label>Prefix:</label>
-                <input type="text" name="prefix" value="{{ config.prefix or '' }}" style="width: 100%; padding: 8px;">
-                <br><br>
-                <label>Status:</label>
-                <input type="text" name="status" value="{{ config.status or '' }}" style="width: 100%; padding: 8px;">
-                <br><br>
-                <button type="submit" style="background: #333; color: white; padding: 10px 20px; border: none;">Save Changes</button>
-            </form>
-        </div>
-
-        <h3>Manage User Roles</h3>
+        <h1>👑 Master Control Panel</h1>
+        
+        <h2>📦 Product Verification</h2>
         <table>
+            <tr><th>Product Name</th><th>Price</th><th>Status</th><th>Action</th></tr>
+            {% for p in products %}
             <tr>
-                <th>Discord ID</th>
-                <th>Is Seller?</th>
-                <th>Action</th>
+                <td>{{ p.name }}</td>
+                <td>৳{{ p.price }}</td>
+                <td>
+                    {% if p.status == 'Approved' %}
+                        <span class="badge-approved">Approved</span>
+                    {% else %}
+                        <span class="badge-pending">Pending</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div style="display: flex;">
+                        {% if p.status != 'Approved' %}
+                        <form action="/approve_product/{{ p._id }}" method="POST">
+                            <button type="submit" class="btn-approve">✅ Approve</button>
+                        </form>
+                        {% endif %}
+                        <form action="/delete_product/{{ p._id }}" method="POST">
+                            <button type="submit" class="btn-del">🗑️ Delete</button>
+                        </form>
+                    </div>
+                </td>
             </tr>
+            {% endfor %}
+        </table>
+
+        <h2>👥 Manage Sellers</h2>
+        <table>
+            <tr><th>Discord ID</th><th>Seller Access</th><th>Action</th></tr>
             {% for u in all_users %}
             <tr>
                 <td>{{ u.discord_id }}</td>
@@ -49,8 +69,8 @@
             </tr>
             {% endfor %}
         </table>
-        <br>
-        <a href="/">⬅ Back to Home</a>
+        
+        <br><a href="/">⬅ Back to Home</a>
     </div>
 </body>
 </html>
