@@ -166,6 +166,47 @@ def product_details(product_id):
         return "Product not found!", 404
         
     return render_template('product.html', product=product)
+
+@app.route('/seller/upload', methods=['POST'])
+def upload_product():
+    user = session.get('user')
+    if not user: return redirect('/account')
+    
+    # ১. ফর্ম থেকে ডাটা সংগ্রহ করা
+    name = request.form.get('name')
+    desc = request.form.get('desc')
+    sizes_input = request.form.get('sizes') # e.g., "S, M, L"
+    original_price = float(request.form.get('original_price', 0))
+    discount = float(request.form.get('discount', 0))
+    image = request.form.get('image')
+    
+    # ২. ডাটা প্রসেসিং
+    # সাইজগুলোকে কমা দিয়ে আলাদা করে লিস্টে রূপান্তর
+    sizes_list = [s.strip() for s in sizes_input.split(',')]
+    
+    # অফার ক্যালকুলেশন
+    final_price = original_price - (original_price * (discount / 100))
+    
+    # ৩. ডাটাবেসে পাঠানো
+    # এখানে আপনার Database.add_product ফাংশনটি কল হবে
+    # নিশ্চিত করুন আপনার Database.add_product ফাংশনে নতুন প্যারামিটারগুলো নেওয়ার ব্যবস্থা আছে
+    Database.add_product(
+        name=name,
+        desc=desc,
+        price=final_price, # সেভ হবে ডিসকাউন্ট করা দাম
+        image=image,
+        is_owner=user.get('is_owner', False),
+        seller_id=user.get('id'),
+        # নতুন ডাটাগুলো পাঠানোর জন্য ফাংশনে এগুলো যোগ করতে হবে
+        extra_data={
+            "sizes": sizes_list,
+            "original_price": original_price,
+            "discount": discount,
+            "fabric_warranty": desc # যেহেতু আপনি সব ডিটেইলস 'desc' এ নিচ্ছেন
+        }
+    )
+    
+    return redirect('/seller')
     
 # --- Server Setup ---
 def run():
