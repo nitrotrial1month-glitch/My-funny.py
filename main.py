@@ -91,13 +91,20 @@ async def on_ready():
     print("------ Ready to go! ------")
     await bot.change_presence(activity=discord.Game(name="/help | Nova help"))
 
-# ================= REACTION VERIFICATION SYSTEM =================
+# ================= REACTION VERIFICATION SYSTEM (ROLE BASED) =================
 @bot.event
 async def on_raw_reaction_add(payload):
-    # ⚠️ নিচে ১২৩৪৫৬৭৮৯০ কেটে আপনার নিজের ডিসকর্ড ইউজার আইডিটি বসিয়ে দিন
-    OWNER_USER_ID = 1234567890 
-    
-    if payload.user_id != OWNER_USER_ID:
+    # বট নিজের রিয়্যাকশন ইগনোর করবে
+    if payload.user_id == bot.user.id:
+        return
+
+    # মেম্বার ডাটা না থাকলে (যেমন DM এ) কাজ করবে না
+    if not payload.member:
+        return
+
+    # চেক করবে রিয়্যাক্ট করা মেম্বারের কাছে OWNER_ROLE আছে কি না
+    has_owner_role = any(role.id == bot.OWNER_ROLE_ID for role in payload.member.roles)
+    if not has_owner_role:
         return
 
     emoji = str(payload.emoji)
@@ -126,7 +133,7 @@ async def on_raw_reaction_add(payload):
             new_embed.color = 65280 # Green
             new_embed.title = "🟢 Product Approved"
             await message.edit(embed=new_embed)
-            await channel.send(f"✅ Product `{product_id}` has been successfully verified and is now live on the website!")
+            await channel.send(f"✅ Product `{product_id}` has been successfully verified by {payload.member.mention} and is now live!")
             
         elif emoji == '❌':
             Database.delete_product(product_id)
@@ -134,8 +141,8 @@ async def on_raw_reaction_add(payload):
             new_embed.color = 16711680 # Red
             new_embed.title = "🔴 Product Declined"
             await message.edit(embed=new_embed)
-            await channel.send(f"❌ Product `{product_id}` has been rejected and deleted.")
-# ================================================================
+            await channel.send(f"❌ Product `{product_id}` has been rejected by {payload.member.mention} and deleted.")
+# =============================================================================
 
 @bot.hybrid_command(name="set_prefix", description="Add a custom prefix (Default 'Nova' will ALWAYS work)")
 @commands.has_permissions(administrator=True)
@@ -171,4 +178,4 @@ if __name__ == "__main__":
         bot.run(token)
     else:
         print("Error: 'DISCORD_TOKEN' not found!")
-        
+    
