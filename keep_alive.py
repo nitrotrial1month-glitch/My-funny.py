@@ -172,40 +172,41 @@ def upload_product():
     user = session.get('user')
     if not user: return redirect('/account')
     
-    # ইনপুট ভ্যালুগুলো সংগ্রহ করুন
-    name = request.form.get('name')
-    short_desc = request.form.get('short_desc')
-    full_details = request.form.get('full_details')
-    sizes_input = request.form.get('sizes')
+    # ইনপুট পাওয়ার পর ভ্যালুগুলোকে ০ দিয়ে ডিফল্ট সেট করুন
+    raw_price = request.form.get('original_price', '0')
+    raw_discount = request.form.get('discount', '0')
     
-    # প্রাইস ক্যালকুলেশন (নিশ্চিত করুন ইনপুট ০ নয়)
-    original = float(request.form.get('original_price', 0))
-    discount = float(request.form.get('discount', 0))
+    # খালি বা ফাঁকা ইনপুট হলে ০ ধরে নেবে
+    original = float(raw_price) if raw_price and raw_price.strip() != "" else 0.0
+    discount = float(raw_discount) if raw_discount and raw_discount.strip() != "" else 0.0
+    
+    # ক্যালকুলেশন
     final_price = original - (original * (discount / 100))
     
-    # ইমেজ হ্যান্ডলিং
+    # ফাইল হ্যান্ডলিং
     file = request.files.get('image')
-    image_url = ""
+    image_path = ""
     if file:
         filename = secure_filename(file.filename)
         file.save(os.path.join('static/uploads', filename))
-        image_url = 'static/uploads/' + filename
-
-    # ডাটাবেসে সেভ করার জন্য ডিকশনারি
+        image_path = 'static/uploads/' + filename
+    
+    # ডাটা তৈরি
     product_data = {
-        "name": name,
-        "description": short_desc,
-        "full_details": full_details,
-        "sizes": [s.strip() for s in sizes_input.split(',')],
+        "name": request.form.get('name'),
+        "description": request.form.get('short_desc'),
+        "full_details": request.form.get('full_details'),
+        "sizes": [s.strip() for s in request.form.get('sizes', '').split(',')],
         "original_price": original,
         "price": final_price,
-        "image": image_url, 
+        "image": image_path,
         "status": "Pending",
         "seller_id": str(user.get('id'))
     }
     
     Database.add_product_from_dict(product_data)
     return redirect('/seller')
+    
     
 # --- Server Setup ---
 def run():
