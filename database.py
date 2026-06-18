@@ -124,12 +124,11 @@ class Database:
         col = Database.get_collection("products")
         return list(col.find({})) if col is not None else []
 
-    @staticmethod
-    def add_product(name, desc, price, image, is_owner=False):
+        @staticmethod
+    def add_product(name, desc, price, image, is_owner=False, seller_id=None):
         col = Database.get_collection("products")
         if col is None: return
         
-        # ওনার হলে সরাসরি Approved, সেলার হলে Pending
         status = "Approved" if is_owner else "Pending"
         
         product_data = {
@@ -143,7 +142,6 @@ class Database:
         result = col.insert_one(product_data)
         product_id = str(result.inserted_id)
         
-        # ওনার আপলোড করলে ডিসকর্ডে ভেরিফিকেশনের মেসেজ পাঠানোর দরকার নেই
         if is_owner:
             print(f"🛍️ Owner uploaded a product. Auto-approved: {name}")
             return
@@ -154,14 +152,19 @@ class Database:
         if webhook_url:
             embed = {
                 "title": "🟡 New Product Pending Verification",
-                "description": f"**Product:** {name}\n**Price:** {price}৳\n\n*Seller: Please reply to this message with a short video of the product.*\n*Owner: React with ✅ or ❌ to verify.*",
+                "description": f"**Product:** {name}\n**Price:** {price}৳\n\n*Seller: Please **REPLY** to this message with a short video of the product.*\n*Owner: React with ✅ or ❌ on this message to verify.*",
                 "color": 16753920,
-                # ছবির লাইনটি (thumbnail) এখান থেকে বাদ দেওয়া হয়েছে
                 "footer": {"text": f"ID: {product_id}"}
             }
+            
+            # সেলারকে মেনশন করার জন্য content যোগ করা হলো
+            payload = {"embeds": [embed]}
+            if seller_id:
+                payload["content"] = f"🔔 <@{seller_id}> Your product is waiting for verification!"
+
             try:
                 import requests
-                requests.post(webhook_url, json={"embeds": [embed]})
+                requests.post(webhook_url, json=payload)
             except Exception as e:
                 print(f"Webhook Exception Error: {e}")
                 
