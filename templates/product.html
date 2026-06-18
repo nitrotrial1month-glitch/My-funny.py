@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ product.name }} | inwear</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f9f9f9; }
+        .product-img { width: 100%; max-width: 400px; display: block; margin: auto; border-radius: 10px; }
+        .price { color: #cc0000; font-size: 24px; font-weight: bold; }
+        .buy-btn { background: #cc0000; color: white; padding: 15px; text-align: center; display: block; border-radius: 8px; text-decoration: none; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <img src="{{ product.image }}" class="product-img">
+    <h2>{{ product.name }}</h2>
+    <p>{{ product.description }}</p>
+    <div class="price">₹{{ product.price }}</div>
+    <a href="/add_to_cart/{{ product._id }}" class="buy-btn">Add to Cart</a>
+</body>
+</html>
+
