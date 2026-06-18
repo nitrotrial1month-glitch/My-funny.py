@@ -25,17 +25,21 @@ def seller_dashboard():
                 filename = secure_filename(file.filename)
                 file.save(os.path.join(UPLOAD_FOLDER, filename))
                 image_path = f"/static/uploads/{filename}"
-
-            # 💡 ফিক্স করা হয়েছে: id এবং discord_id দুটোই চেক করবে
-            seller_discord_id = user.get('discord_id') or user.get('id')
-
+                          
+            # সব রকম সম্ভাব্য নাম চেক করা হচ্ছে এবং প্রিন্ট করা হচ্ছে
+            seller_discord_id = user.get('discord_id') or user.get('id') or user.get('_id')
+            
+            # Render-এর লগে আইডিটা ঠিকমতো আসছে কি না তা চেক করার জন্য
+            print(f"🕵️‍♂️ DEBUG: Seller ID found -> {seller_discord_id}")
+            print(f"🕵️‍♂️ DEBUG: Full User Data -> {user}")
+            
             Database.add_product(
                 name=request.form.get('name'),
                 desc=request.form.get('desc'),
                 price=request.form.get('price'),
                 image=image_path,
                 is_owner=user.get('is_owner', False),
-                seller_id=seller_discord_id  # <--- এই আইডিটি ডাটাবেসে পাঠানো হচ্ছে
+                seller_id=seller_discord_id
             )
             return redirect('/seller')
 
