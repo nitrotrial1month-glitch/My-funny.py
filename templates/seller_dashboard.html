@@ -14,19 +14,20 @@
         .card { background: var(--card-bg); border-radius: 12px; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
         .card h3 { margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; color: #444; }
         
-        input, textarea { width: 100%; padding: 12px; margin: 8px 0 15px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        label { font-size: 14px; font-weight: 600; color: #555; display: block; margin-top: 15px; margin-bottom: 5px; }
+        input, textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
         
-        .btn { background: var(--primary); color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; font-size: 15px; }
+        .btn { background: var(--primary); color: white; padding: 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; margin-top: 20px; }
         .btn:hover { opacity: 0.9; }
         
         .product-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #eee; }
         .product-info { display: flex; flex-direction: column; gap: 4px; }
-        .badge { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; color: white; display: inline-block; width: max-content; }
+        .badge { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; color: white; width: max-content; }
         .pending { background: #ff9800; }
         .approved { background: #28a745; }
         
         .btn-delete { background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
-        .notice { background: #e8f4fd; color: #0056b3; padding: 15px; border-radius: 6px; margin-bottom: 20px; font-size: 14px; border-left: 4px solid #0056b3; }
+        .notice { background: #e8f4fd; color: #0056b3; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #0056b3; font-size: 14px; }
         .back-link { display: block; text-align: center; margin-top: 20px; color: var(--text); text-decoration: none; font-weight: bold; }
     </style>
 </head>
@@ -38,23 +39,31 @@
         </div>
 
         <div class="notice">
-            <strong>ℹ️ Verification Required:</strong> All products uploaded here will be reviewed. Please provide detailed fabric and warranty info.
+            <strong>ℹ️ Verification Required:</strong> Upload high-quality photos. Products will be verified by the Owner before listing.
         </div>
 
         <div class="card">
             <h3>Upload New Product</h3>
             <form method="POST" enctype="multipart/form-data">
                 <input type="text" name="name" placeholder="Product Name" required>
-                <textarea name="desc" placeholder="Full Details: Fabric, Warranty, Features..." rows="4" required></textarea>
+                
+                <label>Short Description (For product card):</label>
+                <textarea name="short_desc" placeholder="Brief info..." rows="2" required></textarea>
+                
+                <label>Full Product Details (Fabric, Warranty, etc.):</label>
+                <textarea name="full_details" placeholder="Detailed specs..." rows="4" required></textarea>
                 
                 <label>Available Sizes (Comma separated):</label>
                 <input type="text" name="sizes" placeholder="e.g. S, M, L, XL, 32, 34" required>
                 
-                <input type="number" name="original_price" placeholder="Original Price (₹)" required>
-                <input type="number" name="discount" placeholder="Discount Percentage (%)" min="0" max="100">
+                <label>Original Price (₹):</label>
+                <input type="number" name="original_price" required>
                 
-                <label>Product Image Link:</label>
-                <input type="text" name="image" placeholder="Image URL" required>
+                <label>Discount Percentage (%):</label>
+                <input type="number" name="discount" min="0" max="100" value="0">
+                
+                <label>Product Photo (From Gallery):</label>
+                <input type="file" name="image" accept="image/*" required>
                 
                 <button type="submit" class="btn">Submit for Review</button>
             </form>
