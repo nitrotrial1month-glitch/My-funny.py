@@ -172,25 +172,40 @@ def upload_product():
     user = session.get('user')
     if not user: return redirect('/account')
     
-    # ফর্ম ডাটা রিসিভ করার জন্য request ব্যবহার করতেই হবে
+    # ইনপুট ভ্যালুগুলো সংগ্রহ করুন
     name = request.form.get('name')
     short_desc = request.form.get('short_desc')
     full_details = request.form.get('full_details')
     sizes_input = request.form.get('sizes')
-    original_price = float(request.form.get('original_price', 0))
+    
+    # প্রাইস ক্যালকুলেশন (নিশ্চিত করুন ইনপুট ০ নয়)
+    original = float(request.form.get('original_price', 0))
     discount = float(request.form.get('discount', 0))
+    final_price = original - (original * (discount / 100))
     
-    # ফাইল হ্যান্ডলিং
+    # ইমেজ হ্যান্ডলিং
     file = request.files.get('image')
-    
-    # আপনার ডাটাবেস ফাংশন কল করুন
-    final_price = original_price - (original_price * (discount / 100))
-    
-    # এখানে ডাটাবেসে ডাটা পাঠানোর লজিক বসান
-    # Database.add_product(...) 
-    
-    return redirect('/seller')
+    image_url = ""
+    if file:
+        filename = secure_filename(file.filename)
+        file.save(os.path.join('static/uploads', filename))
+        image_url = 'static/uploads/' + filename
 
+    # ডাটাবেসে সেভ করার জন্য ডিকশনারি
+    product_data = {
+        "name": name,
+        "description": short_desc,
+        "full_details": full_details,
+        "sizes": [s.strip() for s in sizes_input.split(',')],
+        "original_price": original,
+        "price": final_price,
+        "image": image_url, 
+        "status": "Pending",
+        "seller_id": str(user.get('id'))
+    }
+    
+    Database.add_product_from_dict(product_data)
+    return redirect('/seller')
     
 # --- Server Setup ---
 def run():
