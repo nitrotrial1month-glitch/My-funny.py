@@ -196,3 +196,38 @@ class Database:
             ]
             col.insert_many(dummy_products)
             
+    # ================= 🛒 CART SYSTEM =================
+    @staticmethod
+    def get_user_cart(user_id):
+        col = Database.get_collection("cart")
+        if col is None: return []
+        # ইউজারের আইডি অনুযায়ী কার্টের সব প্রোডাক্ট ফেরত দেবে
+        cart = col.find_one({"user_id": str(user_id)})
+        if cart:
+            product_ids = [ObjectId(pid) for pid in cart.get("items", [])]
+            # প্রোডাক্ট কালেকশন থেকে আসল ডিটেইলস নিয়ে আসবে
+            products_col = Database.get_collection("products")
+            return list(products_col.find({"_id": {"$in": product_ids}}))
+        return []
+
+    @staticmethod
+    def add_to_cart(user_id, product_id):
+        col = Database.get_collection("cart")
+        if col is None: return
+        # কার্টে প্রোডাক্ট আইডি যোগ করছে
+        col.update_one(
+            {"user_id": str(user_id)},
+            {"$addToSet": {"items": str(product_id)}},
+            upsert=True
+        )
+
+    @staticmethod
+    def remove_from_cart(user_id, product_id):
+        col = Database.get_collection("cart")
+        if col is None: return
+        # কার্ট থেকে প্রোডাক্ট আইডি রিমুভ করছে
+        col.update_one(
+            {"user_id": str(user_id)},
+            {"$pull": {"items": str(product_id)}}
+        )
+        
