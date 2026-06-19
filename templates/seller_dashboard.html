@@ -20,13 +20,19 @@
         .btn { background: var(--primary); color: white; padding: 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; margin-top: 20px; }
         .btn:hover { opacity: 0.9; }
         
-        .product-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #eee; }
+        .product-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #eee; flex-wrap: wrap; gap: 15px; }
         .product-info { display: flex; flex-direction: column; gap: 4px; }
         .badge { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; color: white; width: max-content; }
         .pending { background: #ff9800; }
         .approved { background: #28a745; }
         
-        .btn-delete { background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
+        /* Action Buttons Style */
+        .action-buttons { display: flex; gap: 10px; align-items: center; }
+        .btn-edit { background: #007bff; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 13px; font-weight: bold; }
+        .btn-edit:hover { background: #0056b3; }
+        .btn-delete { background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-delete:hover { background: #c82333; }
+        
         .notice { background: #e8f4fd; color: #0056b3; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #0056b3; font-size: 14px; }
         .back-link { display: block; text-align: center; margin-top: 20px; color: var(--text); text-decoration: none; font-weight: bold; }
     </style>
@@ -54,13 +60,13 @@
                 <textarea name="full_details" placeholder="Detailed specs..." rows="4" required></textarea>
                 
                 <label>Available Sizes (Comma separated):</label>
-                <input type="text" name="sizes" placeholder="e.g. S, M, L, XL, 32, 34" required>
+                <input type="text" name="sizes" placeholder="e.g. S, M, L, XL" required>
                 
                 <label>Original Price (₹):</label>
                 <input type="number" id="orig_price" name="original_price" required oninput="calculateDiscount()">
                 
                 <label>Final Price (After Discount ₹):</label>
-                <input type="number" id="final_price" name="final_price" required oninput="calculateDiscount()">
+                <input type="number" id="final_price" name="final_price" placeholder="Leave empty if no discount" oninput="calculateDiscount()">
                 
                 <p id="discount_display" style="color: #28a745; font-weight: bold; margin-top: 5px; font-size: 14px;"></p>
                 
@@ -76,7 +82,7 @@
             {% for p in products %}
             <div class="product-item">
                 <div class="product-info">
-                    <span style="font-weight:bold;">{{ p.name }}</span>
+                    <span style="font-weight:bold; font-size: 16px;">{{ p.name }}</span>
                     <span>
                         Price: ₹{{ p.price }} 
                         {% if p.original_price and p.original_price > p.price %}
@@ -90,9 +96,13 @@
                         {{ p.status or 'Pending' }}
                     </span>
                 </div>
-                <form action="/delete_product/{{ p._id }}" method="POST">
-                    <button type="submit" class="btn-delete">Delete</button>
-                </form>
+                
+                <div class="action-buttons">
+                    <a href="/seller/edit/{{ p._id }}" class="btn-edit">Edit</a>
+                    <form action="/delete_product/{{ p._id }}" method="POST" style="margin: 0;">
+                        <button type="submit" class="btn-delete">Delete</button>
+                    </form>
+                </div>
             </div>
             {% endfor %}
             {% if not products %}
@@ -106,15 +116,22 @@
     <script>
     function calculateDiscount() {
         let orig = parseFloat(document.getElementById('orig_price').value) || 0;
-        let final = parseFloat(document.getElementById('final_price').value) || 0;
+        let finalInput = document.getElementById('final_price').value;
+        let final = parseFloat(finalInput);
         let display = document.getElementById('discount_display');
+
+        // যদি ফাইনাল প্রাইস ইনপুট ফাঁকা থাকে, তাহলে কোনো মেসেজ দেখাবে না
+        if (finalInput.trim() === "" || isNaN(final)) {
+            display.innerText = "";
+            return;
+        }
 
         if (orig > 0 && final > 0 && final < orig) {
             let discount = ((orig - final) / orig) * 100;
             display.innerText = "🎉 You are giving " + discount.toFixed(0) + "% discount!";
             display.style.color = "#28a745";
         } else if (final >= orig && orig > 0) {
-            display.innerText = "⚠️ Final price must be less than Original Price!";
+            display.innerText = "⚠️ Final price must be less than Original Price! (Or leave empty)";
             display.style.color = "#cc0000";
         } else {
             display.innerText = "";
