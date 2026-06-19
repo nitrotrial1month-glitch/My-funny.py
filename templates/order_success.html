@@ -2,33 +2,61 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Order Confirmed</title>
     <style>
-        body { font-family: sans-serif; background: #f4f6f9; text-align: center; padding: 40px 20px; }
-        .card { max-width: 400px; margin: 0 auto; background: white; padding: 40px 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .tick { font-size: 60px; color: #28a745; margin-bottom: 10px; }
-        .btn-orders { display: inline-block; background: #cc0000; color: white; padding: 12px 25px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 25px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f1f3f6; text-align: center; padding: 40px 20px; margin: 0; }
+        .card { max-width: 400px; margin: 0 auto; background: white; padding: 40px 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .tick-img { width: 80px; margin-bottom: 15px; }
+        .title { color: #388e3c; margin-top: 0; font-size: 24px; }
+        .subtitle { color: #555; font-size: 15px; margin-bottom: 25px; }
+        
+        .details-box { background: #f9f9f9; padding: 15px; border-radius: 8px; text-align: left; border: 1px solid #eee; margin-bottom: 25px; }
+        .detail-row { margin: 8px 0; font-size: 14px; color: #333; display: flex; justify-content: space-between; }
+        .detail-row strong { color: #555; }
+        
+        .delivery-box { margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ddd; text-align: center; }
+        .delivery-title { font-size: 13px; color: #888; font-weight: bold; text-transform: uppercase; }
+        .delivery-date { font-size: 18px; color: #cc0000; font-weight: bold; margin-top: 5px; }
+        
+        .btn-orders { display: block; background: #2874f0; color: white; padding: 14px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 15px; width: 100%; box-sizing: border-box; }
     </style>
 </head>
 <body>
     <div class="card">
-        <div class="tick">✅</div>
-        <h2 style="color: #28a745; margin-top: 0;">Order Confirmed!</h2>
-        <p style="color: #555;">Thank you, <strong>{{ order.name }}</strong>!</p>
+        <!-- Success Tick Icon -->
+        <img src="https://img.icons8.com/color/96/000000/ok--v1.png" class="tick-img" alt="Success">
         
-        <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-top: 20px; text-align: left; border: 1px solid #eee;">
-            <p style="margin: 5px 0; font-size: 14px;"><strong>Order ID:</strong> #{{ order._id|string|truncate(8, True, '') }}</p>
-            <p style="margin: 5px 0; font-size: 14px;"><strong>Date:</strong> {{ order.order_date }}</p>
-            <p style="margin: 5px 0; font-size: 14px;"><strong>Payment:</strong> {{ order.payment_method }}</p>
-            <p style="margin: 5px 0; font-size: 16px; color: #cc0000; margin-top: 15px; text-align: center;">
-                <strong>Expected Delivery:</strong><br>
-                {{ order.expected_delivery }}
-            </p>
+        <h2 class="title">Order Confirmed!</h2>
+        <div class="subtitle">Thank you for shopping with us.</div>
+        
+        <div class="details-box">
+            <div class="detail-row">
+                <strong>Order ID:</strong> 
+                <span>#{{ order._id|string|truncate(8, True, '') | upper }}</span>
+            </div>
+            <div class="detail-row">
+                <strong>Date:</strong> 
+                <span>{{ order.order_date }}</span>
+            </div>
+            <div class="detail-row">
+                <strong>Payment Mode:</strong> 
+                <span>{{ order.payment_method }}</span>
+            </div>
+            {% if order.utr_number %}
+            <div class="detail-row">
+                <strong>UTR Status:</strong> 
+                <span style="color: #f0ad4e; font-weight: bold;">Verifying...</span>
+            </div>
+            {% endif %}
+            
+            <div class="delivery-box">
+                <div class="delivery-title">Expected Delivery By</div>
+                <div class="delivery-date">{{ order.expected_delivery }}</div>
+            </div>
         </div>
 
         <a href="/orders" class="btn-orders">Go to My Orders</a>
     </div>
 </body>
 </html>
-
