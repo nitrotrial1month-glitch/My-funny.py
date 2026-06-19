@@ -139,11 +139,13 @@ def checkout_cart():
     if not user: return redirect('/account')
     
     cart_items = Database.get_user_cart(user['id'])
-    if not cart_items:
-        return redirect('/cart')
-        
+    if not cart_items: return redirect('/cart')
+    
+    # সেভ করা অ্যাড্রেস নিয়ে আসা
+    saved_addresses = Database.get_user_addresses(user['id'])
+    
     total = sum(float(item['price']) for item in cart_items)
-    return render_template('checkout.html', items=cart_items, total_price=total, is_direct=False)
+    return render_template('checkout.html', items=cart_items, total_price=total, is_direct=False, saved_addresses=saved_addresses)
 
 # --- ⚡ Checkout: Direct Buy Now ---
 @app.route('/checkout/<product_id>')
@@ -153,11 +155,13 @@ def checkout_direct(product_id):
     
     col = Database.get_collection("products")
     product = col.find_one({"_id": ObjectId(product_id)})
-    if not product:
-        return "Product not found!", 404
-        
+    if not product: return "Product not found!", 404
+    
+    # সেভ করা অ্যাড্রেস নিয়ে আসা
+    saved_addresses = Database.get_user_addresses(user['id'])
+    
     total = float(product['price'])
-    return render_template('checkout.html', items=[product], total_price=total, is_direct=True, direct_product_id=str(product_id))
+    return render_template('checkout.html', items=[product], total_price=total, is_direct=True, direct_product_id=str(product_id), saved_addresses=saved_addresses)
     
 
 # --- Product Detail Route ---
