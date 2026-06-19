@@ -12,7 +12,6 @@ from facebook_auth import facebook_bp
 from apple_auth import apple_bp
 
 app = Flask(__name__)
-# Session-এর জন্য একটি সিক্রেট কি
 app.secret_key = "inwear_super_secret_key_2026"
 
 # আলাদা ফাইলগুলোকে ওয়েবসাইটের সাথে কানেক্ট করা হলো
@@ -30,14 +29,12 @@ DISCORD_API_BASE_URL = "https://discord.com/api"
 AUTHORIZATION_BASE_URL = f"{DISCORD_API_BASE_URL}/oauth2/authorize"
 TOKEN_URL = f"{DISCORD_API_BASE_URL}/oauth2/token"
 
-
 # --- Home Route ---
 @app.route('/')
 def home():
     products = Database.get_all_products()
     user_data = session.get('user')
     return render_template('index.html', products=products, user=user_data)
-
 
 # --- Discord Login Routes ---
 @app.route('/login/discord')
@@ -67,11 +64,9 @@ def discord_callback():
         return "Failed to get access token from Discord."
 
     access_token = token_json['access_token']
-
     user_response = requests.get(f"{DISCORD_API_BASE_URL}/users/@me", headers={'Authorization': f'Bearer {access_token}'})
     user_info = user_response.json()
 
-    # ডাটাবেস থেকে Seller এবং Owner স্ট্যাটাস চেক করা
     col = Database.get_collection("users")
     db_user = col.find_one({"discord_id": str(user_info.get('id'))}) if col is not None else None
     
@@ -88,23 +83,16 @@ def discord_callback():
 
     return redirect(url_for('home'))
 
-
 # --- Account & Logout Routes ---
 @app.route('/account')
 def account_page():
     try:
         user_data = session.get('user')
-        
-        # ইউজার লগইন না থাকলে login.html দেখাবে
         if not user_data:
             return render_template('login.html')
-            
-        # লগইন থাকলে account.html দেখাবে
         return render_template('account.html', user=user_data)
-        
     except Exception as e:
-        return f"<div style='padding:20px; font-family:sans-serif;'><h2 style='color:#cc0000;'>⚠️ Account Page Error</h2><p><b>Error:</b> {str(e)}</p><pre style='background:#f4f4f4; padding:15px; border-radius:5px; overflow-x:auto;'>{traceback.format_exc()}</pre></div>"
-
+        return f"<div style='padding:20px;'><h2 style='color:#cc0000;'>⚠️ Error</h2><p>{str(e)}</p></div>"
 
 @app.route('/logout')
 def logout():
@@ -114,12 +102,9 @@ def logout():
 # --- Cart Routes ---
 @app.route('/cart')
 def cart():
-    # ইউজার আইডি অনুযায়ী ডাটাবেস থেকে কার্ট আইটেম আনবে
     user = session.get('user')
     if not user:
         return redirect('/account')
-    
-    # Database.get_user_cart(user['id']) ফাংশনটি আপনার database.py তে থাকতে হবে
     cart_items = Database.get_user_cart(user['id']) 
     total = sum(float(item['price']) for item in cart_items)
     return render_template('cart.html', cart_items=cart_items, total_price=total)
@@ -151,45 +136,41 @@ def orders():
 def checkout():
     user = session.get('user')
     if not user: return redirect('/account')
-    # এখানে কার্টের আইটেমগুলো নিয়ে অর্ডার প্লেস হবে
     cart_items = Database.get_user_cart(user['id'])
     total = sum(float(item['price']) for item in cart_items)
     Database.place_order(user['id'], cart_items, total)
     return redirect('/orders')
 
+# --- Product Detail Route ---
 @app.route('/product/<product_id>')
 def product_details(product_id):
     col = Database.get_collection("products")
-    # ObjectId ব্যবহার করার সময় খেয়াল রাখবেন
     product = col.find_one({"_id": ObjectId(product_id)})
-    
     if not product:
         return "Product not found!", 404
         
-    # সেলারের অন্যান্য প্রোডাক্ট আনার ফাংশন যদি থাকে তবে আনুন, না থাকলে খালি লিস্ট
     seller_products = []
     if 'seller_id' in product:
         seller_products = Database.get_products_by_seller(product['seller_id'])
         
     return render_template('product.html', product=product, seller_products=seller_products)
     
+# --- Product Upload Route ---
 @app.route('/seller/upload', methods=['POST'])
 def upload_product():
     user = session.get('user')
     if not user: return redirect('/account')
     
-    # ইনপুট পাওয়ার পর ভ্যালুগুলোকে ০ দিয়ে ডিফল্ট সেট করুন
-    raw_price = request.form.get('original_price', '0')
-    raw_discount = request.form.get('discount', '0')
+    raw_orig = request.form.get('original_price', '0')
+    raw_final = request.form.get('final_price', '0')
     
-    # খালি বা ফাঁকা ইনপুট হলে ০ ধরে নেবে
-    original = float(raw_price) if raw_price and raw_price.strip() != "" else 0.0
-    discount = float(raw_discount) if raw_discount and raw_discount.strip() != "" else 0.0
+    original = float(raw_orig) if raw_orig and raw_orig.strip() != "" else 0.0
+    final = float(raw_final) if raw_final and raw_final.strip() != "" else 0.0
     
-    # ক্যালকুলেশন
-    final_price = original - (original * (discount / 100))
+    discount_percent = 0
+    if original > 0 and final < original:
+        discount_percent = ((original - final) / original) * 100
     
-    # ফাইল হ্যান্ডলিং
     file = request.files.get('image')
     image_path = ""
     if file:
@@ -197,14 +178,14 @@ def upload_product():
         file.save(os.path.join('static/uploads', filename))
         image_path = 'static/uploads/' + filename
     
-    # ডাটা তৈরি
     product_data = {
         "name": request.form.get('name'),
         "description": request.form.get('short_desc'),
         "full_details": request.form.get('full_details'),
         "sizes": [s.strip() for s in request.form.get('sizes', '').split(',')],
         "original_price": original,
-        "price": final_price,
+        "price": final,
+        "discount_percent": round(discount_percent),
         "image": image_path,
         "status": "Pending",
         "seller_id": str(user.get('id'))
@@ -213,7 +194,6 @@ def upload_product():
     Database.add_product_from_dict(product_data)
     return redirect('/seller')
     
-    
 # --- Server Setup ---
 def run():
     port = int(os.environ.get("PORT", 8080))
@@ -221,7 +201,6 @@ def run():
     for rule in app.url_map.iter_rules():
         print(f"Route: {rule.rule} -> Endpoint: {rule.endpoint}")
     app.run(host='0.0.0.0', port=port)
-
 
 def keep_alive():
     server = Thread(target=run)
