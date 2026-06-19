@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmed</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f6f9; text-align: center; padding: 40px 20px; }
+        .card { max-width: 400px; margin: 0 auto; background: white; padding: 40px 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .tick { font-size: 60px; color: #28a745; margin-bottom: 10px; }
+        .btn-orders { display: inline-block; background: #cc0000; color: white; padding: 12px 25px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 25px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="tick">✅</div>
+        <h2 style="color: #28a745; margin-top: 0;">Order Confirmed!</h2>
+        <p style="color: #555;">Thank you, <strong>{{ order.name }}</strong>!</p>
+        
+        <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-top: 20px; text-align: left; border: 1px solid #eee;">
+            <p style="margin: 5px 0; font-size: 14px;"><strong>Order ID:</strong> #{{ order._id|string|truncate(8, True, '') }}</p>
+            <p style="margin: 5px 0; font-size: 14px;"><strong>Date:</strong> {{ order.order_date }}</p>
+            <p style="margin: 5px 0; font-size: 14px;"><strong>Payment:</strong> {{ order.payment_method }}</p>
+            <p style="margin: 5px 0; font-size: 16px; color: #cc0000; margin-top: 15px; text-align: center;">
+                <strong>Expected Delivery:</strong><br>
+                {{ order.expected_delivery }}
+            </p>
+        </div>
+
+        <a href="/orders" class="btn-orders">Go to My Orders</a>
+    </div>
+</body>
+</html>
+
