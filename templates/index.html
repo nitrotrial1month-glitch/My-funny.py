@@ -20,11 +20,10 @@
             padding: 0;
             background-color: var(--bg-color);
             color: var(--text-dark);
-            /* নিচের নেভিগেশনের জন্য স্পেস */
             padding-bottom: 70px;
         }
 
-        /* ================= 1. Top Sticky Header (Overlap Fix) ================= */
+        /* ================= 1. Top Sticky Header ================= */
         .top-header {
             position: sticky;
             top: 0;
@@ -35,7 +34,6 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.08);
         }
 
-        /* Top Row (Brand Name & Right Icon) */
         .header-top-row {
             display: flex;
             justify-content: space-between;
@@ -57,10 +55,7 @@
             cursor: pointer;
         }
 
-        /* Search Bar */
-        .search-container {
-            padding: 0 15px 10px 15px;
-        }
+        .search-container { padding: 0 15px 10px 15px; }
         .search-box {
             display: flex;
             align-items: center;
@@ -77,13 +72,8 @@
             font-size: 15px;
             padding-left: 8px;
         }
-        .search-box .voice-icon {
-            font-size: 18px;
-            color: #555;
-            cursor: pointer;
-        }
+        .search-box .voice-icon { font-size: 18px; color: #555; cursor: pointer; }
 
-        /* Categories Bar */
         .category-scroll {
             display: flex;
             overflow-x: auto;
@@ -95,25 +85,9 @@
         }
         .category-scroll::-webkit-scrollbar { display: none; }
         
-        .cat-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-width: 60px;
-            cursor: pointer;
-        }
-        .cat-icon {
-            font-size: 24px;
-            background: #f8f8f8;
-            padding: 10px;
-            border-radius: 12px;
-            margin-bottom: 5px;
-        }
-        .cat-text { 
-            font-size: 12px; 
-            font-weight: bold; 
-            color: var(--primary-red); 
-        }
+        .cat-item { display: flex; flex-direction: column; align-items: center; min-width: 60px; cursor: pointer; }
+        .cat-icon { font-size: 24px; background: #f8f8f8; padding: 10px; border-radius: 12px; margin-bottom: 5px; }
+        .cat-text { font-size: 12px; font-weight: bold; color: var(--primary-red); }
 
         /* ================= 2. Product Grid ================= */
         .main-content { padding: 10px; }
@@ -132,6 +106,8 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             display: flex;
             flex-direction: column;
+            text-decoration: none;
+            color: inherit;
         }
 
         .product-img-container {
@@ -141,13 +117,10 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            position: relative;
         }
 
-        .product-img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+        .product-img { width: 100%; height: 100%; object-fit: cover; }
 
         .wishlist-btn {
             position: absolute;
@@ -166,6 +139,20 @@
             color: #ccc;
         }
 
+        /* Discount Badge Styles */
+        .discount-badge {
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+            background-color: var(--primary-red);
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 3px 6px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
         .product-info { padding: 10px; }
         .product-title {
             font-size: 13px;
@@ -175,18 +162,11 @@
             text-overflow: ellipsis;
             margin-bottom: 4px;
         }
-        .product-price {
-            font-size: 16px;
-            font-weight: bold;
-            color: var(--text-dark);
-        }
-        .product-price span {
-            font-size: 12px;
-            color: var(--text-muted);
-            text-decoration: line-through;
-            margin-left: 5px;
-            font-weight: normal;
-        }
+        
+        /* Price Display Update */
+        .price-container { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
+        .product-price { font-size: 16px; font-weight: bold; color: var(--text-dark); }
+        .original-price { font-size: 12px; color: var(--text-muted); text-decoration: line-through; }
 
         /* ================= 3. Bottom Navigation ================= */
         .bottom-nav {
@@ -203,28 +183,14 @@
         }
         
         .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-decoration: none;
-            color: var(--primary-red); 
-            font-size: 12px;
-            font-weight: bold;
-            cursor: pointer;
-            position: relative;
+            display: flex; flex-direction: column; align-items: center; text-decoration: none;
+            color: var(--primary-red); font-size: 12px; font-weight: bold; cursor: pointer; position: relative;
         }
         .nav-icon { font-size: 22px; margin-bottom: 3px; }
         
         .cart-badge {
-            position: absolute;
-            top: -5px;
-            right: 5px;
-            background: #ff9900;
-            color: white;
-            font-size: 10px;
-            padding: 2px 5px;
-            border-radius: 10px;
-            font-weight: bold;
+            position: absolute; top: -5px; right: 5px; background: #ff9900; color: white;
+            font-size: 10px; padding: 2px 5px; border-radius: 10px; font-weight: bold;
         }
     </style>
 </head>
@@ -269,20 +235,28 @@
     </div>
 
     <div class="main-content">
-                <div class="product-grid">
+        <div class="product-grid">
             {% if products %}
                 {% for p in products %}
                 {% if p.status == 'Approved' %}
-                <a href="/product/{{ p._id }}" class="product-card" style="text-decoration: none; color: inherit;">
-                    <div class="wishlist-btn">♡</div>
-                    
+                <a href="/product/{{ p._id }}" class="product-card">
                     <div class="product-img-container">
+                        <div class="wishlist-btn">♡</div>
                         <img src="{{ p.image }}" alt="{{ p.name }}" class="product-img" onerror="this.src='https://via.placeholder.com/260x300/f0f0f0/cc0000?text=No+Image';">
+                        
+                        {% if p.discount_percent and p.discount_percent > 0 %}
+                            <div class="discount-badge">{{ p.discount_percent }}% OFF</div>
+                        {% endif %}
                     </div>
 
                     <div class="product-info">
                         <div class="product-title">{{ p.name }}</div>
-                        <div class="product-price">₹{{ p.price }} <span>₹999</span></div>
+                        <div class="price-container">
+                            <span class="product-price">₹{{ p.price }}</span>
+                            {% if p.original_price and p.original_price > p.price %}
+                                <span class="original-price">₹{{ p.original_price }}</span>
+                            {% endif %}
+                        </div>
                     </div>
                 </a>
                 {% endif %}
@@ -303,9 +277,9 @@
             <span>Account</span>
         </a>
         <a href="/cart" class="nav-item">
-    <span class="nav-icon">🛒</span>
-    <span class="cart-badge">0</span>
-    <span>Cart</span>
+            <span class="nav-icon">🛒</span>
+            <span class="cart-badge">0</span>
+            <span>Cart</span>
         </a>
     </div>
 
