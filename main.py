@@ -91,18 +91,15 @@ async def on_ready():
     print("------ Ready to go! ------")
     await bot.change_presence(activity=discord.Game(name="/help | Nova help"))
 
-# ================= REACTION VERIFICATION SYSTEM (ROLE BASED) =================
+# ================= REACTION VERIFICATION SYSTEM =================
 @bot.event
 async def on_raw_reaction_add(payload):
-    # বট নিজের রিয়্যাকশন ইগনোর করবে
     if payload.user_id == bot.user.id:
         return
 
-    # মেম্বার ডাটা না থাকলে (যেমন DM এ) কাজ করবে না
     if not payload.member:
         return
 
-    # চেক করবে রিয়্যাক্ট করা মেম্বারের কাছে OWNER_ROLE আছে কি না
     has_owner_role = any(role.id == bot.OWNER_ROLE_ID for role in payload.member.roles)
     if not has_owner_role:
         return
@@ -142,7 +139,6 @@ async def on_raw_reaction_add(payload):
             new_embed.title = "🔴 Product Declined"
             await message.edit(embed=new_embed)
             await channel.send(f"❌ Product `{product_id}` has been rejected by {payload.member.mention} and deleted.")
-# =============================================================================
 
 @bot.hybrid_command(name="set_prefix", description="Add a custom prefix (Default 'Nova' will ALWAYS work)")
 @commands.has_permissions(administrator=True)
@@ -171,16 +167,11 @@ async def set_prefix(ctx, new_prefix: str):
     await ctx.send(embed=embed)
 
 if __name__ == "__main__":
-    import keep_alive
-    
-    # 🔴 ফ্লাস্ক সার্ভারের সাথে Nova বটকে যুক্ত করে দেওয়া হলো
-    keep_alive.nova_bot = bot  
-    
-    keep_alive.keep_alive()
+    keep_alive() # শুধু ওয়েবসাইট চালু করবে
     
     token = os.getenv("DISCORD_TOKEN")
     if token:
         bot.run(token)
     else:
         print("Error: 'DISCORD_TOKEN' not found!")
-        
+            
