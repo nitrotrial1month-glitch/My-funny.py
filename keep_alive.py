@@ -380,6 +380,61 @@ def wishlist():
     </div>
     """
 
+# --- 🚀 Discord DM Function for Sellers ---
+def notify_sellers_via_dm(order_id, name, phone, address, items, payment_method):
+    # কোন সেলারের কোন কোন প্রোডাক্ট, সেটা আলাদা করার জন্য একটি ডিকশনারি
+    seller_items = {}
+    
+    for item in items:
+        seller_id = item.get('seller_id')
+        if not seller_id:
+            continue # সেলার আইডি না থাকলে স্কিপ করবে
+            
+        if seller_id not in seller_items:
+            seller_items[seller_id] = []
+        seller_items[seller_id].append(item)
+
+    # 🔴 আপনার আগে থেকে থাকা DISCORD_TOKEN ভেরিয়েবলটি এখানে ব্যবহার করা হলো
+    headers = {
+        "Authorization": f"Bot {DISCORD_TOKEN}", 
+        "Content-Type": "application/json"
+    }
+
+    # প্রত্যেক সেলারকে আলাদা আলাদা DM পাঠানো
+    for seller_id, s_items in seller_items.items():
+        # ১. সেলারের সাথে DM চ্যানেল তৈরি করা
+        dm_payload = {"recipient_id": str(seller_id)}
+        dm_req = requests.post("https://discord.com/api/v10/users/@me/channels", json=dm_payload, headers=headers)
+        
+        if dm_req.status_code == 200:
+            channel_id = dm_req.json().get("id")
+            
+            # ২. সেলারের জন্য মেসেজ রেডি করা (ছবি ছাড়া)
+            item_details = ""
+            for i in s_items:
+                size_info = f" (Size: {i.get('selected_size')})" if i.get('selected_size') else ""
+                item_details += f"• **{i.get('name', 'Product')}**{size_info} - ₹{i.get('price', 0)}\n"
+
+            message_content = (
+                f"🎉 **New Order Received!**\n\n"
+                f"**Order ID:** #{str(order_id).upper()[:8]}\n"
+                f"**Payment Method:** {payment_method}\n\n"
+                f"🛒 **Items Ordered from You:**\n{item_details}\n"
+                f"👤 **Customer Details:**\n"
+                f"**Name:** {name}\n"
+                f"**Phone:** {phone}\n"
+                f"**Address:** {address}\n\n"
+                f"⚡ *Please prepare this order for delivery.*"
+            )
+            
+            msg_payload = {"content": message_content}
+            
+            # ৩. DM চ্যানেলে মেসেজটি পাঠিয়ে দেওয়া
+            requests.post(f"https://discord.com/api/v10/channels/{channel_id}/messages", json=msg_payload, headers=headers)
+        else:
+            print(f"Failed to create DM with seller {seller_id}. Status: {dm_req.status_code}")
+
+
 # --- Server Setup ---
 def run():
     port = int(os.environ.get("PORT", 8080))
