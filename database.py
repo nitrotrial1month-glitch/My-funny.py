@@ -293,3 +293,9 @@ class Database:
         if col is not None:
             col.update_one({"_id": ObjectId(order_id)}, {"$set": {"status": new_status}})
 
+    @staticmethod
+    def get_user_addresses(user_id):
+        col = Database.get_collection("saved_addresses")
+        if col is None: return []
+        return list(col.find({"user_id": str(user_id)}))
+        
