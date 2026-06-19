@@ -248,7 +248,13 @@ class Database:
     def get_products_by_seller(seller_id):
         col = Database.get_collection("products")
         return list(col.find({"seller_id": seller_id}))
-
+    
+    @staticmethod
+    def update_product(product_id, updated_data):
+        col = Database.get_collection("products")
+        if col is not None:
+            col.update_one({"_id": ObjectId(product_id)}, {"$set": updated_data})
+            
     # 🔴 এই লাইনগুলো একদম ঠিকঠাক স্পেস দিয়ে বসানো হয়েছে 🔴
     @staticmethod
     def add_product_from_dict(data):
