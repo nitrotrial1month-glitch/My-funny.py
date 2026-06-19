@@ -111,9 +111,9 @@
     </div>
     {% endif %}
 
-    <div class="action-btns">
-        <a href="/add_to_cart/{{ product._id }}" class="btn add-cart">Add to Cart</a>
-        <a href="/checkout/{{ product._id }}" class="btn buy-now">Buy Now</a>
+     <div class="action-btns">
+     <a href="/add_to_cart/{{ product._id | string }}" class="btn add-cart">Add to Cart</a>
+     <a href="/checkout/{{ product._id | string }}" class="btn buy-now">Buy Now</a>
     </div>
 
 </body>
