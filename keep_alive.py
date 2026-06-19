@@ -287,6 +287,8 @@ def process_checkout():
     initial_status = "Confirmed" if payment_method == "COD" else "Pending Payment"
     
     order_id, expected_date = Database.place_order(user['id'], items, total, name, address, phone, payment_method, clear_cart, status=initial_status)
+        # অর্ডার প্লেস হওয়ার পর অ্যাড্রেস অটোমেটিক সেভ হয়ে যাবে
+    Database.save_user_address(user['id'], name, phone, address)
     
     if payment_method == "Online":
         return redirect(f'/pay/{order_id}')
@@ -315,7 +317,23 @@ def order_success(order_id):
     if not order: return "Order not found", 404
     return render_template('order_success.html', order=order)
 
+# --- 📍 Saved Addresses Page ---
+@app.route('/saved_addresses', methods=['GET', 'POST'])
+def saved_addresses():
+    user = session.get('user')
+    if not user: return redirect('/account')
 
+    if request.method == 'POST':
+        name = request.form.get('name')
+        phone = request.form.get('phone')
+        address = request.form.get('address')
+        if name and phone and address:
+            Database.save_user_address(user['id'], name, phone, address)
+        return redirect('/saved_addresses')
+
+    addresses = Database.get_user_addresses(user['id'])
+    return render_template('saved_addresses.html', addresses=addresses)
+    
 # --- Server Setup ---
 def run():
     port = int(os.environ.get("PORT", 8080))
