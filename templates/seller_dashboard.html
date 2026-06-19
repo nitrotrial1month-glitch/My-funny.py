@@ -44,7 +44,7 @@
 
         <div class="card">
             <h3>Upload New Product</h3>
-            <form method="POST" enctype="multipart/form-data">
+            <form method="POST" enctype="multipart/form-data" action="/seller/upload">
                 <input type="text" name="name" placeholder="Product Name" required>
                 
                 <label>Short Description (For product card):</label>
@@ -57,10 +57,12 @@
                 <input type="text" name="sizes" placeholder="e.g. S, M, L, XL, 32, 34" required>
                 
                 <label>Original Price (₹):</label>
-                <input type="number" name="original_price" required>
+                <input type="number" id="orig_price" name="original_price" required oninput="calculateDiscount()">
                 
-                <label>Discount Percentage (%):</label>
-                <input type="number" name="discount" min="0" max="100" value="0">
+                <label>Final Price (After Discount ₹):</label>
+                <input type="number" id="final_price" name="final_price" required oninput="calculateDiscount()">
+                
+                <p id="discount_display" style="color: #28a745; font-weight: bold; margin-top: 5px; font-size: 14px;"></p>
                 
                 <label>Product Photo (From Gallery):</label>
                 <input type="file" name="image" accept="image/*" required>
@@ -75,7 +77,15 @@
             <div class="product-item">
                 <div class="product-info">
                     <span style="font-weight:bold;">{{ p.name }}</span>
-                    <span>Price: ₹{{ p.price }} <small style="text-decoration:line-through; color:gray;">(₹{{ p.original_price }})</small></span>
+                    <span>
+                        Price: ₹{{ p.price }} 
+                        {% if p.original_price and p.original_price > p.price %}
+                            <small style="text-decoration:line-through; color:gray;">(₹{{ p.original_price }})</small>
+                            <span style="color: #cc0000; font-weight: bold; font-size: 12px; margin-left: 5px;">
+                                {{ p.discount_percent }}% OFF
+                            </span>
+                        {% endif %}
+                    </span>
                     <span class="badge {{ 'approved' if p.status == 'Approved' else 'pending' }}">
                         {{ p.status or 'Pending' }}
                     </span>
@@ -92,5 +102,24 @@
         
         <a href="/" class="back-link">⬅ Back to Home</a>
     </div>
+
+    <script>
+    function calculateDiscount() {
+        let orig = parseFloat(document.getElementById('orig_price').value) || 0;
+        let final = parseFloat(document.getElementById('final_price').value) || 0;
+        let display = document.getElementById('discount_display');
+
+        if (orig > 0 && final > 0 && final < orig) {
+            let discount = ((orig - final) / orig) * 100;
+            display.innerText = "🎉 You are giving " + discount.toFixed(0) + "% discount!";
+            display.style.color = "#28a745";
+        } else if (final >= orig && orig > 0) {
+            display.innerText = "⚠️ Final price must be less than Original Price!";
+            display.style.color = "#cc0000";
+        } else {
+            display.innerText = "";
+        }
+    }
+    </script>
 </body>
 </html>
