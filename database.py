@@ -224,20 +224,6 @@ class Database:
             {"user_id": str(user_id)},
             {"$pull": {"items": str(product_id)}}
         )
-        
-    # ================= 📦 ORDER SYSTEM =================
-    @staticmethod
-    def place_order(user_id, cart_items, total_price):
-        col = Database.get_collection("orders")
-        order_data = {
-            "user_id": str(user_id),
-            "items": cart_items,
-            "total": total_price,
-            "status": "Pending",
-            "date": datetime.now().isoformat()
-        }
-        col.insert_one(order_data)
-        Database.get_collection("cart").delete_one({"user_id": str(user_id)})
 
     @staticmethod
     def get_user_orders(user_id):
@@ -262,3 +248,48 @@ class Database:
         if col is not None:
             col.insert_one(data)
                 
+    # ================= 📦 ORDER SYSTEM UPDATE =================
+    @staticmethod
+    def place_order(user_id, items, total_price, name, address, phone, payment_method, clear_cart=False, status="Pending"):
+        col = Database.get_collection("orders")
+        
+        serialized_items = []
+        for item in items:
+            item_copy = item.copy()
+            if '_id' in item_copy:
+                item_copy['_id'] = str(item_copy['_id'])
+            serialized_items.append(item_copy)
+            
+        # অর্ডার প্লেস করার দিন থেকে ৫ দিন পরের তারিখ হিসাব করা
+        expected_date = (datetime.now() + timedelta(days=5)).strftime("%d %B, %Y")
+        
+        order_data = {
+            "user_id": str(user_id),
+            "items": serialized_items,
+            "total": total_price,
+            "name": name,
+            "address": address,
+            "phone": phone,
+            "payment_method": payment_method,
+            "status": status,
+            "order_date": datetime.now().strftime("%d %B, %Y"),
+            "expected_delivery": expected_date
+        }
+        result = col.insert_one(order_data)
+        
+        if clear_cart:
+            Database.get_collection("cart").delete_one({"user_id": str(user_id)})
+            
+        return str(result.inserted_id), expected_date
+
+    @staticmethod
+    def get_order_by_id(order_id):
+        col = Database.get_collection("orders")
+        return col.find_one({"_id": ObjectId(order_id)}) if col is not None else None
+
+    @staticmethod
+    def update_order_status(order_id, new_status):
+        col = Database.get_collection("orders")
+        if col is not None:
+            col.update_one({"_id": ObjectId(order_id)}, {"$set": {"status": new_status}})
+        
