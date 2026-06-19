@@ -299,3 +299,17 @@ class Database:
         if col is None: return []
         return list(col.find({"user_id": str(user_id)}))
         
+    @staticmethod
+    def save_user_address(user_id, name, phone, address):
+        col = Database.get_collection("saved_addresses")
+        if col is not None:
+            # চেক করবে একই অ্যাড্রেস আগে থেকে সেভ করা আছে কি না
+            existing = col.find_one({"user_id": str(user_id), "address": address})
+            if not existing:
+                col.insert_one({
+                    "user_id": str(user_id),
+                    "name": name,
+                    "phone": phone,
+                    "address": address
+                })
+                
