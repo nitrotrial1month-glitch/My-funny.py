@@ -1,0 +1,31 @@
+    <div class="card">
+        <h3>📍 Shipping & Delivery Details</h3>
+        <form action="/process_checkout" method="POST">
+            <input type="hidden" name="is_direct" value="{{ is_direct }}">
+            {% if is_direct %}
+                <input type="hidden" name="product_id" value="{{ direct_product_id }}">
+            {% endif %}
+
+            <label>Full Name:</label>
+            <input type="text" name="name" placeholder="Enter your name" required>
+
+            <label>Mobile Number:</label>
+            <input type="tel" name="phone" placeholder="10-digit mobile number" required pattern="[0-9]{10}">
+
+            <label>Full Delivery Address:</label>
+            <textarea name="address" rows="3" placeholder="House No, Village/Colony, City, Pincode" required></textarea>
+
+            <label>Payment Method:</label>
+            <div style="background: #f9f9f9; padding: 10px; border-radius: 6px; margin-top: 5px; border: 1px solid #ddd;">
+                <label style="margin-top: 0; font-weight: normal; cursor: pointer;">
+                    <input type="radio" name="payment_method" value="COD" checked> 💵 Cash on Delivery (COD)
+                </label>
+                <label style="font-weight: normal; cursor: pointer;">
+                    <input type="radio" name="payment_method" value="Online"> ⚡ Pay Online (FamPay / UPI)
+                </label>
+            </div>
+
+            <button type="submit" class="btn-place">Continue to Payment</button>
+        </form>
+    </div>
+
