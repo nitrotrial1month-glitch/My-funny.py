@@ -158,41 +158,52 @@ def product_details(product_id):
 # --- Product Upload Route ---
 @app.route('/seller/upload', methods=['POST'])
 def upload_product():
-    user = session.get('user')
-    if not user: return redirect('/account')
-    
-    raw_orig = request.form.get('original_price', '0')
-    raw_final = request.form.get('final_price', '0')
-    
-    original = float(raw_orig) if raw_orig and raw_orig.strip() != "" else 0.0
-    final = float(raw_final) if raw_final and raw_final.strip() != "" else 0.0
-    
-    discount_percent = 0
-    if original > 0 and final < original:
-        discount_percent = ((original - final) / original) * 100
-    
-    file = request.files.get('image')
-    image_path = ""
-    if file:
-        filename = secure_filename(file.filename)
-        file.save(os.path.join('static/uploads', filename))
-        image_path = 'static/uploads/' + filename
-    
-    product_data = {
-        "name": request.form.get('name'),
-        "description": request.form.get('short_desc'),
-        "full_details": request.form.get('full_details'),
-        "sizes": [s.strip() for s in request.form.get('sizes', '').split(',')],
-        "original_price": original,
-        "price": final,
-        "discount_percent": round(discount_percent),
-        "image": image_path,
-        "status": "Pending",
-        "seller_id": str(user.get('id'))
-    }
-    
-    Database.add_product_from_dict(product_data)
-    return redirect('/seller')
+    try:
+        user = session.get('user')
+        if not user: return redirect('/account')
+        
+        raw_orig = request.form.get('original_price', '0')
+        raw_final = request.form.get('final_price', '0')
+        
+        original = float(raw_orig) if raw_orig and raw_orig.strip() != "" else 0.0
+        final = float(raw_final) if raw_final and raw_final.strip() != "" else 0.0
+        
+        discount_percent = 0
+        if original > 0 and final < original:
+            discount_percent = ((original - final) / original) * 100
+        
+        file = request.files.get('image')
+        image_path = ""
+        if file and file.filename:
+            # 🔴 এটি ফোল্ডার না থাকলে অটোমেটিক তৈরি করে নেবে
+            upload_dir = os.path.join('static', 'uploads')
+            os.makedirs(upload_dir, exist_ok=True)
+            
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(upload_dir, filename))
+            image_path = 'static/uploads/' + filename
+        
+        product_data = {
+            "name": request.form.get('name', 'Unknown'),
+            "description": request.form.get('short_desc', ''),
+            "full_details": request.form.get('full_details', ''),
+            "sizes": [s.strip() for s in request.form.get('sizes', '').split(',')],
+            "original_price": original,
+            "price": final,
+            "discount_percent": round(discount_percent),
+            "image": image_path,
+            "status": "Pending",
+            "seller_id": str(user.get('id'))
+        }
+        
+        Database.add_product_from_dict(product_data)
+        return redirect('/seller')
+
+    except Exception as e:
+        # 🔴 এরর হলে সার্ভার ক্র্যাশ করবে না, বরং স্ক্রিনে এরর মেসেজ দেখাবে
+        import traceback
+        return f"<div style='padding:20px; font-family:sans-serif;'><h2 style='color:#cc0000;'>⚠️ Upload Error</h2><p><b>Error Details:</b> {str(e)}</p><pre style='background:#f4f4f4; padding:15px; overflow-x:auto;'>{traceback.format_exc()}</pre><button onclick='history.back()'>Go Back</button></div>"
+        
     
 # --- Server Setup ---
 def run():
