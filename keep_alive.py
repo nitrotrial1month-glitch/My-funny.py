@@ -132,14 +132,33 @@ def orders():
     orders = Database.get_user_orders(user['id'])
     return render_template('orders.html', orders=orders)
 
+# --- 🛒 Checkout: From Cart ---
 @app.route('/checkout')
-def checkout():
+def checkout_cart():
     user = session.get('user')
     if not user: return redirect('/account')
+    
     cart_items = Database.get_user_cart(user['id'])
+    if not cart_items:
+        return redirect('/cart')
+        
     total = sum(float(item['price']) for item in cart_items)
-    Database.place_order(user['id'], cart_items, total)
-    return redirect('/orders')
+    return render_template('checkout.html', items=cart_items, total_price=total, is_direct=False)
+
+# --- ⚡ Checkout: Direct Buy Now ---
+@app.route('/checkout/<product_id>')
+def checkout_direct(product_id):
+    user = session.get('user')
+    if not user: return redirect('/account')
+    
+    col = Database.get_collection("products")
+    product = col.find_one({"_id": ObjectId(product_id)})
+    if not product:
+        return "Product not found!", 404
+        
+    total = float(product['price'])
+    return render_template('checkout.html', items=[product], total_price=total, is_direct=True, direct_product_id=str(product_id))
+    
 
 # --- Product Detail Route ---
 @app.route('/product/<product_id>')
