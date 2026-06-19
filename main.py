@@ -171,11 +171,16 @@ async def set_prefix(ctx, new_prefix: str):
     await ctx.send(embed=embed)
 
 if __name__ == "__main__":
-    keep_alive()
+    import keep_alive
+    
+    # 🔴 ফ্লাস্ক সার্ভারের সাথে Nova বটকে যুক্ত করে দেওয়া হলো
+    keep_alive.nova_bot = bot  
+    
+    keep_alive.keep_alive()
     
     token = os.getenv("DISCORD_TOKEN")
     if token:
         bot.run(token)
     else:
         print("Error: 'DISCORD_TOKEN' not found!")
-    
+        
