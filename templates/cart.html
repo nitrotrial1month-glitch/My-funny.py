@@ -2,49 +2,193 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Cart | inwear</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>My Cart | inwear</title>
     <style>
-        :root { --primary-red: #cc0000; --bg-color: #f1f2f4; --white: #ffffff; --text-dark: #212121; }
-        body { background-color: var(--bg-color); font-family: sans-serif; margin: 0; padding-bottom: 100px; }
+        :root {
+            --primary-red: #cc0000;
+            --bg-color: #f1f3f6;
+            --text-dark: #212121;
+            --text-muted: #878787;
+            --white: #ffffff;
+            --border-color: #e0e0e0;
+            --success-green: #388e3c;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: var(--text-dark);
+            padding-bottom: 90px;
+        }
+
+        /* Top Header */
+        .header {
+            background: var(--white);
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .back-btn { text-decoration: none; font-size: 20px; color: var(--text-dark); margin-right: 15px; font-weight: bold; }
+        .header-title { font-size: 16px; font-weight: 600; margin: 0; }
+
+        .container { max-width: 600px; margin: 0 auto; padding: 10px; }
+
+        /* Product Card */
+        .cart-card {
+            background-color: var(--white);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            gap: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border: 1px solid #f5f5f5;
+        }
+        .item-img { width: 80px; height: 100px; object-fit: cover; border-radius: 6px; background-color: #f9f9f9; border: 1px solid #eee; }
+        .item-info { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        .item-name { font-size: 15px; font-weight: 500; color: var(--text-dark); margin: 0 0 5px 0; }
         
-        .header { background: var(--white); padding: 15px; font-weight: bold; font-size: 18px; border-bottom: 1px solid #ddd; position: sticky; top: 0; }
-        .cart-item { background: var(--white); padding: 15px; display: flex; gap: 15px; margin-bottom: 10px; border-bottom: 1px solid #eee; }
-        .item-img { width: 80px; height: 100px; background: #f0f0f0; object-fit: cover; }
-        .item-details { flex: 1; }
-        .item-name { font-weight: bold; margin-bottom: 5px; }
-        .item-price { color: var(--primary-red); font-weight: bold; }
-        .remove-btn { color: #888; font-size: 13px; cursor: pointer; text-decoration: underline; margin-top: 5px; display: inline-block; }
+        .price-wrap { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+        .item-price { font-size: 18px; font-weight: bold; color: var(--text-dark); }
+
+        /* Remove Action */
+        .action-row { border-top: 1px dashed var(--border-color); padding-top: 10px; margin-top: auto; display: flex; justify-content: flex-end; }
+        .btn-remove { background: none; border: none; color: var(--text-muted); font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; display: flex; align-items: center; gap: 5px; transition: 0.2s; }
+        .btn-remove:hover { color: var(--primary-red); }
+
+        /* Price Details Card */
+        .bill-card {
+            background-color: var(--white);
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-top: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .bill-title { font-size: 14px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-top: 0; margin-bottom: 15px; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; }
+        .bill-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; color: var(--text-dark); }
+        .bill-total { display: flex; justify-content: space-between; font-size: 16px; font-weight: bold; border-top: 1px dashed var(--border-color); padding-top: 12px; margin-top: 12px; color: var(--text-dark); }
+        .trust-badge { font-size: 12px; color: var(--success-green); font-weight: 500; text-align: center; margin-top: 15px; background: #f0fdf4; padding: 8px; border-radius: 4px; }
+
+        /* Sticky Bottom Bar */
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--white);
+            padding: 12px 20px;
+            box-sizing: border-box;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+        }
+        .total-box { display: flex; flex-direction: column; }
+        .total-label { font-size: 12px; font-weight: 600; color: var(--text-muted); }
+        .total-amt { font-size: 20px; font-weight: bold; color: var(--text-dark); }
         
-        .footer-bar { position: fixed; bottom: 0; width: 100%; background: var(--white); padding: 15px; border-top: 2px solid #eee; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; }
-        .total-price { font-size: 18px; font-weight: bold; }
-        .place-order-btn { background: var(--primary-red); color: white; padding: 12px 25px; border-radius: 5px; font-weight: bold; text-decoration: none; }
+        .btn-place-order {
+            background-color: var(--primary-red);
+            color: var(--white);
+            padding: 14px 30px;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: bold;
+            text-decoration: none;
+            text-transform: uppercase;
+            box-shadow: 0 2px 5px rgba(204, 0, 0, 0.3);
+        }
+
+        /* Empty Cart State */
+        .empty-state { text-align: center; padding: 60px 20px; background: var(--white); border-radius: 8px; margin-top: 20px; }
+        .empty-icon { font-size: 60px; margin-bottom: 15px; display: block; }
+        .empty-title { font-size: 18px; font-weight: bold; color: var(--text-dark); margin: 0 0 10px 0; }
+        .empty-desc { font-size: 14px; color: var(--text-muted); margin-bottom: 25px; }
+        .btn-shop { background: var(--primary-red); color: white; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 14px; }
     </style>
 </head>
 <body>
-    <div class="header">My Cart</div>
-    
-    <div id="cart-items">
+
+    <div class="header">
+        <a href="javascript:history.back()" class="back-btn">←</a>
+        <h1 class="header-title">My Cart</h1>
+    </div>
+
+    <div class="container">
         {% if cart_items %}
+            
             {% for item in cart_items %}
-            <div class="cart-item">
-                <img src="{{ item.image }}" class="item-img" alt="Product">
-                <div class="item-details">
-                    <div class="item-name">{{ item.name }}</div>
-                    <div class="item-price">₹{{ item.price }}</div>
-                    <a href="/remove_from_cart/{{ item.id }}" class="remove-btn">Remove</a>
+            <div class="cart-card">
+                <img src="/{{ item.image }}" class="item-img" alt="{{ item.name }}" onerror="this.src='https://via.placeholder.com/80x100';">
+                <div class="item-info">
+                    <div>
+                        <h3 class="item-name">{{ item.name }}</h3>
+                        <div class="price-wrap">
+                            <span class="item-price">₹{{ item.price }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="action-row">
+                        <a href="/remove_from_cart/{{ item._id | string }}" class="btn-remove">
+                            🗑️ Remove Item
+                        </a>
+                    </div>
                 </div>
             </div>
             {% endfor %}
+
+            <div class="bill-card">
+                <h3 class="bill-title">Price Details ({{ cart_items|length }} Items)</h3>
+                
+                <div class="bill-row">
+                    <span>Total Price</span>
+                    <span>₹{{ total_price }}</span>
+                </div>
+                
+                <div class="bill-row">
+                    <span>Delivery Charges</span>
+                    <span style="color: var(--success-green); font-weight: bold;">FREE</span>
+                </div>
+                
+                <div class="bill-total">
+                    <span>Total Amount</span>
+                    <span>₹{{ total_price }}</span>
+                </div>
+                
+                <div class="trust-badge">
+                    🛡️ Safe and Secure Payments. 100% Authentic products.
+                </div>
+            </div>
+
         {% else %}
-            <div style="text-align: center; margin-top: 50px;">Your cart is empty!</div>
+            
+            <div class="empty-state">
+                <span class="empty-icon">🛒</span>
+                <h2 class="empty-title">Your cart is empty!</h2>
+                <p class="empty-desc">Looks like you haven't added anything to your cart yet.</p>
+                <a href="/" class="btn-shop">Shop Now</a>
+            </div>
+
         {% endif %}
     </div>
 
-    <div class="footer-bar">
-        <div class="total-price">Total: ₹{{ total_price }}</div>
-        <a href="/checkout" class="place-order-btn">Place Order</a>
+    {% if cart_items %}
+    <div class="bottom-bar">
+        <div class="total-box">
+            <span class="total-label">Total Payable</span>
+            <span class="total-amt">₹{{ total_price }}</span>
+        </div>
+        <a href="/checkout" class="btn-place-order">Place Order</a>
     </div>
+    {% endif %}
+
 </body>
 </html>
-
