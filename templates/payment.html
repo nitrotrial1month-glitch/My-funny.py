@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Payment</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f6f9; text-align: center; padding: 20px; }
+        .box { max-width: 400px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .btn-pay { display: inline-block; background: #ffaa00; color: #000; font-weight: bold; padding: 15px 30px; border-radius: 8px; text-decoration: none; font-size: 18px; margin-top: 20px; }
+        .btn-confirm { background: #28a745; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2 style="color: #cc0000;">Complete Your Payment</h2>
+        <p>Total Amount Payable: <strong style="font-size: 24px;">₹{{ order.total }}</strong></p>
+        
+        <a href="upi://pay?pa={{ upi_id }}&pn=inwear&am={{ order.total }}&cu=INR" class="btn-pay">Pay with FamPay / UPI App</a>
+        
+        <p style="color: gray; font-size: 12px; margin-top: 20px;">After completing the payment on your app, click the button below to confirm your order.</p>
+        
+        <form action="/confirm_payment/{{ order._id }}" method="POST">
+            <button type="submit" class="btn-confirm">I Have Paid ✅</button>
+        </form>
+    </div>
+</body>
+</html>
+
