@@ -56,11 +56,11 @@
                     {% endif %}
                 </div>
 
-                {% for item in order.items %}
+                {% for item in order.get('items', []) %}
                 <div class="item-row">
-                    <img src="/{{ item.image }}" class="item-img" onerror="this.src='https://via.placeholder.com/50';">
-                    <span class="item-name">{{ item.name }}</span>
-                    <span style="font-weight: bold; font-size: 14px;">₹{{ item.price }}</span>
+                    <img src="/{{ item.get('image', '') }}" class="item-img" onerror="this.src='https://via.placeholder.com/50';">
+                    <span class="item-name">{{ item.get('name', 'Product') }}</span>
+                    <span style="font-weight: bold; font-size: 14px;">₹{{ item.get('price', '0') }}</span>
                 </div>
                 {% endfor %}
 
