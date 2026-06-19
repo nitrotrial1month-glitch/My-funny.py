@@ -146,7 +146,6 @@ class Database:
             print(f"🛍️ Owner uploaded a product. Auto-approved: {name}")
             return
             
-        # সেলার আপলোড করলে ডিসকর্ডে Webhook পাঠানো
         webhook_url = "https://discord.com/api/webhooks/1517038233559633980/ynh7QyKkWQXbiey9js7iWs27v0k2lW4En7Sna2TKwz4ZkXwED_aBKSPSp_e7CMPtYu-a"
         
         if webhook_url:
@@ -157,7 +156,6 @@ class Database:
                 "footer": {"text": f"ID: {product_id}"}
             }
             
-            # সেলারকে মেনশন করার জন্য content যোগ করা হলো
             payload = {"embeds": [embed]}
             if seller_id:
                 payload["content"] = f"🔔 <@{seller_id}> Your product is waiting for verification!"
@@ -201,11 +199,9 @@ class Database:
     def get_user_cart(user_id):
         col = Database.get_collection("cart")
         if col is None: return []
-        # ইউজারের আইডি অনুযায়ী কার্টের সব প্রোডাক্ট ফেরত দেবে
         cart = col.find_one({"user_id": str(user_id)})
         if cart:
             product_ids = [ObjectId(pid) for pid in cart.get("items", [])]
-            # প্রোডাক্ট কালেকশন থেকে আসল ডিটেইলস নিয়ে আসবে
             products_col = Database.get_collection("products")
             return list(products_col.find({"_id": {"$in": product_ids}}))
         return []
@@ -214,7 +210,6 @@ class Database:
     def add_to_cart(user_id, product_id):
         col = Database.get_collection("cart")
         if col is None: return
-        # কার্টে প্রোডাক্ট আইডি যোগ করছে
         col.update_one(
             {"user_id": str(user_id)},
             {"$addToSet": {"items": str(product_id)}},
@@ -225,7 +220,6 @@ class Database:
     def remove_from_cart(user_id, product_id):
         col = Database.get_collection("cart")
         if col is None: return
-        # কার্ট থেকে প্রোডাক্ট আইডি রিমুভ করছে
         col.update_one(
             {"user_id": str(user_id)},
             {"$pull": {"items": str(product_id)}}
@@ -243,7 +237,6 @@ class Database:
             "date": datetime.now().isoformat()
         }
         col.insert_one(order_data)
-        # কার্ট খালি করে দিন
         Database.get_collection("cart").delete_one({"user_id": str(user_id)})
 
     @staticmethod
@@ -256,9 +249,10 @@ class Database:
         col = Database.get_collection("products")
         return list(col.find({"seller_id": seller_id}))
 
-@staticmethod
-def add_product_from_dict(data):
-    col = Database.get_collection("products")
-    col.insert_one(data)
-    
-        
+    # 🔴 এই লাইনগুলো একদম ঠিকঠাক স্পেস দিয়ে বসানো হয়েছে 🔴
+    @staticmethod
+    def add_product_from_dict(data):
+        col = Database.get_collection("products")
+        if col is not None:
+            col.insert_one(data)
+                
