@@ -321,7 +321,7 @@ def order_success(order_id):
     if not order: return "Order not found", 404
     return render_template('order_success.html', order=order)
 
-# --- 📍 Saved Addresses Page ---
+# এটি keep_alive.py বা main.py ফাইলে বসান
 @app.route('/saved_addresses', methods=['GET', 'POST'])
 def saved_addresses():
     user = session.get('user')
