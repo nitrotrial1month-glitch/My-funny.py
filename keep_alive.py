@@ -163,10 +163,11 @@ def upload_product():
         if not user: return redirect('/account')
         
         raw_orig = request.form.get('original_price', '0')
-        raw_final = request.form.get('final_price', '0')
+        raw_final = request.form.get('final_price', '') # এখন এটি ফাঁকা হতে পারে
         
         original = float(raw_orig) if raw_orig and raw_orig.strip() != "" else 0.0
-        final = float(raw_final) if raw_final and raw_final.strip() != "" else 0.0
+        # যদি সেলার ফাইনাল প্রাইস না দেয়, তবে অরিজিনাল প্রাইসটাই ফাইনাল প্রাইস হবে
+        final = float(raw_final) if raw_final and raw_final.strip() != "" else original
         
         discount_percent = 0
         if original > 0 and final < original:
@@ -175,10 +176,8 @@ def upload_product():
         file = request.files.get('image')
         image_path = ""
         if file and file.filename:
-            # 🔴 এটি ফোল্ডার না থাকলে অটোমেটিক তৈরি করে নেবে
             upload_dir = os.path.join('static', 'uploads')
             os.makedirs(upload_dir, exist_ok=True)
-            
             filename = secure_filename(file.filename)
             file.save(os.path.join(upload_dir, filename))
             image_path = 'static/uploads/' + filename
@@ -187,7 +186,7 @@ def upload_product():
             "name": request.form.get('name', 'Unknown'),
             "description": request.form.get('short_desc', ''),
             "full_details": request.form.get('full_details', ''),
-            "sizes": [s.strip() for s in request.form.get('sizes', '').split(',')],
+            "sizes": [s.strip() for s in request.form.get('sizes', '').split(',')] if request.form.get('sizes') else [],
             "original_price": original,
             "price": final,
             "discount_percent": round(discount_percent),
@@ -200,10 +199,47 @@ def upload_product():
         return redirect('/seller')
 
     except Exception as e:
-        # 🔴 এরর হলে সার্ভার ক্র্যাশ করবে না, বরং স্ক্রিনে এরর মেসেজ দেখাবে
         import traceback
-        return f"<div style='padding:20px; font-family:sans-serif;'><h2 style='color:#cc0000;'>⚠️ Upload Error</h2><p><b>Error Details:</b> {str(e)}</p><pre style='background:#f4f4f4; padding:15px; overflow-x:auto;'>{traceback.format_exc()}</pre><button onclick='history.back()'>Go Back</button></div>"
+        return f"<div style='padding:20px;'><h2 style='color:#cc0000;'>⚠️ Upload Error</h2><p>{str(e)}</p><pre>{traceback.format_exc()}</pre></div>"
+
+# --- 🔴 নতুন: Product Edit Route ---
+@app.route('/seller/edit/<product_id>', methods=['GET', 'POST'])
+def edit_product(product_id):
+    user = session.get('user')
+    if not user: return redirect('/account')
+
+    col = Database.get_collection("products")
+    product = col.find_one({"_id": ObjectId(product_id)})
+    
+    if not product or product.get('seller_id') != str(user['id']):
+        return "Unauthorized or Product not found", 403
+
+    if request.method == 'POST':
+        original = float(request.form.get('original_price', 0))
+        raw_final = request.form.get('final_price', '')
+        final = float(raw_final) if raw_final and raw_final.strip() != "" else original
+
+        discount_percent = 0
+        if original > 0 and final < original:
+            discount_percent = ((original - final) / original) * 100
+
+        sizes_input = request.form.get('sizes', '')
+
+        updated_data = {
+            "name": request.form.get('name'),
+            "description": request.form.get('short_desc'),
+            "full_details": request.form.get('full_details'),
+            "sizes": [s.strip() for s in sizes_input.split(',')] if sizes_input else [],
+            "original_price": original,
+            "price": final,
+            "discount_percent": round(discount_percent)
+        }
         
+        Database.update_product(product_id, updated_data)
+        return redirect('/seller')
+
+    return render_template('edit_product.html', product=product)
+    
     
 # --- Server Setup ---
 def run():
