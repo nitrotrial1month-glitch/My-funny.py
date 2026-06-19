@@ -292,4 +292,21 @@ class Database:
         col = Database.get_collection("orders")
         if col is not None:
             col.update_one({"_id": ObjectId(order_id)}, {"$set": {"status": new_status}})
-        
+
+ # --- 📍 Saved Addresses Page ---
+@app.route('/saved_addresses', methods=['GET', 'POST'])
+def saved_addresses():
+    user = session.get('user')
+    if not user: return redirect('/account')
+
+    if request.method == 'POST':
+        name = request.form.get('name')
+        phone = request.form.get('phone')
+        address = request.form.get('address')
+        if name and phone and address:
+            Database.save_user_address(user['id'], name, phone, address)
+        return redirect('/saved_addresses')
+
+    addresses = Database.get_user_addresses(user['id'])
+    return render_template('saved_addresses.html', addresses=addresses)
+    
