@@ -2,28 +2,71 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure Payment</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Secure UPI Payment</title>
     <style>
-        body { font-family: sans-serif; background: #f4f6f9; text-align: center; padding: 20px; }
-        .box { max-width: 400px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .btn-pay { display: inline-block; background: #ffaa00; color: #000; font-weight: bold; padding: 15px 30px; border-radius: 8px; text-decoration: none; font-size: 18px; margin-top: 20px; }
-        .btn-confirm { background: #28a745; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f1f3f6; margin: 0; padding: 20px; text-align: center; color: #212121; }
+        .payment-card { background: white; max-width: 400px; margin: 20px auto; padding: 30px 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .header-title { font-size: 18px; font-weight: bold; color: #333; margin-top: 0; margin-bottom: 5px; }
+        .amt-text { font-size: 14px; color: #878787; }
+        .amt-value { font-size: 36px; font-weight: 900; color: #212121; margin: 5px 0 25px 0; }
+        
+        /* UPI Buttons */
+        .upi-btn { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 15px; margin-bottom: 12px; border: 1px solid #e0e0e0; transition: 0.2s; color: #333; background: #fff; }
+        .upi-btn img { width: 24px; height: 24px; object-fit: contain; }
+        .upi-btn.gpay { border-color: #dadce0; }
+        .upi-btn.phonepe { border-color: #6739b7; color: #6739b7; background: #fdfbff; }
+        .upi-btn.paytm { border-color: #00baf2; color: #002970; background: #f0fbff; }
+        .upi-btn.other { background: #212121; color: white; border-color: #212121; }
+        
+        /* Verification Section */
+        .verify-box { margin-top: 30px; padding-top: 25px; border-top: 1px dashed #ddd; }
+        .verify-text { font-size: 13px; color: #555; margin-bottom: 15px; font-weight: 500; }
+        .utr-input { width: 100%; padding: 14px; border: 2px solid #ddd; border-radius: 8px; font-size: 15px; box-sizing: border-box; text-align: center; letter-spacing: 2px; font-weight: bold; outline: none; margin-bottom: 15px; transition: 0.2s; }
+        .utr-input:focus { border-color: #2874f0; }
+        
+        .btn-confirm { background: #388e3c; color: white; border: none; padding: 16px; width: 100%; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
     </style>
 </head>
 <body>
-    <div class="box">
-        <h2 style="color: #cc0000;">Complete Your Payment</h2>
-        <p>Total Amount Payable: <strong style="font-size: 24px;">₹{{ order.total }}</strong></p>
+
+    <div class="payment-card">
+        <h2 class="header-title">Payment Gateway</h2>
+        <div class="amt-text">Total Amount Payable</div>
+        <div class="amt-value">₹{{ order.total }}</div>
         
-        <a href="upi://pay?pa={{ upi_id }}&pn=inwear&am={{ order.total }}&cu=INR" class="btn-pay">Pay with FamPay / UPI App</a>
-        
-        <p style="color: gray; font-size: 12px; margin-top: 20px;">After completing the payment on your app, click the button below to confirm your order.</p>
-        
-        <form action="/confirm_payment/{{ order._id }}" method="POST">
-            <button type="submit" class="btn-confirm">I Have Paid ✅</button>
-        </form>
+        <div style="text-align: left; font-size: 13px; font-weight: bold; color: #888; margin-bottom: 10px;">SELECT PAYMENT APP:</div>
+
+        <!-- Google Pay -->
+        <a href="tez://upi/pay?pa={{ upi_id }}&pn=inwear&am={{ order.total }}&cu=INR" class="upi-btn gpay">
+            <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="GPay"> Pay with Google Pay
+        </a>
+
+        <!-- PhonePe -->
+        <a href="phonepe://pay?pa={{ upi_id }}&pn=inwear&am={{ order.total }}&cu=INR" class="upi-btn phonepe">
+            <img src="https://download.logo.wine/logo/PhonePe/PhonePe-Logo.wine.png" alt="PhonePe" style="width: 35px;"> Pay with PhonePe
+        </a>
+
+        <!-- Paytm -->
+        <a href="paytmmp://pay?pa={{ upi_id }}&pn=inwear&am={{ order.total }}&cu=INR" class="upi-btn paytm">
+            <img src="https://img.icons8.com/color/48/000000/paytm.png" alt="Paytm"> Pay with Paytm
+        </a>
+
+        <!-- Universal UPI -->
+        <a href="upi://pay?pa={{ upi_id }}&pn=inwear&am={{ order.total }}&cu=INR" class="upi-btn other">
+            <img src="https://img.icons8.com/color/48/ffffff/bhim-upi.png" alt="UPI"> Other UPI Apps
+        </a>
+
+        <!-- Verification Section -->
+        <div class="verify-box">
+            <div class="verify-text">⚠️ After completing the payment, please enter the <strong>12-digit UTR / Reference No.</strong> from your app to confirm the order.</div>
+            
+            <form action="/confirm_payment/{{ order._id }}" method="POST">
+                <input type="text" name="utr_number" class="utr-input" placeholder="Enter 12-digit UTR No." required pattern="[0-9]{12}" maxlength="12">
+                <button type="submit" class="btn-confirm">Verify & Confirm Order</button>
+            </form>
+        </div>
     </div>
+
 </body>
 </html>
-
