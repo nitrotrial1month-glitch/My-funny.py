@@ -141,7 +141,6 @@ def checkout_cart():
     cart_items = Database.get_user_cart(user['id'])
     if not cart_items: return redirect('/cart')
     
-    # সেভ করা অ্যাড্রেস নিয়ে আসা
     saved_addresses = Database.get_user_addresses(user['id'])
     
     total = sum(float(item['price']) for item in cart_items)
@@ -157,13 +156,11 @@ def checkout_direct(product_id):
     product = col.find_one({"_id": ObjectId(product_id)})
     if not product: return "Product not found!", 404
     
-    # সেভ করা অ্যাড্রেস নিয়ে আসা
     saved_addresses = Database.get_user_addresses(user['id'])
     
     total = float(product['price'])
     return render_template('checkout.html', items=[product], total_price=total, is_direct=True, direct_product_id=str(product_id), saved_addresses=saved_addresses)
     
-
 # --- Product Detail Route ---
 @app.route('/product/<product_id>')
 def product_details(product_id):
@@ -186,10 +183,9 @@ def upload_product():
         if not user: return redirect('/account')
         
         raw_orig = request.form.get('original_price', '0')
-        raw_final = request.form.get('final_price', '') # এখন এটি ফাঁকা হতে পারে
+        raw_final = request.form.get('final_price', '') 
         
         original = float(raw_orig) if raw_orig and raw_orig.strip() != "" else 0.0
-        # যদি সেলার ফাইনাল প্রাইস না দেয়, তবে অরিজিনাল প্রাইসটাই ফাইনাল প্রাইস হবে
         final = float(raw_final) if raw_final and raw_final.strip() != "" else original
         
         discount_percent = 0
@@ -225,7 +221,7 @@ def upload_product():
         import traceback
         return f"<div style='padding:20px;'><h2 style='color:#cc0000;'>⚠️ Upload Error</h2><p>{str(e)}</p><pre>{traceback.format_exc()}</pre></div>"
 
-# --- 🔴 নতুন: Product Edit Route ---
+# --- Product Edit Route ---
 @app.route('/seller/edit/<product_id>', methods=['GET', 'POST'])
 def edit_product(product_id):
     user = session.get('user')
@@ -263,6 +259,42 @@ def edit_product(product_id):
 
     return render_template('edit_product.html', product=product)
 
+# --- 🚀 Discord Webhook Function ---
+def send_order_to_discord(order_id, name, phone, address, items, total, payment_method):
+    # 🔴 নিচে আপনার ডিসকর্ড ওয়েবহুকের কপি করা লিংকটি বসান
+    WEBHOOK_URL = "আপনার_ডিসকর্ড_ওয়েবহুক_লিংক_এখানে_দিন"
+    
+    item_details = ""
+    seller_ids = set()
+    
+    for item in items:
+        item_details += f"• **{item.get('name', 'Product')}** - ₹{item.get('price', 0)}\n"
+        if 'seller_id' in item:
+            seller_ids.add(item['seller_id'])
+            
+    tags = " ".join([f"<@{sid}>" for sid in seller_ids])
+    
+    data = {
+        "content": f"🚨 **New Order Received!** {tags}",
+        "embeds": [{
+            "title": f"📦 Order #{str(order_id).upper()[:8]}",
+            "color": 16711680,
+            "fields": [
+                {"name": "👤 Customer", "value": f"{name}\n📞 {phone}", "inline": True},
+                {"name": "📍 Delivery Address", "value": f"{address}", "inline": True},
+                {"name": "💳 Payment Method", "value": f"{payment_method}", "inline": True},
+                {"name": "🛒 Ordered Items", "value": item_details, "inline": False},
+                {"name": "💰 Total Amount", "value": f"**₹{total}**", "inline": False}
+            ],
+            "footer": {"text": "inwear Store Automated System"}
+        }]
+    }
+    
+    try:
+        requests.post(WEBHOOK_URL, json=data)
+    except Exception as e:
+        print(f"Webhook error: {e}")
+
 # --- 📦 Process Checkout Action ---
 @app.route('/process_checkout', methods=['POST'])
 def process_checkout():
@@ -272,7 +304,7 @@ def process_checkout():
     name = request.form.get('name')
     address = request.form.get('address')
     phone = request.form.get('phone')
-    payment_method = request.form.get('payment_method') # COD or Online
+    payment_method = request.form.get('payment_method')
     is_direct = request.form.get('is_direct') == 'True'
     
     if is_direct:
@@ -287,12 +319,13 @@ def process_checkout():
         total = sum(float(item['price']) for item in items)
         clear_cart = True
         
-    # যদি COD হয় তবে স্ট্যাটাস Confirmed, আর Online হলে Pending Payment
     initial_status = "Confirmed" if payment_method == "COD" else "Pending Payment"
     
     order_id, expected_date = Database.place_order(user['id'], items, total, name, address, phone, payment_method, clear_cart, status=initial_status)
-        # অর্ডার প্লেস হওয়ার পর অ্যাড্রেস অটোমেটিক সেভ হয়ে যাবে
+    
+    # ঠিকানা সেভ করা এবং ডিসকর্ডে মেসেজ পাঠানো
     Database.save_user_address(user['id'], name, phone, address)
+    send_order_to_discord(order_id, name, phone, address, items, total, payment_method)
     
     if payment_method == "Online":
         return redirect(f'/pay/{order_id}')
@@ -304,13 +337,11 @@ def process_checkout():
 def pay_online(order_id):
     order = Database.get_order_by_id(order_id)
     if not order: return "Order not found", 404
-    # এখানে আপনার FamPay UPI ID দিন
     fampay_upi_id = "9046348427@fam" 
     return render_template('payment.html', order=order, upi_id=fampay_upi_id)
 
 @app.route('/confirm_payment/<order_id>', methods=['POST'])
 def confirm_payment(order_id):
-    # পেমেন্ট কনফার্ম হলে স্ট্যাটাস আপডেট হবে
     Database.update_order_status(order_id, "Confirmed")
     return redirect(f'/order_success/{order_id}')
 
@@ -321,7 +352,7 @@ def order_success(order_id):
     if not order: return "Order not found", 404
     return render_template('order_success.html', order=order)
 
-# এটি keep_alive.py বা main.py ফাইলে বসান
+# --- 📍 Saved Addresses ---
 @app.route('/saved_addresses', methods=['GET', 'POST'])
 def saved_addresses():
     user = session.get('user')
@@ -337,7 +368,18 @@ def saved_addresses():
 
     addresses = Database.get_user_addresses(user['id'])
     return render_template('saved_addresses.html', addresses=addresses)
-    
+
+# --- ❤️ Wishlist Page ---
+@app.route('/wishlist')
+def wishlist():
+    return """
+    <div style="text-align: center; padding: 50px; font-family: sans-serif;">
+        <h1 style="font-size: 50px; margin: 0;">❤️</h1>
+        <h2>Wishlist feature is coming soon!</h2>
+        <a href="/" style="color: #2874f0; text-decoration: none; font-weight: bold;">← Go back to Home</a>
+    </div>
+    """
+
 # --- Server Setup ---
 def run():
     port = int(os.environ.get("PORT", 8080))
