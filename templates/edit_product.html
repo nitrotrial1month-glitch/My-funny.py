@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Product | inwear</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f6f9; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        label { font-weight: bold; margin-top: 15px; display: block; color: #555; }
+        input, textarea { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        .btn { background: #007bff; color: white; padding: 12px; width: 100%; border: none; border-radius: 6px; font-weight: bold; margin-top: 20px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>✏️ Edit Product</h2>
+        <form method="POST">
+            <label>Product Name:</label>
+            <input type="text" name="name" value="{{ product.name }}" required>
+
+            <label>Short Description:</label>
+            <textarea name="short_desc" required>{{ product.description }}</textarea>
+
+            <label>Full Details:</label>
+            <textarea name="full_details" rows="4">{{ product.full_details }}</textarea>
+
+            <label>Available Sizes (Comma separated):</label>
+            <input type="text" name="sizes" value="{{ product.sizes | join(', ') }}">
+            <small style="color: gray;">Remove a size if it's out of stock.</small>
+
+            <label>Original Price (₹):</label>
+            <input type="number" name="original_price" value="{{ product.original_price }}" required>
+
+            <label>Final Price (After Discount ₹):</label>
+            <input type="number" name="final_price" value="{{ product.price if product.price < product.original_price else '' }}">
+            <small style="color: gray;">Want to start a sale? Enter a discounted price here.</small>
+
+            <button type="submit" class="btn">Save Changes</button>
+            <a href="/seller" style="display: block; text-align: center; margin-top: 15px; color: #888; text-decoration: none;">Cancel</a>
+        </form>
+    </div>
+</body>
+</html>
+
