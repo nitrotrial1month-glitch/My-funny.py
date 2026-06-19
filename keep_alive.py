@@ -239,8 +239,64 @@ def edit_product(product_id):
         return redirect('/seller')
 
     return render_template('edit_product.html', product=product)
+
+# --- 📦 Process Checkout Action ---
+@app.route('/process_checkout', methods=['POST'])
+def process_checkout():
+    user = session.get('user')
+    if not user: return redirect('/account')
     
+    name = request.form.get('name')
+    address = request.form.get('address')
+    phone = request.form.get('phone')
+    payment_method = request.form.get('payment_method') # COD or Online
+    is_direct = request.form.get('is_direct') == 'True'
     
+    if is_direct:
+        product_id = request.form.get('product_id')
+        col = Database.get_collection("products")
+        product = col.find_one({"_id": ObjectId(product_id)})
+        items = [product]
+        total = float(product['price'])
+        clear_cart = False
+    else:
+        items = Database.get_user_cart(user['id'])
+        total = sum(float(item['price']) for item in items)
+        clear_cart = True
+        
+    # যদি COD হয় তবে স্ট্যাটাস Confirmed, আর Online হলে Pending Payment
+    initial_status = "Confirmed" if payment_method == "COD" else "Pending Payment"
+    
+    order_id, expected_date = Database.place_order(user['id'], items, total, name, address, phone, payment_method, clear_cart, status=initial_status)
+    
+    if payment_method == "Online":
+        return redirect(f'/pay/{order_id}')
+    else:
+        return redirect(f'/order_success/{order_id}')
+
+# --- 💳 FamPay / Online Payment Page ---
+@app.route('/pay/<order_id>')
+def pay_online(order_id):
+    order = Database.get_order_by_id(order_id)
+    if not order: return "Order not found", 404
+    # এখানে আপনার FamPay UPI ID দিন
+    fampay_upi_id = "9046348427@fam" 
+    return render_template('payment.html', order=order, upi_id=fampay_upi_id)
+
+@app.route('/confirm_payment/<order_id>', methods=['POST'])
+def confirm_payment(order_id):
+    # পেমেন্ট কনফার্ম হলে স্ট্যাটাস আপডেট হবে
+    Database.update_order_status(order_id, "Confirmed")
+    return redirect(f'/order_success/{order_id}')
+
+# --- ✅ Order Success Page ---
+@app.route('/order_success/<order_id>')
+def order_success(order_id):
+    order = Database.get_order_by_id(order_id)
+    if not order: return "Order not found", 404
+    return render_template('order_success.html', order=order)
+
+
 # --- Server Setup ---
 def run():
     port = int(os.environ.get("PORT", 8080))
