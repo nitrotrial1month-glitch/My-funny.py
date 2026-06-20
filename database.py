@@ -241,7 +241,7 @@ class Database:
         if col is not None:
             col.update_one({"_id": ObjectId(product_id)}, {"$set": updated_data})
             
-        @staticmethod
+    @staticmethod
     def add_product_from_dict(data):
         col = Database.get_collection("products")
         if col is not None:
