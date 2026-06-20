@@ -248,8 +248,7 @@ class Database:
             result = col.insert_one(data)
             return result.inserted_id  # 🔴 এই লাইনটি যোগ করা হলো
         return None
-        
-                
+          
     # ================= 📦 ORDER SYSTEM UPDATE =================
     @staticmethod
     def place_order(user_id, items, total_price, name, address, phone, payment_method, clear_cart=False, status="Pending"):
