@@ -3,7 +3,6 @@ import pymongo
 from pymongo import MongoClient
 import certifi
 from datetime import datetime, timedelta
-import requests
 from bson import ObjectId
 
 MONGO_URL = os.getenv("MONGO_URL")
@@ -136,34 +135,16 @@ class Database:
             "description": desc,
             "price": int(price) if price else 0,
             "image": image,
-            "status": status
+            "status": status,
+            "seller_id": str(seller_id) if seller_id else None
         }
         
         result = col.insert_one(product_data)
-        product_id = str(result.inserted_id)
         
         if is_owner:
             print(f"🛍️ Owner uploaded a product. Auto-approved: {name}")
-            return
             
-        webhook_url = "https://discord.com/api/webhooks/1517038233559633980/ynh7QyKkWQXbiey9js7iWs27v0k2lW4En7Sna2TKwz4ZkXwED_aBKSPSp_e7CMPtYu-a"
-        
-        if webhook_url:
-            embed = {
-                "title": "🟡 New Product Pending Verification",
-                "description": f"**Product:** {name}\n**Price:** {price}₹\n\n*Seller: Please **REPLY** to this message with a short video of the product.*\n*Owner: React with ✅ or ❌ on this message to verify.*",
-                "color": 16753920,
-                "footer": {"text": f"ID: {product_id}"}
-            }
-            
-            payload = {"embeds": [embed]}
-            if seller_id:
-                payload["content"] = f"🔔 <@{seller_id}> Your product is waiting for verification!"
-
-            try:
-                requests.post(webhook_url, json=payload)
-            except Exception as e:
-                print(f"Webhook Exception Error: {e}")
+        return result.inserted_id
 
     @staticmethod
     def approve_product(product_id):
@@ -310,4 +291,4 @@ class Database:
                     "phone": phone,
                     "address": address
                 })
-        
+                
