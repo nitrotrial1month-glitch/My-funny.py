@@ -241,12 +241,14 @@ class Database:
         if col is not None:
             col.update_one({"_id": ObjectId(product_id)}, {"$set": updated_data})
             
-    # 🔴 এই লাইনগুলো একদম ঠিকঠাক স্পেস দিয়ে বসানো হয়েছে 🔴
-    @staticmethod
+        @staticmethod
     def add_product_from_dict(data):
         col = Database.get_collection("products")
         if col is not None:
-            col.insert_one(data)
+            result = col.insert_one(data)
+            return result.inserted_id  # 🔴 এই লাইনটি যোগ করা হলো
+        return None
+        
                 
     # ================= 📦 ORDER SYSTEM UPDATE =================
     @staticmethod
