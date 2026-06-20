@@ -161,7 +161,6 @@ class Database:
                 payload["content"] = f"🔔 <@{seller_id}> Your product is waiting for verification!"
 
             try:
-                import requests
                 requests.post(webhook_url, json=payload)
             except Exception as e:
                 print(f"Webhook Exception Error: {e}")
@@ -246,7 +245,7 @@ class Database:
         col = Database.get_collection("products")
         if col is not None:
             result = col.insert_one(data)
-            return result.inserted_id  # 🔴 এই লাইনটি যোগ করা হলো
+            return result.inserted_id
         return None
           
     # ================= 📦 ORDER SYSTEM UPDATE =================
@@ -261,7 +260,6 @@ class Database:
                 item_copy['_id'] = str(item_copy['_id'])
             serialized_items.append(item_copy)
             
-        # অর্ডার প্লেস করার দিন থেকে ৫ দিন পরের তারিখ হিসাব করা
         expected_date = (datetime.now() + timedelta(days=5)).strftime("%d %B, %Y")
         
         order_data = {
@@ -304,7 +302,6 @@ class Database:
     def save_user_address(user_id, name, phone, address):
         col = Database.get_collection("saved_addresses")
         if col is not None:
-            # চেক করবে একই অ্যাড্রেস আগে থেকে সেভ করা আছে কি না
             existing = col.find_one({"user_id": str(user_id), "address": address})
             if not existing:
                 col.insert_one({
@@ -313,4 +310,4 @@ class Database:
                     "phone": phone,
                     "address": address
                 })
-                
+        
