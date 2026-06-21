@@ -80,7 +80,7 @@ def api_chat():
     try:
         # 🔴 নতুন লাইব্রেরি অনুযায়ী এআই কল করা হলো
         response = client.models.generate_content(
-            model='gemini-1.5-flash',
+            model='gemini-3.5-flash',
             contents=system_prompt
         )
         reply_text = response.text.replace('\n', '<br>')
