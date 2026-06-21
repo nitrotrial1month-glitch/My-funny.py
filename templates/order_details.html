@@ -37,18 +37,22 @@
 </head>
 <body>
 
+    {% set status = order.get('status', 'Pending') %}
+    {% set items = order.get('items', []) %}
+    
     <div class="header">
         <a href="/orders" class="back-btn">← <span>Order Details</span></a>
-        <a href="/chat_support/{{ order._id }}" class="help-btn">Help</a>
+        <a href="/chat_support/{{ order.get('_id') }}" class="help-btn">Help</a>
     </div>
 
     <div class="section">
         <div class="product-info">
-            {% if order.get('items') and order['items']|length > 0 %}
-                <img src="/{{ order['items'][0].image }}" class="product-img" onerror="this.src='/static/placeholder.png'">
+            {% if items|length > 0 %}
+                {% set first_item = items[0] %}
+                <img src="/{{ first_item.get('image', 'static/placeholder.png') }}" class="product-img" onerror="this.src='/static/placeholder.png'">
                 <div class="product-details">
-                    <div class="product-title">{{ order['items'][0].name }}</div>
-                    <div class="product-meta">Qty: {{ order['items'][0].quantity|default(1) }}</div>
+                    <div class="product-title">{{ first_item.get('name', 'Product') }}</div>
+                    <div class="product-meta">Qty: {{ first_item.get('quantity', 1) }}</div>
                 </div>
             {% else %}
                 <div class="product-img" style="background: #e0e0e0;"></div>
@@ -58,38 +62,38 @@
     </div>
     
     <div class="order-id-box">
-        Order #<span id="oid">{{ order._id|string|upper }}</span>
+        Order #<span id="oid">{{ order.get('_id')|string|upper }}</span>
         <span class="copy-icon" onclick="copyId()">📋</span>
     </div>
 
     <div class="tracker-box">
-        {% set status_class = order.status|lower|replace(' ', '-') %}
+        {% set status_class = status|lower|replace(' ', '-') %}
         <div class="status-title {{ status_class }}">
-            {% if order.status == 'Delivered' %} ✔️ Delivered on {{ order.expected_delivery }}
-            {% elif order.status == 'Cancelled' %} ❌ Order Cancelled
-            {% else %} ⏳ {{ order.status }}
+            {% if status == 'Delivered' %} ✔️ Delivered on {{ order.get('expected_delivery', 'TBD') }}
+            {% elif status == 'Cancelled' %} ❌ Order Cancelled
+            {% else %} ⏳ {{ status }}
             {% endif %}
         </div>
-        <div style="font-size: 13px; color: #757575;">Order placed on {{ order.order_date }}</div>
+        <div style="font-size: 13px; color: #757575;">Order placed on {{ order.get('order_date', 'Recently') }}</div>
 
         <div class="action-grid">
-            {% if order.status == 'Pending' or order.status == 'Pending Payment' or order.status == 'Confirmed' %}
-                <button onclick="if(confirm('Cancel this order?')) window.location.href='/cancel_order/{{ order._id }}';" class="action-btn danger">✖ Cancel Order</button>
+            {% if status in ['Pending', 'Confirmed', 'Pending Payment'] %}
+                <button onclick="if(confirm('Cancel this order?')) window.location.href='/cancel_order/{{ order.get('_id') }}';" class="action-btn danger">✖ Cancel Order</button>
             {% endif %}
             
-            {% if order.status == 'Delivered' %}
-                <a href="/return_order/{{ order._id }}" class="action-btn danger">↩ Return / Replace</a>
+            {% if status == 'Delivered' %}
+                <a href="/return_order/{{ order.get('_id') }}" class="action-btn danger">↩ Return / Replace</a>
             {% endif %}
             
-            <a href="/chat_support/{{ order._id }}" class="action-btn primary">💬 Need Help?</a>
+            <a href="/chat_support/{{ order.get('_id') }}" class="action-btn primary">💬 Need Help?</a>
         </div>
     </div>
 
     <div class="section">
         <div class="section-title">Delivery details</div>
         <div class="address-box">
-            <b>{{ user.username }}</b> <span>{{ user.phone | default('') }}</span><br><br>
-            🏠 {{ user.address | default('Gushkara, West Bengal, India') }}
+            <b>{{ user.get('username', 'Customer') }}</b> <span>{{ user.get('phone', '') }}</span><br><br>
+            🏠 {{ user.get('address', 'Not Provided') }}
         </div>
     </div>
 
@@ -97,7 +101,7 @@
         <div class="section-title">Price details</div>
         <div class="price-row">
             <span>Selling price</span>
-            <span>₹{{ order.total_price }}</span>
+            <span>₹{{ order.get('total_price', '0') }}</span>
         </div>
         <div class="price-row">
             <span>Delivery fee</span>
@@ -105,11 +109,11 @@
         </div>
         <div class="price-row total">
             <span>Total amount</span>
-            <span>₹{{ order.total_price }}</span>
+            <span>₹{{ order.get('total_price', '0') }}</span>
         </div>
         <div class="paid-by">
             <span>Paid By</span>
-            <span>{% if order.payment_method == 'COD' %}Cash On Delivery{% else %}Online{% endif %}</span>
+            <span>{% if order.get('payment_method') == 'COD' %}Cash On Delivery{% else %}Online{% endif %}</span>
         </div>
     </div>
 
