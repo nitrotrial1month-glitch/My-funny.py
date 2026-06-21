@@ -29,29 +29,32 @@ def general_help():
 @support_bp.route('/api/chat', methods=['POST'])
 def api_chat():
     user = session.get('user')
-    if not user: return jsonify({"reply": "Session expired. Please login again."})
+    if not user: return jsonify({"reply": "Session expired. Please login again.", "options": []})
 
     data = request.json
     message = data.get('message', '').strip()
     order_id = data.get('order_id', '')
 
-    # Magic Command
+    # Magic Command for Owner
     if message.lower().startswith('/setnumber '):
         if user.get('is_owner'):
             number = message[11:].strip()
             col = Database.get_collection("config")
             if col is not None:
                 col.update_one({"_id": "main_config"}, {"$set": {"support_number": number}}, upsert=True)
-            return jsonify({"reply": f"✅ **Success!** Customer support number has been updated to: **{number}**", "options": []})
+            return jsonify({"reply": f"✅ **Success!** Customer support number updated to: **{number}**", "options": []})
         else:
             return jsonify({"reply": "🚫 **Access Denied!**", "options": []})
 
     if not model:
-        return jsonify({"reply": "AI is sleeping... please contact admin.", "options": []})
+        return jsonify({"reply": "AI is currently unavailable.", "options": []})
 
-    # Fetch Config
+    # Fetch Config Safely (Fixing the NotImplementedError)
     col = Database.get_collection("config")
-    config_data = col.find_one({"_id": "main_config"}) if col else {}
+    config_data = {}
+    if col is not None:
+        config_data = col.find_one({"_id": "main_config"}) or {}
+    
     support_number = config_data.get("support_number", "Not set yet.")
 
     order_display = f"#{order_id[:8].upper()}" if order_id != "General Inquiry" else "General Inquiry"
@@ -67,9 +70,9 @@ def api_chat():
     try:
         response = model.generate_content(system_prompt)
         reply_text = response.text.replace('\n', '<br>')
-        # নতুন ফিচার: বাটন বা সাজেশন্স পাঠানো
         suggestions = ["How to become a seller?", "Check Order Status", "Return Policy", "Refund Inquiry"]
         return jsonify({"reply": reply_text, "options": suggestions})
     except Exception as e:
+        print(f"Error: {e}") # লগে এররটি দেখা যাবে
         return jsonify({"reply": "Network error, please try again.", "options": []})
         
