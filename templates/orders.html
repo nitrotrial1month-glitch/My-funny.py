@@ -23,7 +23,7 @@
         /* Order Cards */
         .order-card { background: #fff; padding: 15px; margin-bottom: 8px; display: block; text-decoration: none; color: inherit; }
         .order-top { display: flex; gap: 15px; justify-content: space-between; }
-        .product-img { width: 75px; height: 75px; object-fit: cover; border-radius: 6px; border: 1px solid #f0f0f0; }
+        .product-img { width: 75px; height: 75px; object-fit: cover; border-radius: 6px; border: 1px solid #f0f0f0; background: #fafafa; }
         .order-info { flex: 1; display: flex; flex-direction: column; justify-content: center; }
         
         /* Status Colors */
@@ -42,7 +42,7 @@
         .stars span:hover, .stars span.active { color: #28a745; }
         .rate-text { font-size: 13px; color: #757575; margin-top: 4px; }
         
-        /* Action Buttons (Cancel, Return, Chat) */
+        /* Action Buttons */
         .action-buttons { display: flex; gap: 10px; margin-top: 15px; border-top: 1px solid #f0f0f0; padding-top: 15px; flex-wrap: wrap; }
         .btn { flex: 1; padding: 10px; text-align: center; font-size: 13px; font-weight: 600; border-radius: 4px; border: 1px solid #d7d7d7; background: #fff; cursor: pointer; color: #444; text-decoration: none; min-width: 100px; }
         .btn:hover { background: #f9f9f9; }
@@ -76,11 +76,15 @@
             
             <a href="/order_details/{{ order._id }}" style="text-decoration: none; color: inherit;">
                 <div class="order-top">
-                    {% set first_item = order.items[0] %}
-                    <img src="/{{ first_item.image }}" alt="Product Image" class="product-img">
+                    {% if order.items and order.items is iterable and order.items|length > 0 %}
+                        {% set first_item = order.items[0] %}
+                        <img src="/{{ first_item.image if first_item.image else 'static/placeholder.png' }}" alt="Product Image" class="product-img" onerror="this.style.display='none'">
+                    {% else %}
+                        <div class="product-img"></div>
+                    {% endif %}
                     
                     <div class="order-info">
-                        <div class="status {{ order.status|lower }}">
+                        <div class="status {{ order.status|lower|replace(' ', '-') }}">
                             {% if order.status == 'Delivered' %}
                                 Delivered on {{ order.expected_delivery }}
                             {% elif order.status == 'Cancelled' %}
@@ -91,7 +95,12 @@
                             <span class="arrow">›</span>
                         </div>
                         <div class="product-name">
-                            {{ first_item.name }} {% if order.items|length > 1 %} + {{ order.items|length - 1 }} more items {% endif %}
+                            {% if order.items and order.items is iterable and order.items|length > 0 %}
+                                {{ order.items[0].name }} 
+                                {% if order.items|length > 1 %} + {{ order.items|length - 1 }} more items {% endif %}
+                            {% else %}
+                                Order #{{ order._id|string|truncate(8, True, '')|upper }}
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -133,19 +142,14 @@
             const stars = starContainer.querySelectorAll('span');
             stars.forEach((star, index) => {
                 star.addEventListener('click', () => {
-                    // Reset all stars in this container
                     stars.forEach(s => s.style.color = '#e0e0e0');
-                    // Highlight up to the clicked star
                     for(let i = 0; i <= index; i++) {
                         stars[i].style.color = '#28a745';
                     }
-                    // Find the closest rate-text and update it
                     const text = starContainer.nextElementSibling;
                     text.innerText = "Thanks for your rating!";
                     text.style.color = "#28a745";
                     text.style.fontWeight = "bold";
-                    
-                    // You can add an AJAX request here later to save the rating in the database
                 });
             });
         });
