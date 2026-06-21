@@ -57,8 +57,8 @@
             <div class="order-card" data-status="{{ order.status|lower }}">
                 <a href="/order_details/{{ order._id }}" style="text-decoration: none; color: inherit;">
                     <div class="order-content">
-                        {% if order.items and order.items|length > 0 %}
-                            <img src="/{{ order.items[0].image }}" class="product-img" onerror="this.src='/static/placeholder.png'">
+                        {% if order.get('items') and order['items']|length > 0 %}
+                            <img src="/{{ order['items'][0].image }}" class="product-img" onerror="this.src='/static/placeholder.png'">
                             <div class="order-info">
                                 <div class="status {{ order.status|lower|replace(' ', '-') }}">
                                     {% if order.status == 'Delivered' %} Delivered on {{ order.expected_delivery }}
@@ -66,7 +66,7 @@
                                     {% else %} {{ order.status }}
                                     {% endif %}
                                 </div>
-                                <div class="product-name">{{ order.items[0].name }}</div>
+                                <div class="product-name">{{ order['items'][0].name }}</div>
                             </div>
                         {% else %}
                             <div class="product-img" style="background: #e0e0e0;"></div>
@@ -80,7 +80,7 @@
                 </a>
 
                 <div class="action-bar">
-                    {% if order.status == 'Pending' or order.status == 'Confirmed' %}
+                    {% if order.status == 'Pending' or order.status == 'Confirmed' or order.status == 'Pending Payment' %}
                         <a href="#" onclick="if(confirm('Cancel this order?')) window.location.href='/cancel_order/{{ order._id }}';" class="btn btn-danger">Cancel</a>
                     {% endif %}
                     {% if order.status == 'Delivered' %}
