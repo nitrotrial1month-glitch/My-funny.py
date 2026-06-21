@@ -5,205 +5,118 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Orders | inwear</title>
     <style>
-        /* Mobile-first UI matching Flipkart style */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f1f3f6; margin: 0; padding: 0; color: #212121; }
-        
-        /* Header */
-        .header { background: #fff; padding: 15px; display: flex; align-items: center; gap: 15px; font-size: 18px; font-weight: 600; border-bottom: 1px solid #f0f0f0; position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .header { background: #fff; padding: 15px; display: flex; align-items: center; gap: 15px; font-size: 18px; font-weight: 600; border-bottom: 1px solid #f0f0f0; position: sticky; top: 0; z-index: 100; }
         .back-btn { text-decoration: none; color: #212121; font-size: 20px; font-weight: bold; }
         
-        /* Search & Filters */
         .search-container { background: #fff; padding: 10px 15px; }
-        .search-box { width: 100%; padding: 12px 15px; border: 1px solid #e0e0e0; border-radius: 8px; box-sizing: border-box; font-size: 14px; outline: none; background: #f9f9f9; transition: border 0.3s; }
-        .search-box:focus { border-color: #2874f0; background: #fff; }
+        .search-box { width: 100%; padding: 10px 15px; border: 1px solid #e0e0e0; border-radius: 6px; box-sizing: border-box; font-size: 14px; outline: none; background: #fff; }
         
         .filters { display: flex; gap: 10px; padding: 0 15px 15px; background: #fff; overflow-x: auto; border-bottom: 1px solid #f0f0f0; scrollbar-width: none; }
         .filters::-webkit-scrollbar { display: none; }
-        .filter-btn { padding: 8px 16px; border: 1px solid #e0e0e0; border-radius: 20px; background: #fff; font-size: 13px; font-weight: 500; white-space: nowrap; cursor: pointer; color: #444; transition: 0.3s; }
-        .filter-btn.active { background: #2874f0; color: #fff; border-color: #2874f0; }
+        .filter-btn { padding: 6px 16px; border: 1px solid #e0e0e0; border-radius: 16px; background: #fff; font-size: 13px; cursor: pointer; color: #444; }
+        .filter-btn.active { background: #212121; color: #fff; border-color: #212121; }
         
-        /* Order Cards */
-        .order-card { background: #fff; padding: 15px; margin-bottom: 8px; display: block; text-decoration: none; color: inherit; transition: transform 0.2s; }
-        .order-top { display: flex; gap: 15px; justify-content: space-between; }
-        .product-img { width: 75px; height: 75px; object-fit: cover; border-radius: 6px; border: 1px solid #f0f0f0; background: #fafafa; }
-        .order-info { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+        /* Flipkart Style Card */
+        .order-card { background: #fff; margin-bottom: 8px; display: block; text-decoration: none; color: inherit; }
+        .order-content { padding: 15px; display: flex; gap: 15px; align-items: center; border-bottom: 1px solid #f9f9f9; }
+        .product-img { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #f0f0f0; }
+        .order-info { flex: 1; }
         
-        /* Status Colors */
-        .status { font-weight: bold; font-size: 14px; margin-bottom: 5px; display: flex; align-items: center; justify-content: space-between; }
-        .status.delivered { color: #28a745; }
-        .status.cancelled { color: #dc3545; }
-        .status.pending, .status.processing { color: #ff9800; }
+        .status { font-weight: bold; font-size: 14px; margin-bottom: 4px; color: #212121; }
+        .status.cancelled { color: #ff6161; }
+        .status.pending { color: #ff9f00; }
+        .product-name { font-size: 13px; color: #757575; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
         
-        .product-name { font-size: 13px; color: #757575; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .arrow { color: #878787; font-weight: bold; }
-        
-        /* Rating Section */
-        .rating-section { margin-top: 15px; padding-left: 90px; }
-        .stars { color: #e0e0e0; font-size: 22px; letter-spacing: 2px; }
-        .stars span { cursor: pointer; transition: color 0.2s; }
-        .stars span:hover, .stars span.active { color: #28a745; }
-        .rate-text { font-size: 13px; color: #757575; margin-top: 4px; }
-        
-        /* Action Buttons */
-        .action-buttons { display: flex; gap: 10px; margin-top: 15px; border-top: 1px solid #f0f0f0; padding-top: 15px; flex-wrap: wrap; }
-        .btn { flex: 1; padding: 10px; text-align: center; font-size: 13px; font-weight: 600; border-radius: 6px; border: 1px solid #d7d7d7; background: #fff; cursor: pointer; color: #444; text-decoration: none; min-width: 100px; transition: 0.2s; }
-        .btn:hover { background: #f9f9f9; }
-        .btn-danger { color: #dc3545; border-color: #f5c6cb; background: #fffcfc; }
-        .btn-danger:hover { background: #f8d7da; }
-        .btn-primary { color: #2874f0; border-color: #b8daff; background: #f0f8ff; }
-        .btn-primary:hover { background: #cce5ff; }
-        
-        /* Empty State */
-        .empty-state { text-align: center; padding: 50px 20px; color: #878787; background: #fff; }
+        /* 🔴 VISIBLE BUTTONS AT THE BOTTOM OF CARD */
+        .action-bar { padding: 10px 15px; display: flex; gap: 10px; background: #fafafa; }
+        .btn { flex: 1; padding: 8px; text-align: center; font-size: 13px; font-weight: 600; border-radius: 4px; border: 1px solid #d7d7d7; background: #fff; cursor: pointer; color: #444; text-decoration: none; }
+        .btn-danger { color: #ff6161; }
+        .btn-primary { color: #2874f0; border-color: #b8daff; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <a href="/" class="back-btn">←</a>
-        <span>My Orders</span>
+        <a href="/" class="back-btn">←</a> <span>My Orders</span>
     </div>
 
-    <!-- Search & Filters -->
     <div class="search-container">
-        <input type="text" id="searchInput" class="search-box" placeholder="🔍 Search your order here (e.g. Shirt, #1234)">
+        <input type="text" id="searchInput" class="search-box" placeholder="🔍 Search your order here">
     </div>
-    <div class="filters" id="filterContainer">
+    <div class="filters">
         <button class="filter-btn active" data-filter="all">All</button>
         <button class="filter-btn" data-filter="delivered">Delivered</button>
         <button class="filter-btn" data-filter="pending">Pending</button>
         <button class="filter-btn" data-filter="cancelled">Cancelled</button>
     </div>
 
-    <!-- Orders List -->
     <div id="ordersList">
         {% if orders %}
             {% for order in orders %}
             <div class="order-card" data-status="{{ order.status|lower }}">
                 <a href="/order_details/{{ order._id }}" style="text-decoration: none; color: inherit;">
-                    <div class="order-top">
-                        {% if order.items and order.items is iterable and order.items|length > 0 %}
-                            {% set first_item = order.items[0] %}
-                            <img src="/{{ first_item.image if first_item.image else 'static/placeholder.png' }}" alt="Product Image" class="product-img" onerror="this.src='/static/placeholder.png'">
+                    <div class="order-content">
+                        {% if order.items and order.items|length > 0 %}
+                            <img src="/{{ order.items[0].image }}" class="product-img" onerror="this.src='/static/placeholder.png'">
+                            <div class="order-info">
+                                <div class="status {{ order.status|lower|replace(' ', '-') }}">
+                                    {% if order.status == 'Delivered' %} Delivered on {{ order.expected_delivery }}
+                                    {% elif order.status == 'Cancelled' %} Cancelled
+                                    {% else %} {{ order.status }}
+                                    {% endif %}
+                                </div>
+                                <div class="product-name">{{ order.items[0].name }}</div>
+                            </div>
                         {% else %}
-                            <div class="product-img" style="background: #e0e0e0; display:flex; align-items:center; justify-content:center; font-size:10px; color:#666;">No Image</div>
+                            <div class="product-img" style="background: #e0e0e0;"></div>
+                            <div class="order-info">
+                                <div class="status {{ order.status|lower|replace(' ', '-') }}">{{ order.status }}</div>
+                                <div class="product-name">Order #{{ order._id|string|truncate(8, True, '')|upper }}</div>
+                            </div>
                         {% endif %}
-                        
-                        <div class="order-info">
-                            <div class="status {{ order.status|lower|replace(' ', '-') }}">
-                                {% if order.status == 'Delivered' %}
-                                    Delivered on {{ order.expected_delivery }}
-                                {% elif order.status == 'Cancelled' %}
-                                    Cancelled on {{ order.order_date }}
-                                {% else %}
-                                    {{ order.status }} (Expected: {{ order.expected_delivery }})
-                                {% endif %}
-                                <span class="arrow">›</span>
-                            </div>
-                            <div class="product-name">
-                                {% if order.items and order.items is iterable and order.items|length > 0 %}
-                                    {{ order.items[0].name }} 
-                                    {% if order.items|length > 1 %} + {{ order.items|length - 1 }} more items {% endif %}
-                                {% else %}
-                                    Order #{{ order._id|string|truncate(8, True, '')|upper }}
-                                {% endif %}
-                            </div>
-                        </div>
+                        <div style="color: #878787; font-weight: bold;">›</div>
                     </div>
                 </a>
 
-                {% if order.status == 'Delivered' %}
-                <div class="rating-section">
-                    <div class="stars">
-                        <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
-                    </div>
-                    <div class="rate-text">Rate this product now</div>
-                </div>
-                {% endif %}
-
-                <div class="action-buttons">
-                    {% if order.status == 'Pending' or order.status == 'Pending Payment' or order.status == 'Confirmed' %}
-                        <!-- Added JavaScript Confirmation before cancelling -->
-                        <a href="/cancel_order/{{ order._id }}" class="btn btn-danger" onclick="return confirm('Are you sure you want to cancel this order? This action cannot be undone.');">Cancel Order</a>
+                <div class="action-bar">
+                    {% if order.status == 'Pending' or order.status == 'Confirmed' %}
+                        <a href="#" onclick="if(confirm('Cancel this order?')) window.location.href='/cancel_order/{{ order._id }}';" class="btn btn-danger">Cancel</a>
                     {% endif %}
-                    
                     {% if order.status == 'Delivered' %}
-                        <a href="/return_order/{{ order._id }}" class="btn">Return / Replace</a>
+                        <a href="/return_order/{{ order._id }}" class="btn btn-danger">Return</a>
                     {% endif %}
-                    
-                    <a href="/chat_support/{{ order._id }}" class="btn btn-primary">Need Help? (Chat)</a>
-                    <a href="/order_details/{{ order._id }}" class="btn">View Details</a>
+                    <a href="/chat_support/{{ order._id }}" class="btn btn-primary">Help</a>
                 </div>
             </div>
             {% endfor %}
         {% else %}
-            <div class="empty-state">
-                <img src="https://cdn-icons-png.flaticon.com/512/2748/2748614.png" alt="Empty Box" style="width: 100px; opacity: 0.5; margin-bottom: 15px;">
-                <h3 style="color: #212121; margin-bottom: 10px;">No Orders Yet!</h3>
-                <p>Looks like you haven't placed an order yet.</p>
-                <a href="/" class="btn btn-primary" style="display: inline-block; margin-top: 20px; padding: 12px 25px;">Start Shopping</a>
+            <div style="text-align: center; padding: 50px 20px; color: #878787;">
+                <h3>No Orders Yet!</h3>
+                <a href="/" class="btn btn-primary" style="display: inline-block; margin-top: 15px; padding: 10px 20px;">Start Shopping</a>
             </div>
         {% endif %}
     </div>
 
     <script>
-        // 1. Rating Logic
-        document.querySelectorAll('.stars').forEach(starContainer => {
-            const stars = starContainer.querySelectorAll('span');
-            stars.forEach((star, index) => {
-                star.addEventListener('click', () => {
-                    stars.forEach(s => s.style.color = '#e0e0e0');
-                    for(let i = 0; i <= index; i++) {
-                        stars[i].style.color = '#28a745';
-                    }
-                    const text = starContainer.nextElementSibling;
-                    text.innerText = "Thanks for your rating! 💚";
-                    text.style.color = "#28a745";
-                    text.style.fontWeight = "bold";
-                });
-            });
-        });
-
-        // 2. Live Search Logic
+        // Live Search & Filters
         const searchInput = document.getElementById('searchInput');
         const orderCards = document.querySelectorAll('.order-card');
+        const filterBtns = document.querySelectorAll('.filter-btn');
 
         searchInput.addEventListener('input', function() {
             const searchTerm = this.value.toLowerCase();
-            orderCards.forEach(card => {
-                const text = card.innerText.toLowerCase();
-                if(text.includes(searchTerm)) {
-                    card.style.display = 'block';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
+            orderCards.forEach(card => card.style.display = card.innerText.toLowerCase().includes(searchTerm) ? 'block' : 'none');
         });
 
-        // 3. Live Filter Buttons Logic
-        const filterBtns = document.querySelectorAll('.filter-btn');
         filterBtns.forEach(btn => {
             btn.addEventListener('click', () => {
-                // Remove active class from all buttons
                 filterBtns.forEach(b => b.classList.remove('active'));
-                // Add active class to clicked button
                 btn.classList.add('active');
-
                 const filterValue = btn.getAttribute('data-filter');
-
                 orderCards.forEach(card => {
-                    const status = card.getAttribute('data-status');
-                    
-                    if(filterValue === 'all') {
-                        card.style.display = 'block';
-                    } else if(status.includes(filterValue)) {
-                        card.style.display = 'block';
-                    } else {
-                        card.style.display = 'none';
-                    }
+                    card.style.display = (filterValue === 'all' || card.getAttribute('data-status').includes(filterValue)) ? 'block' : 'none';
                 });
-                
-                // Clear search box when filter is clicked
                 searchInput.value = '';
             });
         });
