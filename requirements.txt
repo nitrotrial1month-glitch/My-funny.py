@@ -6,4 +6,4 @@ flask
 easy-pil
 Flask-Dance
 requests
-google-generativeai
+google-genai
