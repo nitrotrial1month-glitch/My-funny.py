@@ -80,16 +80,24 @@
             inputField.value = '';
             typingIndicator.style.display = 'block';
 
+                        // API তে রিকোয়েস্ট পাঠানো
             fetch('/api/chat', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({message: text, order_id: '{{ order_id }}'})
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: text, order_id: '{{ order_id }}' })
             })
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) throw new Error('Server Error: ' + res.status);
+                return res.json();
+            })
             .then(data => {
                 typingIndicator.style.display = 'none';
                 appendMessage(data.reply, 'ai');
                 if (data.options && data.options.length > 0) renderOptions(data.options);
+            })
+            .catch(error => {
+                typingIndicator.style.display = 'none';
+                appendMessage("⚠️ Error: " + error.message, 'ai');
             });
         }
     </script>
