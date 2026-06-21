@@ -56,14 +56,6 @@ def notify_sellers_via_dm(order_id, name, phone, address, items, payment_method)
 # 🛒 চেকআউট এবং অর্ডারের রাউটগুলো
 # ==========================================================
 
-# ২. ইউজারের পুরোনো অর্ডার দেখার পেজ
-@checkout_bp.route('/orders')
-def orders():
-    user = session.get('user')
-    if not user: return redirect('/account')
-    orders = Database.get_user_orders(user['id'])
-    return render_template('orders.html', orders=orders)
-
 # ৩. কার্ট থেকে চেকআউট পেজ
 @checkout_bp.route('/checkout')
 def checkout_cart():
