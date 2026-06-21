@@ -3,11 +3,10 @@ from flask import Blueprint, render_template, request, session, redirect, jsonif
 from database import Database
 from bson.objectid import ObjectId
 
-# 🔴 এই লাইনটি মিসিং থাকার কারণেই আপনার সার্ভার ক্র্যাশ করেছিল!
 orders_bp = Blueprint('orders', __name__)
 
 # ==========================================
-# 📋 ১. My Orders Page Route
+# 📋 ১. My Orders Page Route (১০০% ফিক্সড)
 # ==========================================
 @orders_bp.route('/orders')
 def my_orders():
@@ -19,7 +18,19 @@ def my_orders():
     user_orders = []
     
     if col is not None:
-        query = {"username": user.get('username')}
+        user_id = user.get('id')
+        username = user.get('username')
+        
+        # 🔴 স্মার্ট কোয়েরি: ডেটাবেসে যেভাবেই সেভ হোক না কেন, এটি অর্ডার খুঁজে আনবেই!
+        query = {
+            "$or": [
+                {"user_id": user_id},          # ইনটেজার আইডি
+                {"user_id": str(user_id)},     # স্ট্রিং আইডি
+                {"discord_id": user_id},       # ডিসকর্ড আইডি
+                {"username": username}         # অথবা ইউজারনেম
+            ]
+        }
+        # নতুন অর্ডারগুলো একদম উপরে দেখানোর জন্য sort করা হলো
         user_orders = list(col.find(query).sort("_id", -1))
         
     return render_template('orders.html', orders=user_orders, user=user)
@@ -36,8 +47,9 @@ def cancel_order(order_id):
     col = Database.get_collection("orders")
     if col is not None:
         try:
+            # সিকিউরিটি: শুধুমাত্র নিজের অর্ডার ক্যানসেল করা যাবে
             col.update_one(
-                {"_id": ObjectId(order_id), "username": user.get('username')}, 
+                {"_id": ObjectId(order_id), "$or": [{"user_id": user.get('id')}, {"user_id": str(user.get('id'))}, {"username": user.get('username')}]}, 
                 {"$set": {"status": "Cancelled"}}
             )
         except Exception as e:
@@ -58,7 +70,7 @@ def return_order(order_id):
     if col is not None:
         try:
             col.update_one(
-                {"_id": ObjectId(order_id), "username": user.get('username')}, 
+                {"_id": ObjectId(order_id), "$or": [{"user_id": user.get('id')}, {"user_id": str(user.get('id'))}, {"username": user.get('username')}]}, 
                 {"$set": {"status": "Return Requested"}}
             )
         except Exception as e:
@@ -80,12 +92,16 @@ def order_details(order_id):
     
     if col is not None:
         try:
-            order = col.find_one({"_id": ObjectId(order_id), "username": user.get('username')})
+            # আইডি দিয়ে অর্ডার ডিটেইলস খুঁজে বের করা
+            order = col.find_one({
+                "_id": ObjectId(order_id), 
+                "$or": [{"user_id": user.get('id')}, {"user_id": str(user.get('id'))}, {"username": user.get('username')}]
+            })
         except Exception as e:
             print(f"Fetch Details Database Error: {e}")
             
     if not order:
-        return "<h1>Order not found!</h1><br><a href='/orders'>Go Back</a>", 404
+        return "<h1>Order not found or Unauthorized!</h1><br><a href='/orders'>Go Back</a>", 404
         
     return render_template('order_details.html', order=order, user=user)
     
