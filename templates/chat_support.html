@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Support Chat | inwear</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #e5ddd5; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; }
+        
+        /* Header */
+        .chat-header { background: #075e54; color: white; padding: 15px 20px; display: flex; align-items: center; gap: 15px; font-size: 18px; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.2); z-index: 10; }
+        .back-btn { text-decoration: none; color: white; font-size: 22px; }
+        
+        /* Chat Area */
+        .chat-box { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
+        
+        .msg { max-width: 75%; padding: 10px 15px; border-radius: 8px; font-size: 15px; line-height: 1.4; position: relative; box-shadow: 0 1px 1px rgba(0,0,0,0.1); word-wrap: break-word;}
+        .msg.ai { align-self: flex-start; background: #fff; border-top-left-radius: 0; }
+        .msg.user { align-self: flex-end; background: #dcf8c6; border-top-right-radius: 0; }
+        
+        .time { font-size: 10px; color: #999; text-align: right; margin-top: 5px; display: block; }
+        
+        /* Input Area */
+        .chat-input-area { background: #f0f0f0; padding: 10px 15px; display: flex; gap: 10px; align-items: center; }
+        .chat-input { flex: 1; padding: 12px 15px; border: none; border-radius: 20px; outline: none; font-size: 15px; }
+        .send-btn { background: #128c7e; color: white; border: none; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; transition: 0.2s; }
+        .send-btn:hover { background: #075e54; }
+        
+        /* Loading Animation */
+        .typing { display: none; align-self: flex-start; background: #fff; padding: 10px 15px; border-radius: 20px; font-size: 14px; color: #888; font-style: italic; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+
+    <div class="chat-header">
+        <a href="/orders" class="back-btn">←</a>
+        <div>
+            <div>Support AI</div>
+            <div style="font-size: 12px; font-weight: normal; opacity: 0.8;">Order #{{ order_id[:8]|upper }}</div>
+        </div>
+    </div>
+
+    <div class="chat-box" id="chatBox">
+        <!-- Initial AI Message -->
+        <div class="msg ai">
+            Hello {{ user.username }}! 👋<br>
+            I am your AI Support Assistant. How can I help you today regarding your order?
+            <span class="time">Just now</span>
+        </div>
+        
+        {% if is_owner %}
+        <div style="text-align: center; font-size: 12px; color: #555; margin: 10px 0; background: #fffcd6; padding: 5px; border-radius: 4px;">
+            👑 <b>Owner Tip:</b> Type <code>/setnumber [your number]</code> to update the customer care number.
+        </div>
+        {% endif %}
+        
+        <div class="typing" id="typingIndicator">AI is typing...</div>
+    </div>
+
+    <div class="chat-input-area">
+        <input type="text" id="userInput" class="chat-input" placeholder="Type a message..." autocomplete="off">
+        <button class="send-btn" onclick="sendMessage()">➤</button>
+    </div>
+
+    <script>
+        const orderId = "{{ order_id }}";
+        const inputField = document.getElementById('userInput');
+        const chatBox = document.getElementById('chatBox');
+        const typingIndicator = document.getElementById('typingIndicator');
+
+        // Enter চাপলে মেসেজ যাবে
+        inputField.addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
+
+        function getCurrentTime() {
+            const now = new Date();
+            let hours = now.getHours();
+            let minutes = now.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12; 
+            minutes = minutes < 10 ? '0'+minutes : minutes;
+            return hours + ':' + minutes + ' ' + ampm;
+        }
+
+        function appendMessage(text, sender) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `msg ${sender}`;
+            msgDiv.innerHTML = `${text} <span class="time">${getCurrentTime()}</span>`;
+            
+            // টাইপিং ইন্ডিকেটরের আগে মেসেজ বসানো
+            chatBox.insertBefore(msgDiv, typingIndicator);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function sendMessage() {
+            const text = inputField.value.trim();
+            if (!text) return;
+
+            // ইউজার মেসেজ দেখাও
+            appendMessage(text, 'user');
+            inputField.value = '';
+            
+            // টাইপিং এনিমেশন দেখাও
+            typingIndicator.style.display = 'block';
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // API তে রিকোয়েস্ট পাঠানো
+            fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: text, order_id: orderId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                typingIndicator.style.display = 'none';
+                appendMessage(data.reply, 'ai');
+            })
+            .catch(error => {
+                typingIndicator.style.display = 'none';
+                appendMessage("Network error. Please try again.", 'ai');
+            });
+        }
+    </script>
+</body>
+</html>
+
