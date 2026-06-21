@@ -15,7 +15,7 @@
         .card h3 { margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; color: #444; }
         
         label { font-size: 14px; font-weight: 600; color: #555; display: block; margin-top: 15px; margin-bottom: 5px; }
-        input, textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        input[type="text"], input[type="number"], textarea, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
         
         .btn { background: var(--primary); color: white; padding: 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; margin-top: 20px; }
         .btn:hover { opacity: 0.9; }
@@ -35,6 +35,14 @@
         
         .notice { background: #e8f4fd; color: #0056b3; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #0056b3; font-size: 14px; }
         .back-link { display: block; text-align: center; margin-top: 20px; color: var(--text); text-decoration: none; font-weight: bold; }
+        
+        /* New Styles for Flex Inputs */
+        .flex-row { display: flex; gap: 15px; margin-bottom: 15px; }
+        .flex-col { flex: 1; }
+        .policy-box { padding: 15px; border: 1px solid #ddd; border-radius: 6px; background: #fdfdfd; margin-bottom: 15px; }
+        .policy-box label { display: inline-block; margin-top: 0; margin-right: 15px; font-weight: normal; cursor: pointer; }
+        .file-input-group { margin-bottom: 10px; }
+        .file-input-group input { padding: 8px; border: 1px dashed #ccc; background: #fafafa; }
     </style>
 </head>
 <body>
@@ -45,7 +53,7 @@
         </div>
 
         <div class="notice">
-            <strong>ℹ️ Verification Required:</strong> Upload high-quality photos. Products will be verified by the Owner before listing.
+            <strong>ℹ️ Verification Required:</strong> Upload high-quality photos and videos. Products will be verified by the Owner before listing.
         </div>
 
         <div class="card">
@@ -62,16 +70,59 @@
                 <label>Available Sizes (Comma separated):</label>
                 <input type="text" name="sizes" placeholder="e.g. S, M, L, XL" required>
                 
-                <label>Original Price (₹):</label>
-                <input type="number" id="orig_price" name="original_price" required oninput="calculateDiscount()">
+                <div class="flex-row" style="margin-top: 15px;">
+                    <div class="flex-col">
+                        <label style="margin-top: 0;">Original Price (₹):</label>
+                        <input type="number" id="orig_price" name="original_price" required oninput="calculateDiscount()">
+                    </div>
+                    <div class="flex-col">
+                        <label style="margin-top: 0;">Final Price (₹):</label>
+                        <input type="number" id="final_price" name="final_price" placeholder="Leave empty if no discount" oninput="calculateDiscount()">
+                    </div>
+                </div>
+                <p id="discount_display" style="color: #28a745; font-weight: bold; margin-top: -5px; margin-bottom: 15px; font-size: 14px;"></p>
                 
-                <label>Final Price (After Discount ₹):</label>
-                <input type="number" id="final_price" name="final_price" placeholder="Leave empty if no discount" oninput="calculateDiscount()">
+                <div class="flex-row">
+                    <div class="flex-col">
+                        <label style="margin-top: 0;">Target Gender:</label>
+                        <select name="gender" required>
+                            <option value="Men">Men (ছেলেদের)</option>
+                            <option value="Women">Women (মেয়েদের)</option>
+                            <option value="Unisex">Unisex (সবার জন্য)</option>
+                        </select>
+                    </div>
+                    <div class="flex-col">
+                        <label style="margin-top: 0;">Age Group:</label>
+                        <select name="age_group" required>
+                            <option value="Adults">Adults (বড়দের)</option>
+                            <option value="Kids">Kids (বাচ্চাদের)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <label>Product Policy (Select at least one):</label>
+                <div class="policy-box">
+                    <label>
+                        <input type="checkbox" name="can_return" id="can_return"> 7 Days Return Available
+                    </label> 
+                    <label>
+                        <input type="checkbox" name="can_replace" id="can_replace"> 7 Days Replacement Available
+                    </label>
+                </div>
                 
-                <p id="discount_display" style="color: #28a745; font-weight: bold; margin-top: 5px; font-size: 14px;"></p>
-                
-                <label>Product Photo (From Gallery):</label>
-                <input type="file" name="image" accept="image/*" required>
+                <label>Product Images (Max 3):</label>
+                <div class="file-input-group">
+                    <input type="file" name="image1" accept="image/*" required>
+                    <small style="display:block; color:#666; margin-bottom:8px;">* Main Image (Required)</small>
+                    
+                    <input type="file" name="image2" accept="image/*" style="margin-bottom:8px;">
+                    <input type="file" name="image3" accept="image/*">
+                </div>
+
+                <label>Product Video (Optional but recommended):</label>
+                <div class="file-input-group">
+                    <input type="file" name="video" accept="video/mp4,video/x-m4v,video/*">
+                </div>
                 
                 <button type="submit" class="btn">Submit for Review</button>
             </form>
@@ -98,10 +149,14 @@
                 </div>
                 
                 <div class="action-buttons">
-                    <a href="/seller/edit/{{ p._id }}" class="btn-edit">Edit</a>
-                    <form action="/delete_product/{{ p._id }}" method="POST" style="margin: 0;">
-                        <button type="submit" class="btn-delete">Delete</button>
-                    </form>
+                    {% if p.seller_id|string == user.id|string %}
+                        <a href="/seller/edit/{{ p._id }}" class="btn-edit">Edit</a>
+                        <form action="/delete_product/{{ p._id }}" method="POST" style="margin: 0;">
+                            <button type="submit" class="btn-delete">Delete</button>
+                        </form>
+                    {% else %}
+                        <span style="font-size: 12px; color: #888; font-style: italic;">Viewing Only</span>
+                    {% endif %}
                 </div>
             </div>
             {% endfor %}
@@ -120,7 +175,6 @@
         let final = parseFloat(finalInput);
         let display = document.getElementById('discount_display');
 
-        // যদি ফাইনাল প্রাইস ইনপুট ফাঁকা থাকে, তাহলে কোনো মেসেজ দেখাবে না
         if (finalInput.trim() === "" || isNaN(final)) {
             display.innerText = "";
             return;
