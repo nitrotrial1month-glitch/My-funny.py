@@ -2,93 +2,153 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Orders | inwear</title>
     <style>
-        :root { --primary-red: #cc0000; --bg: #f1f2f4; --white: #ffffff; }
-        body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: var(--bg); margin: 0; padding: 0; }
+        /* Mobile-first UI matching Flipkart style */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f1f3f6; margin: 0; padding: 0; color: #212121; }
         
-        .header { background: var(--white); padding: 15px; display: flex; align-items: center; box-shadow: 0 1px 4px rgba(0,0,0,0.08); position: sticky; top: 0; z-index: 100; }
-        .back-btn { text-decoration: none; font-size: 20px; color: #333; margin-right: 15px; font-weight: bold; }
-        .header-title { font-size: 16px; font-weight: bold; margin: 0; }
-
-        .container { padding: 10px; max-width: 600px; margin: 0 auto; }
+        /* Header */
+        .header { background: #fff; padding: 15px; display: flex; align-items: center; gap: 15px; font-size: 18px; font-weight: 600; border-bottom: 1px solid #f0f0f0; position: sticky; top: 0; z-index: 100; }
+        .back-btn { text-decoration: none; color: #212121; font-size: 20px; font-weight: bold; }
         
-        /* Order Card */
-        .order-card { background: var(--white); border-radius: 8px; padding: 15px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #e0e0e0; }
-        .order-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 12px; }
-        .order-id { font-size: 12px; font-weight: bold; color: #878787; }
+        /* Search & Filters */
+        .search-container { background: #fff; padding: 10px 15px; }
+        .search-box { width: 100%; padding: 10px 15px; border: 1px solid #e0e0e0; border-radius: 6px; box-sizing: border-box; font-size: 14px; outline: none; background: #f9f9f9; }
+        .filters { display: flex; gap: 10px; padding: 0 15px 15px; background: #fff; overflow-x: auto; border-bottom: 1px solid #f0f0f0; scrollbar-width: none; }
+        .filters::-webkit-scrollbar { display: none; }
+        .filter-btn { padding: 6px 14px; border: 1px solid #e0e0e0; border-radius: 16px; background: #fff; font-size: 13px; white-space: nowrap; cursor: pointer; color: #444; }
+        .filter-btn.active { background: #212121; color: #fff; border-color: #212121; }
         
-        /* Status Badges */
-        .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; color: white; text-transform: uppercase; }
-        .status-confirmed { background: #388e3c; }
-        .status-pending { background: #ff9f00; }
-        .status-verification { background: #007bff; }
-
-        /* Order Items inside card */
-        .item-row { display: flex; gap: 12px; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #f5f5f5; }
-        .item-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-        .item-img { width: 50px; height: 60px; object-fit: cover; border-radius: 4px; background: #eee; }
-        .item-name { font-size: 13px; font-weight: 500; color: #212121; flex: 1; }
+        /* Order Cards */
+        .order-card { background: #fff; padding: 15px; margin-bottom: 8px; display: block; text-decoration: none; color: inherit; }
+        .order-top { display: flex; gap: 15px; justify-content: space-between; }
+        .product-img { width: 75px; height: 75px; object-fit: cover; border-radius: 6px; border: 1px solid #f0f0f0; }
+        .order-info { flex: 1; display: flex; flex-direction: column; justify-content: center; }
         
-        .order-footer { margin-top: 12px; padding-top: 10px; border-top: 1px solid #f0f0f0; font-size: 13px; color: #555; }
+        /* Status Colors */
+        .status { font-weight: bold; font-size: 14px; margin-bottom: 5px; display: flex; align-items: center; justify-content: space-between; }
+        .status.delivered { color: #212121; }
+        .status.cancelled { color: #dc3545; }
+        .status.pending { color: #ff9800; }
+        
+        .product-name { font-size: 13px; color: #757575; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .arrow { color: #878787; font-weight: bold; }
+        
+        /* Rating Section */
+        .rating-section { margin-top: 15px; padding-left: 90px; }
+        .stars { color: #e0e0e0; font-size: 22px; letter-spacing: 2px; }
+        .stars span { cursor: pointer; transition: color 0.2s; }
+        .stars span:hover, .stars span.active { color: #28a745; }
+        .rate-text { font-size: 13px; color: #757575; margin-top: 4px; }
+        
+        /* Action Buttons (Cancel, Return, Chat) */
+        .action-buttons { display: flex; gap: 10px; margin-top: 15px; border-top: 1px solid #f0f0f0; padding-top: 15px; flex-wrap: wrap; }
+        .btn { flex: 1; padding: 10px; text-align: center; font-size: 13px; font-weight: 600; border-radius: 4px; border: 1px solid #d7d7d7; background: #fff; cursor: pointer; color: #444; text-decoration: none; min-width: 100px; }
+        .btn:hover { background: #f9f9f9; }
+        .btn-danger { color: #dc3545; border-color: #f5c6cb; background: #fffcfc; }
+        .btn-primary { color: #2874f0; border-color: #b8daff; background: #f0f8ff; }
+        
+        /* Empty State */
+        .empty-state { text-align: center; padding: 50px 20px; color: #878787; background: #fff; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <a href="/account" class="back-btn">←</a>
-        <h1 class="header-title">My Orders</h1>
+        <a href="/" class="back-btn">←</a>
+        <span>My Orders</span>
     </div>
 
-    <div class="container">
-        {% if orders %}
-            {% for order in orders %}
-            <div class="order-card">
-                <div class="order-header">
-                    <span class="order-id">ID: #{{ order._id|string|truncate(10, True, '') | upper }}</span>
-                    {% if order.status == 'Confirmed' %}
-                        <span class="status-badge status-confirmed">Confirmed</span>
-                    {% elif order.status == 'Verification Pending' %}
-                        <span class="status-badge status-verification">Verifying Pay</span>
-                    {% else %}
-                        <span class="status-badge status-pending">{{ order.status }}</span>
-                    {% endif %}
-                </div>
+    <div class="search-container">
+        <input type="text" class="search-box" placeholder="🔍 Search your order here">
+    </div>
+    <div class="filters">
+        <button class="filter-btn active">All</button>
+        <button class="filter-btn">Delivered</button>
+        <button class="filter-btn">Pending</button>
+        <button class="filter-btn">Cancelled</button>
+    </div>
 
-                {% for item in order.get('items', []) %}
-                <div class="item-row">
-                    <img src="/{{ item.get('image', '') }}" class="item-img" onerror="this.src='https://via.placeholder.com/50';">
-                    <span class="item-name">{{ item.get('name', 'Product') }}</span>
-                    <span style="font-weight: bold; font-size: 14px;">₹{{ item.get('price', '0') }}</span>
-                </div>
-                {% endfor %}
-
-                <div class="order-footer">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span><strong>Date:</strong> {{ order.order_date }}</span>
-                        <span><strong>Total:</strong> <strong style="color: var(--primary-red);">₹{{ order.total }}</strong></span>
-                    </div>
-                    <div style="font-size: 12px; color: #388e3c; font-weight: 500; margin-top: 8px; text-align: center; background: #f4f8ff; padding: 6px; border-radius: 4px;">
-                        📅 Expected Delivery: {{ order.expected_delivery }}
-                    </div>
-                    {% if order.utr_number and order.utr_number != 'Not Provided' %}
-                        <div style="font-size: 11px; color: #777; margin-top: 5px; text-align: center;">
-                            Submited UTR: <code>{{ order.utr_number }}</code>
+    {% if orders %}
+        {% for order in orders %}
+        <div class="order-card">
+            
+            <a href="/order_details/{{ order._id }}" style="text-decoration: none; color: inherit;">
+                <div class="order-top">
+                    {% set first_item = order.items[0] %}
+                    <img src="/{{ first_item.image }}" alt="Product Image" class="product-img">
+                    
+                    <div class="order-info">
+                        <div class="status {{ order.status|lower }}">
+                            {% if order.status == 'Delivered' %}
+                                Delivered on {{ order.expected_delivery }}
+                            {% elif order.status == 'Cancelled' %}
+                                Cancelled on {{ order.order_date }}
+                            {% else %}
+                                {{ order.status }} (Expected: {{ order.expected_delivery }})
+                            {% endif %}
+                            <span class="arrow">›</span>
                         </div>
-                    {% endif %}
+                        <div class="product-name">
+                            {{ first_item.name }} {% if order.items|length > 1 %} + {{ order.items|length - 1 }} more items {% endif %}
+                        </div>
+                    </div>
                 </div>
-            </div>
-            {% endfor %}
-        {% else %}
-            <div style="text-align: center; padding: 50px 20px;">
-                <span style="font-size: 50px;">📦</span>
-                <h3 style="margin-top: 15px; color: #555;">No orders found!</h3>
-                <p style="color: #888; font-size: 14px;">You haven't placed any orders yet.</p>
-                <a href="/" style="display: inline-block; background: var(--primary-red); color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold; margin-top: 15px;">Start Shopping</a>
-            </div>
-        {% endif %}
-    </div>
+            </a>
 
+            {% if order.status == 'Delivered' %}
+            <div class="rating-section">
+                <div class="stars">
+                    <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+                </div>
+                <div class="rate-text">Rate this product now</div>
+            </div>
+            {% endif %}
+
+            <div class="action-buttons">
+                {% if order.status == 'Pending' or order.status == 'Pending Payment' or order.status == 'Confirmed' %}
+                    <a href="/cancel_order/{{ order._id }}" class="btn btn-danger">Cancel Order</a>
+                {% endif %}
+                
+                {% if order.status == 'Delivered' %}
+                    <a href="/return_order/{{ order._id }}" class="btn">Return / Replace</a>
+                {% endif %}
+                
+                <a href="/chat_support/{{ order._id }}" class="btn btn-primary">Need Help? (Chat)</a>
+                <a href="/order_details/{{ order._id }}" class="btn">View Details</a>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <h3 style="color: #212121; margin-bottom: 10px;">No Orders Yet!</h3>
+            <p>Looks like you haven't placed an order yet.</p>
+            <a href="/" class="btn btn-primary" style="display: inline-block; margin-top: 20px;">Start Shopping</a>
+        </div>
+    {% endif %}
+
+    <script>
+        document.querySelectorAll('.stars').forEach(starContainer => {
+            const stars = starContainer.querySelectorAll('span');
+            stars.forEach((star, index) => {
+                star.addEventListener('click', () => {
+                    // Reset all stars in this container
+                    stars.forEach(s => s.style.color = '#e0e0e0');
+                    // Highlight up to the clicked star
+                    for(let i = 0; i <= index; i++) {
+                        stars[i].style.color = '#28a745';
+                    }
+                    // Find the closest rate-text and update it
+                    const text = starContainer.nextElementSibling;
+                    text.innerText = "Thanks for your rating!";
+                    text.style.color = "#28a745";
+                    text.style.fontWeight = "bold";
+                    
+                    // You can add an AJAX request here later to save the rating in the database
+                });
+            });
+        });
+    </script>
 </body>
 </html>
