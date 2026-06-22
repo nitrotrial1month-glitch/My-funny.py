@@ -22,200 +22,127 @@
             color: var(--text-dark);
         }
 
-        /* ================= Top Bar ================= */
         .top-bar {
-            background-color: var(--white);
-            padding: 15px;
-            display: flex;
-            align-items: center;
-            border-bottom: 1px solid var(--border-color);
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            background-color: var(--white); padding: 15px; display: flex; align-items: center;
+            border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 100;
         }
-        .back-btn { 
-            font-size: 22px; text-decoration: none; color: var(--text-dark); 
-            margin-right: 15px; font-weight: bold; line-height: 1;
-        }
+        .back-btn { font-size: 22px; text-decoration: none; color: var(--text-dark); margin-right: 15px; font-weight: bold; line-height: 1; }
         .page-title { font-size: 18px; font-weight: bold; }
 
-        /* ================= Banner Section ================= */
         .header-banner {
             background: linear-gradient(135deg, var(--primary-red) 0%, #ff4d4d 100%);
-            color: white;
-            padding: 25px 20px;
-            text-align: center;
+            color: white; padding: 25px 20px; text-align: center;
         }
         .header-banner h1 { margin: 0; font-size: 22px; }
         .header-banner p { margin: 8px 0 0; font-size: 13px; opacity: 0.9; }
 
-        /* ================= Form Container ================= */
         .form-container {
-            background-color: var(--white);
-            margin: -15px 15px 30px 15px;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            position: relative;
+            background-color: var(--white); margin: -15px 15px 30px 15px; padding: 20px;
+            border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); position: relative;
         }
 
-        .input-group {
-            margin-bottom: 18px;
-        }
-        .input-group label {
-            display: block;
-            font-size: 13px;
-            font-weight: bold;
-            color: var(--text-dark);
-            margin-bottom: 6px;
-        }
-        .input-group input[type="text"],
-        .input-group input[type="email"],
-        .input-group input[type="tel"],
-        .input-group textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            font-size: 14px;
-            color: var(--text-dark);
-            background-color: #f9f9f9;
-            box-sizing: border-box;
-            outline: none;
-            transition: border 0.3s;
-        }
-        .input-group input:focus,
-        .input-group textarea:focus {
-            border-color: var(--primary-red);
-            background-color: var(--white);
+        /* Form Sections */
+        .section-label {
+            font-size: 14px; font-weight: 800; color: var(--primary-red);
+            margin: 25px 0 15px 0; padding-bottom: 5px; border-bottom: 2px solid #f0f0f0;
+            text-transform: uppercase;
         }
 
-        /* ================= File Upload Custom UI ================= */
+        .input-group { margin-bottom: 18px; }
+        .input-group label { display: block; font-size: 13px; font-weight: bold; color: var(--text-dark); margin-bottom: 6px; }
+        .input-group input, .input-group textarea {
+            width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px;
+            font-size: 14px; color: var(--text-dark); background-color: #f9f9f9; box-sizing: border-box; outline: none; transition: border 0.3s;
+        }
+        .input-group input:focus, .input-group textarea:focus { border-color: var(--primary-red); background-color: var(--white); }
+
+        /* Document Upload Box */
         .file-upload-box {
-            border: 2px dashed #ccc;
-            border-radius: 10px;
-            padding: 25px 20px;
-            text-align: center;
-            background-color: #fafafa;
-            cursor: pointer;
-            transition: border 0.3s, background 0.3s;
+            border: 2px dashed #ccc; border-radius: 10px; padding: 25px 20px;
+            text-align: center; background-color: #fafafa; cursor: pointer; transition: 0.3s;
         }
-        .file-upload-box:hover {
-            border-color: var(--primary-red);
-            background-color: #fff5f5;
-        }
-        .file-icon {
-            font-size: 30px;
-            margin-bottom: 10px;
-        }
-        .file-text {
-            font-size: 13px;
-            color: var(--text-muted);
-            margin-bottom: 10px;
-        }
-        .file-upload-box input[type="file"] {
-            display: none; /* Hide default input */
-        }
+        .file-upload-box:hover { border-color: var(--primary-red); background-color: #fff5f5; }
+        .file-icon { font-size: 30px; margin-bottom: 10px; }
+        .file-text { font-size: 13px; color: var(--text-muted); margin-bottom: 10px; }
+        .file-upload-box input[type="file"] { display: none; }
         .browse-btn {
-            background-color: var(--white);
-            border: 1px solid var(--border-color);
-            padding: 6px 15px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-            color: var(--text-dark);
-            pointer-events: none; /* Let the click pass to the box */
+            background-color: var(--white); border: 1px solid var(--border-color); padding: 6px 15px;
+            border-radius: 20px; font-size: 12px; font-weight: bold; color: var(--text-dark); pointer-events: none;
         }
 
-        /* ================= Submit Button ================= */
         .submit-btn {
-            width: 100%;
-            background-color: var(--primary-red);
-            color: white;
-            border: none;
-            padding: 15px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 10px;
-            box-shadow: 0 4px 10px rgba(204, 0, 0, 0.2);
-            transition: transform 0.1s;
+            width: 100%; background-color: var(--primary-red); color: white; border: none;
+            padding: 15px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;
+            margin-top: 20px; box-shadow: 0 4px 10px rgba(204, 0, 0, 0.2); transition: transform 0.1s;
         }
-        .submit-btn:active {
-            transform: scale(0.98);
-        }
-
-        /* Terms text */
-        .terms-text {
-            font-size: 11px;
-            color: var(--text-muted);
-            text-align: center;
-            margin-top: 15px;
-            line-height: 1.5;
-        }
+        .submit-btn:active { transform: scale(0.98); }
+        .terms-text { font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 15px; line-height: 1.5; }
     </style>
 </head>
 <body>
 
-    <!-- Top Navigation Bar -->
     <div class="top-bar">
         <a href="/account" class="back-btn">‹</a>
         <div class="page-title">Seller Application</div>
     </div>
 
-    <!-- Promotional Header -->
     <div class="header-banner">
         <h1>Sell on inwear</h1>
-        <p>Reach thousands of customers and grow your business with our 100% secure platform.</p>
+        <p>100% Secure. Fast Payouts. Join our seller community today.</p>
     </div>
 
-    <!-- Application Form -->
-    <!-- Added enctype="multipart/form-data" which is required for file uploads -->
     <div class="form-container">
         <form action="/submit-seller-application" method="POST" enctype="multipart/form-data">
             
+            <div class="section-label">1. Store Details</div>
+            
             <div class="input-group">
                 <label>Store / Brand Name</label>
-                <input type="text" name="store_name" placeholder="e.g. Urban Style Store" required>
+                <input type="text" name="store_name" placeholder="e.g. Urban Style" required>
+            </div>
+            <div class="input-group">
+                <label>Contact Number (WhatsApp)</label>
+                <input type="tel" name="phone_number" placeholder="Enter mobile number" required>
+            </div>
+            <div class="input-group">
+                <label>Pickup / Store Address</label>
+                <textarea name="address" rows="2" placeholder="Full address for delivery pickup" required></textarea>
             </div>
 
+            <div class="section-label">2. Payment Details (For Payouts)</div>
+            
             <div class="input-group">
-                <label>Contact Email</label>
-                <!-- We can auto-fill this using Jinja if needed: value="{{ current_user.email }}" -->
-                <input type="email" name="contact_email" placeholder="store@example.com" required>
+                <label>UPI ID (PhonePe / GPay / Paytm)</label>
+                <input type="text" name="upi_id" placeholder="e.g. yourname@ybl" required>
+            </div>
+            <div class="input-group">
+                <label>Bank Account Number (Optional)</label>
+                <input type="text" name="bank_account" placeholder="Enter Bank Account No.">
+            </div>
+            <div class="input-group">
+                <label>Bank IFSC Code (Optional)</label>
+                <input type="text" name="ifsc_code" placeholder="Enter IFSC Code">
             </div>
 
+            <div class="section-label">3. Verification Document</div>
+            
             <div class="input-group">
-                <label>Phone Number</label>
-                <input type="tel" name="phone_number" placeholder="+880 1XXX-XXXXXX" required>
-            </div>
-
-            <div class="input-group">
-                <label>Business Address / Location</label>
-                <textarea name="address" rows="3" placeholder="Enter your full business address..." required></textarea>
-            </div>
-
-            <!-- Custom Document Upload Section -->
-            <div class="input-group">
-                <label>Upload Document (NID / Trade License)</label>
+                <label>Identity Proof</label>
                 <label class="file-upload-box" for="document_upload">
-                    <div class="file-icon">📄</div>
-                    <div class="file-text">Tap to select a clear photo or PDF of your document for verification.</div>
-                    <span class="browse-btn">Browse File</span>
-                    <!-- The actual file input is hidden but triggered when the box is clicked -->
-                    <input type="file" id="document_upload" name="document_file" accept=".jpg, .jpeg, .png, .pdf" required onchange="updateFileName(this)">
+                    <div class="file-icon">🪪</div>
+                    <div class="file-text">Upload a clear photo of your Aadhaar Card, PAN Card, or Trade License.</div>
+                    <span class="browse-btn">Browse Photo</span>
+                    <input type="file" id="document_upload" name="id_document" accept=".jpg, .jpeg, .png, .pdf" required onchange="updateFileName(this)">
                 </label>
                 <div id="file_name_display" style="font-size: 12px; color: #00a650; margin-top: 8px; text-align: center; font-weight: bold; display: none;"></div>
             </div>
 
-            <button type="submit" class="submit-btn">Submit Application</button>
+            <button type="submit" class="submit-btn">Submit & Verify Details</button>
             
-            <p class="terms-text">By submitting this application, you agree to our <a href="#" style="color: var(--primary-red);">Seller Terms & Conditions</a>. Our admin team will verify your details within 24-48 hours.</p>
+            <p class="terms-text">By submitting, you agree to inwear's <a href="#" style="color: var(--primary-red);">Seller Terms</a>. Payments will be directly transferred to your provided UPI/Bank.</p>
         </form>
     </div>
 
-    <!-- JavaScript to show the selected file name -->
     <script>
         function updateFileName(input) {
             const fileNameDisplay = document.getElementById('file_name_display');
