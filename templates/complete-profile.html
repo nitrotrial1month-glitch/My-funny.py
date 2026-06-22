@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Complete Profile - inwear</title>
+    <style>
+        :root {
+            --primary-red: #cc0000;
+            --bg-color: #f1f2f4;
+            --text-dark: #212121;
+            --text-muted: #878787;
+            --white: #ffffff;
+            --border-color: #e0e0e0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0; padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh;
+        }
+
+        .profile-container {
+            background-color: var(--white);
+            width: 90%; max-width: 400px;
+            border-radius: 16px;
+            padding: 30px 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+
+        .brand-logo { font-size: 28px; font-weight: 900; color: var(--primary-red); margin-bottom: 5px; }
+        .welcome-text { font-size: 14px; color: var(--text-muted); margin-bottom: 25px; }
+
+        /* ================= Profile Picture Upload ================= */
+        .avatar-upload {
+            position: relative; width: 100px; height: 100px;
+            margin: 0 auto 20px auto;
+        }
+        .avatar-preview {
+            width: 100px; height: 100px; border-radius: 50%;
+            border: 3px solid var(--primary-red);
+            object-fit: cover; background-color: #f9f9f9;
+        }
+        .avatar-edit {
+            position: absolute; right: 0; bottom: 0;
+            background-color: var(--primary-red); color: white;
+            width: 32px; height: 32px; border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            font-size: 14px; border: 2px solid var(--white);
+        }
+        .avatar-edit input { display: none; }
+
+        /* ================= Form Inputs ================= */
+        .input-group { margin-bottom: 20px; text-align: left; }
+        .input-group label { display: block; font-size: 12px; font-weight: bold; color: var(--text-muted); margin-bottom: 6px; }
+        .input-group input {
+            width: 100%; padding: 12px; border: 1px solid var(--border-color);
+            border-radius: 8px; font-size: 15px; color: var(--text-dark);
+            background-color: #f9f9f9; box-sizing: border-box; outline: none; transition: 0.3s;
+        }
+        .input-group input:focus { border-color: var(--primary-red); background-color: var(--white); }
+
+        /* Auto Generated ID Styling */
+        .generated-id {
+            background-color: #f0f5ff; border: 1px dashed #2874f0;
+            color: #2874f0; font-weight: bold; text-align: center;
+            font-family: monospace; letter-spacing: 1px;
+            cursor: not-allowed;
+        }
+
+        /* ================= Save Button ================= */
+        .save-btn {
+            width: 100%; background-color: var(--text-dark); color: white; border: none;
+            padding: 15px; border-radius: 8px; font-size: 16px; font-weight: bold;
+            cursor: pointer; margin-top: 10px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.1s;
+        }
+        .save-btn:active { transform: scale(0.98); }
+    </style>
+</head>
+<body>
+
+    <div class="profile-container">
+        <div class="brand-logo">inwear</div>
+        <div class="welcome-text">Complete your profile to get started</div>
+
+        <!-- The form submits to backend to save user profile -->
+        <form action="/save-profile" method="POST" enctype="multipart/form-data">
+            
+            <!-- 1. Profile Picture -->
+            <div class="avatar-upload">
+                <!-- Default Placeholder Image -->
+                <img id="imagePreview" class="avatar-preview" src="https://via.placeholder.com/100/e0e0e0/878787?text=Photo">
+                <label class="avatar-edit" for="imageUpload">
+                    📷
+                    <input type='file' id="imageUpload" name="profile_picture" accept=".png, .jpg, .jpeg" required />
+                </label>
+            </div>
+
+            <!-- 2. Username -->
+            <div class="input-group">
+                <label>Choose a Username</label>
+                <!-- Can be auto-filled by pulling data from Facebook/Google via backend -->
+                <input type="text" name="username" placeholder="e.g. @cool_dude99" required>
+            </div>
+
+            <!-- 3. Auto-Generated User ID (Read-only) -->
+            <div class="input-group">
+                <label>Your Unique inwear ID (Auto-Generated)</label>
+                <!-- This value will be generated by your Python Backend, e.g., INW-8392 -->
+                <input type="text" class="generated-id" name="inwear_id" id="autoId" readonly>
+            </div>
+
+            <button type="submit" class="save-btn">Save & Continue</button>
+        </form>
+    </div>
+
+    <!-- JavaScript for Live Image Preview and Dummy Auto-ID Generation -->
+    <script>
+        // 1. Live Profile Picture Preview
+        document.getElementById('imageUpload').addEventListener('change', function(event) {
+            const [file] = event.target.files;
+            if (file) {
+                document.getElementById('imagePreview').src = URL.createObjectURL(file);
+            }
+        });
+
+        // 2. Generate a random ID (For visual purposes. Backend should generate the real one)
+        window.onload = function() {
+            const randomNum = Math.floor(100000 + Math.random() * 900000); // 6 digit number
+            document.getElementById('autoId').value = "INW-" + randomNum;
+        };
+    </script>
+
+</body>
+</html>
+
