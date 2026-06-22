@@ -164,7 +164,7 @@ def smart_dashboard_redirect():
     if role == "owner":
         return redirect('/owner-dashboard')
     elif role == "seller":
-        return redirect('/seller')
+        return redirect('/seller-dashboard')
     elif role == "delivery":
         return redirect('/delivery/dashboard')
     else:
@@ -188,6 +188,7 @@ def owner_dashboard():
     pending_products = list(db_products.find({"status": "Pending"})) if db_products is not None else []
     latest_orders = list(db_orders.find({}).sort("_id", -1).limit(20)) if db_orders is not None else []
 
+    # 🔴 FIXED: owner_dashboard.html (আপনার রিকোয়েস্ট অনুযায়ী আন্ডারস্কোর)
     return render_template('owner_dashboard.html', 
                            current_user=user,
                            total_users=total_users, 
@@ -195,6 +196,19 @@ def owner_dashboard():
                            total_products=total_products,
                            pending_products=pending_products,
                            orders=latest_orders)
+
+
+# 🏪 সেলার (Seller) ড্যাশবোর্ড (লাইভ প্রোডাক্ট সহ)
+@auth_bp.route('/seller-dashboard')
+@role_required('seller', 'owner')
+def seller_dashboard():
+    user = get_current_user()
+    
+    col = Database.get_collection("products")
+    seller_products = list(col.find({"seller_id": str(user['id'])})) if col is not None else []
+    
+    # 🔴 FIXED: seller_dashboard.html (আপনার রিকোয়েস্ট অনুযায়ী আন্ডারস্কোর)
+    return render_template('seller_dashboard.html', current_user=user, products=seller_products)
 
 
 # Forms
