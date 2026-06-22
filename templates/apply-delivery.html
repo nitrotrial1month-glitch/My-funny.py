@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Apply for Delivery - inwear</title>
+    <style>
+        :root {
+            --primary-red: #cc0000;
+            --bg-color: #f1f2f4;
+            --text-dark: #212121;
+            --text-muted: #878787;
+            --white: #ffffff;
+            --border-color: #e0e0e0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+        }
+
+        /* ================= Top Bar ================= */
+        .top-bar {
+            background-color: var(--white);
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .back-btn { 
+            font-size: 22px; text-decoration: none; color: var(--text-dark); 
+            margin-right: 15px; font-weight: bold; line-height: 1;
+        }
+        .page-title { font-size: 18px; font-weight: bold; }
+
+        /* ================= Banner Section ================= */
+        /* Changed gradient slightly to differentiate from Seller Form */
+        .header-banner {
+            background: linear-gradient(135deg, #ff6b00 0%, #ff9900 100%);
+            color: white;
+            padding: 25px 20px;
+            text-align: center;
+        }
+        .header-banner h1 { margin: 0; font-size: 22px; display: flex; align-items: center; justify-content: center; gap: 8px;}
+        .header-banner p { margin: 8px 0 0; font-size: 13px; opacity: 0.9; }
+
+        /* ================= Form Container ================= */
+        .form-container {
+            background-color: var(--white);
+            margin: -15px 15px 30px 15px;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            position: relative;
+        }
+
+        .input-group {
+            margin-bottom: 18px;
+        }
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--text-dark);
+            margin-bottom: 6px;
+        }
+        /* Added select styling for Vehicle Type */
+        .input-group input[type="text"],
+        .input-group input[type="email"],
+        .input-group input[type="tel"],
+        .input-group textarea,
+        .input-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            color: var(--text-dark);
+            background-color: #f9f9f9;
+            box-sizing: border-box;
+            outline: none;
+            transition: border 0.3s;
+            appearance: auto; /* Show dropdown arrow */
+        }
+        .input-group input:focus,
+        .input-group textarea:focus,
+        .input-group select:focus {
+            border-color: #ff6b00;
+            background-color: var(--white);
+        }
+
+        /* ================= File Upload Custom UI ================= */
+        .file-upload-box {
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 25px 20px;
+            text-align: center;
+            background-color: #fafafa;
+            cursor: pointer;
+            transition: border 0.3s, background 0.3s;
+        }
+        .file-upload-box:hover {
+            border-color: #ff6b00;
+            background-color: #fff9f5;
+        }
+        .file-icon {
+            font-size: 30px;
+            margin-bottom: 10px;
+        }
+        .file-text {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+        .file-upload-box input[type="file"] {
+            display: none;
+        }
+        .browse-btn {
+            background-color: var(--white);
+            border: 1px solid var(--border-color);
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            color: var(--text-dark);
+            pointer-events: none;
+        }
+
+        /* ================= Submit Button ================= */
+        .submit-btn {
+            width: 100%;
+            background-color: var(--text-dark);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.1s;
+        }
+        .submit-btn:active {
+            transform: scale(0.98);
+        }
+
+        .terms-text {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-align: center;
+            margin-top: 15px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <a href="/account" class="back-btn">‹</a>
+        <div class="page-title">Delivery Partner</div>
+    </div>
+
+    <div class="header-banner">
+        <h1>🛵 Join the Fleet</h1>
+        <p>Earn on your own schedule with weekly payouts. Sign up today!</p>
+    </div>
+
+    <div class="form-container">
+        <form action="/submit-delivery-application" method="POST" enctype="multipart/form-data">
+            
+            <div class="input-group">
+                <label>Full Name</label>
+                <input type="text" name="full_name" placeholder="Enter your full name" required>
+            </div>
+
+            <div class="input-group">
+                <label>Contact Number</label>
+                <input type="tel" name="phone_number" placeholder="+91 XXXXX XXXXX" required>
+            </div>
+
+            <div class="input-group">
+                <label>Preferred Delivery Area</label>
+                <input type="text" name="delivery_area" placeholder="e.g. Gushkara, Burdwan" required>
+            </div>
+
+            <div class="input-group">
+                <label>Vehicle Type</label>
+                <select name="vehicle_type" required>
+                    <option value="" disabled selected>Select your vehicle</option>
+                    <option value="motorcycle">Motorcycle / Bike</option>
+                    <option value="scooter">Scooter / Scooty</option>
+                    <option value="bicycle">Bicycle</option>
+                    <option value="none">No Vehicle (Walking Delivery)</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>Upload ID (NID / Driving License)</label>
+                <label class="file-upload-box" for="document_upload">
+                    <div class="file-icon">🪪</div>
+                    <div class="file-text">Upload a clear picture of your National ID or Driving License.</div>
+                    <span class="browse-btn">Browse File</span>
+                    <input type="file" id="document_upload" name="id_document" accept=".jpg, .jpeg, .png, .pdf" required onchange="updateFileName(this)">
+                </label>
+                <div id="file_name_display" style="font-size: 12px; color: #00a650; margin-top: 8px; text-align: center; font-weight: bold; display: none;"></div>
+            </div>
+
+            <button type="submit" class="submit-btn">Submit Application</button>
+            
+            <p class="terms-text">By joining, you agree to our <a href="#" style="color: var(--primary-red);">Delivery Partner Terms</a>. Our team will verify your documents shortly.</p>
+        </form>
+    </div>
+
+    <script>
+        function updateFileName(input) {
+            const fileNameDisplay = document.getElementById('file_name_display');
+            if (input.files && input.files.length > 0) {
+                fileNameDisplay.textContent = 'Selected: ' + input.files[0].name;
+                fileNameDisplay.style.display = 'block';
+            } else {
+                fileNameDisplay.style.display = 'none';
+            }
+        }
+    </script>
+
+</body>
+</html>
+
