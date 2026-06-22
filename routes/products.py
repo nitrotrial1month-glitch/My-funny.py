@@ -198,4 +198,23 @@ def edit_product(product_id):
         return redirect('/seller-dashboard')
         
     return render_template('edit_product.html', product=product)
+
+# ৫. সেলারের নিজস্ব প্রোডাক্ট ডিলিট করার রাউট
+@products_bp.route('/seller/delete/<product_id>', methods=['POST'])
+def delete_seller_product(product_id):
+    user = session.get('user')
+    if not user: 
+        return redirect('/account')
+    
+    col = Database.get_collection("products")
+    product = col.find_one({"_id": ObjectId(product_id)}) if col is not None else None
+    
+    # 🔴 সিকিউরিটি চেক: শুধু আসল মালিকই ডিলিট করতে পারবে!
+    if not product or product.get('seller_id') != str(user['id']): 
+        return "Unauthorized! You can only delete your own products.", 403
+
+    # প্রোডাক্ট ডিলিট করা হচ্ছে
+    col.delete_one({"_id": ObjectId(product_id)})
+    
+    return redirect('/seller-dashboard')
     
