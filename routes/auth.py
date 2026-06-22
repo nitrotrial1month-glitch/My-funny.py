@@ -1,7 +1,7 @@
 import os
 import requests
 import random
-from flask import Blueprint, redirect, session, request, render_template, abort
+from flask import Blueprint, redirect, session, request, render_template, abort, url_for
 from functools import wraps
 from database import Database
 
@@ -37,17 +37,31 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not session.get('user'):
-            return redirect(url_for('auth.account_page')) # Redirect to login view
+            return redirect('/account') # Redirect to login view
         return f(*args, **kwargs)
     return decorated_function
 
+# 👑 মাস্টার কি (Master Key) - Owner সব ড্যাশবোর্ডে যেতে পারবে!
 def role_required(*allowed_roles):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             user = get_current_user()
-            if not user or user.get("role") not in allowed_roles:
+            
+            # যদি ইউজার লগইন করা না থাকে
+            if not user:
+                abort(403, description="Access Denied: You must be logged in.")
+            
+            user_role = user.get("role")
+            
+            # 👑 Master Key: Owner (Super Admin) সব ড্যাশবোর্ডে যেতে পারবে!
+            if user_role == "owner":
+                return f(*args, **kwargs)
+                
+            # অন্য ইউজারদের জন্য নির্দিষ্ট পারমিশন চেক করা
+            if user_role not in allowed_roles:
                 abort(403, description="Access Denied: You do not have permission to view this page.")
+                
             return f(*args, **kwargs)
         return decorated_function
     return decorator
@@ -56,12 +70,11 @@ def role_required(*allowed_roles):
 # 🔴 ২. ডিসকর্ড লগইন রুট
 @auth_bp.route('/login/discord')
 def login_discord():
-    # Only requesting basic identify scope. Email is not provided by default unless requested.
     auth_url = f"{AUTHORIZATION_BASE_URL}?client_id={DISCORD_CLIENT_ID}&redirect_uri={DISCORD_REDIRECT_URI}&response_type=code&scope=identify%20email"
     return redirect(auth_url)
 
 
-# 🔴 ৩. ডিসকর্ড কলব্যাক রুট (Updated with Role Logic)
+# 🔴 ৩. ডিসকর্ড কলব্যাক রুট
 @auth_bp.route('/discord/callback')
 def discord_callback():
     code = request.args.get('code')
@@ -86,7 +99,7 @@ def discord_callback():
     user_info = user_response.json()
 
     discord_id = str(user_info.get('id'))
-    email = user_info.get('email', '') # Might be empty if Discord user hasn't verified email or denied access
+    email = user_info.get('email', '')
     
     col = Database.get_collection("users")
     db_user = None
@@ -96,10 +109,9 @@ def discord_callback():
         
         # If user doesn't exist in DB, create a new profile
         if not db_user:
-            # Generate a random INW ID
             random_id = f"INW-{random.randint(100000, 999999)}"
             
-            # Determine initial role. Check for Super Admin.
+            # Determine initial role.
             initial_role = "user"
             if email == "kstomh05@gmail.com":
                 initial_role = "owner"
@@ -114,8 +126,6 @@ def discord_callback():
             }
             col.insert_one(new_user)
             db_user = new_user
-            
-            # Since it's a new user, you might want to redirect them to complete profile
             is_new_user = True
         else:
             is_new_user = False
@@ -125,26 +135,21 @@ def discord_callback():
                 col.update_one({"discord_id": discord_id}, {"$set": {"role": "owner"}})
                 db_user["role"] = "owner"
 
-    # Save to session (Keep it lightweight)
+    # Save to session
     session['user'] = {
         'id': discord_id,
         'role': db_user.get("role") if db_user else "user"
     }
-    
-    if is_new_user:
-         # Optionally redirect to complete-profile if you want to gather more data
-         # return redirect('/complete-profile')
-         pass
 
     return redirect('/')
 
 
-# 🔴 ৪. ইউজার অ্যাকাউন্ট পেজ রুট (Updated)
+# 🔴 ৪. ইউজার অ্যাকাউন্ট পেজ রুট
 @auth_bp.route('/account')
 def account_page():
     user_data = get_current_user()
     if not user_data: 
-        return render_template('login.html') # Assuming you have a login.html template
+        return render_template('login.html') 
         
     return render_template('account.html', current_user=user_data)
 
@@ -176,31 +181,16 @@ def smart_dashboard_redirect():
     else:
         return redirect('/account')
 
+
+# 👑 ওনার (Owner) ড্যাশবোর্ড (রিয়েল-টাইম লাইভ ডেটা সহ)
 @auth_bp.route('/owner-dashboard')
 @role_required('owner')
 def owner_dashboard():
     user = get_current_user()
-    return render_template('owner-dashboard.html', current_user=user)
-
-@auth_bp.route('/seller-dashboard')
-@role_required('seller')
-def seller_dashboard():
-    user = get_current_user()
-    return render_template('seller-dashboard.html', current_user=user)
-
-@auth_bp.route('/delivery-dashboard')
-@role_required('delivery')
-def delivery_dashboard():
-    user = get_current_user()
-    return render_template('delivery-dashboard.html', current_user=user)
     
-# Forms
-@auth_bp.route('/apply-seller')
-@login_required
-def apply_seller():
-    return render_template('apply-seller.html')
-
-@auth_bp.route('/apply-delivery')
-@login_required
-def apply_delivery():
-    return render_template('apply-delivery.html')
+    db_users = Database.get_collection("users")
+    db_orders = Database.get_collection("orders")
+    db_products = Database.get_collection("products")
+    
+    total_users = db_users
+    
