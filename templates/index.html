@@ -12,6 +12,8 @@
             --text-dark: #212121;
             --text-muted: #878787;
             --white: #ffffff;
+            --verified-green: #00a650;
+            --assured-blue: #2874f0; /* Flipkart like blue for Trust Badge */
         }
 
         body {
@@ -89,8 +91,40 @@
         .cat-icon { font-size: 24px; background: #f8f8f8; padding: 10px; border-radius: 12px; margin-bottom: 5px; }
         .cat-text { font-size: 12px; font-weight: bold; color: var(--primary-red); }
 
-        /* ================= 2. Product Grid ================= */
-        .main-content { padding: 10px; }
+        /* ================= 2. Delivery Recruitment Banner ================= */
+        .delivery-banner {
+            background: linear-gradient(135deg, #ffe0e0 0%, #fff0f0 100%);
+            margin: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px dashed var(--primary-red);
+        }
+        .delivery-banner-text h3 {
+            margin: 0;
+            color: var(--text-dark);
+            font-size: 15px;
+        }
+        .delivery-banner-text p {
+            margin: 5px 0 0;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        .delivery-btn {
+            background: var(--primary-red);
+            color: white;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        /* ================= 3. Product Grid & Trust Badges ================= */
+        .main-content { padding: 0 10px 10px 10px; }
         
         .product-grid {
             display: grid;
@@ -139,7 +173,41 @@
             color: #ccc;
         }
 
-        /* Discount Badge Styles */
+        /* NEW: "inwear Assured" Premium Badge (Top Left) */
+        .inwear-assured-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background-color: var(--assured-blue);
+            color: white;
+            font-size: 10px;
+            font-style: italic;
+            font-weight: 900;
+            padding: 3px 6px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            letter-spacing: 0.5px;
+        }
+
+        /* Circle icon inside the Assured badge */
+        .assured-icon {
+            background-color: white;
+            color: var(--assured-blue);
+            border-radius: 50%;
+            width: 12px;
+            height: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 9px;
+            font-weight: bold;
+            font-style: normal;
+        }
+
+        /* Discount Badge Styles (Bottom Left) */
         .discount-badge {
             position: absolute;
             bottom: 8px;
@@ -163,12 +231,25 @@
             margin-bottom: 4px;
         }
         
-        /* Price Display Update */
         .price-container { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
         .product-price { font-size: 16px; font-weight: bold; color: var(--text-dark); }
         .original-price { font-size: 12px; color: var(--text-muted); text-decoration: line-through; }
 
-        /* ================= 3. Bottom Navigation ================= */
+        /* Secure Text Info */
+        .secure-info {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .secure-info span {
+            color: var(--verified-green);
+            font-size: 12px;
+        }
+
+        /* ================= 4. Bottom Navigation ================= */
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -234,6 +315,15 @@
         </div>
     </div>
 
+    <!-- Delivery Boy Recruitment Banner -->
+    <div class="delivery-banner">
+        <div class="delivery-banner-text">
+            <h3>🛵 Earn with Inwear</h3>
+            <p>Join as a delivery partner today!</p>
+        </div>
+        <a href="/delivery-recruitment" class="delivery-btn">Apply Now</a>
+    </div>
+
     <div class="main-content">
         <div class="product-grid">
             {% if products %}
@@ -241,6 +331,12 @@
                 {% if p.status == 'Approved' %}
                 <a href="/product/{{ p._id }}" class="product-card">
                     <div class="product-img-container">
+                        <!-- NEW: "inwear Assured" Premium Badge -->
+                        <div class="inwear-assured-badge">
+                            <span class="assured-icon">✓</span>
+                            inwear Assured
+                        </div>
+                        
                         <div class="wishlist-btn">♡</div>
                         <img src="{{ p.image }}" alt="{{ p.name }}" class="product-img" onerror="this.src='https://via.placeholder.com/260x300/f0f0f0/cc0000?text=No+Image';">
                         
@@ -257,6 +353,10 @@
                                 <span class="original-price">₹{{ p.original_price }}</span>
                             {% endif %}
                         </div>
+                        <!-- Updated Quality Check Text -->
+                        <div class="secure-info">
+                            <span>✔</span> Quality Checked
+                        </div>
                     </div>
                 </a>
                 {% endif %}
@@ -271,6 +371,11 @@
         <a href="/" class="nav-item">
             <span class="nav-icon">🏠</span>
             <span>Home</span>
+        </a>
+        <!-- Panel option for Dashboards -->
+        <a href="/dashboards" class="nav-item">
+            <span class="nav-icon">📊</span>
+            <span>Panel</span>
         </a>
         <a href="/account" class="nav-item">
             <span class="nav-icon">👤</span>
