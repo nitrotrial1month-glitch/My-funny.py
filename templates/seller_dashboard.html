@@ -49,6 +49,10 @@
         .status-live { background: #e6f6ee; color: var(--success-green); }
         .status-pending { background: #fff5e6; color: var(--warning-orange); }
 
+        /* Form Inputs Custom Style */
+        .custom-input { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-family: inherit; font-size: 13px; }
+        .custom-textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-family: inherit; font-size: 13px; resize: vertical; }
+        
         /* Bottom Nav */
         .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--white); display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000; }
         .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: var(--text-muted); font-size: 12px; font-weight: bold; position: relative; }
@@ -129,32 +133,45 @@
     <div id="uploadFormSection" style="display: none; padding: 20px; background: white; margin-top: 20px; border-top: 2px solid #f0f0f0;">
         <h3 style="color: var(--primary-red);">Upload New Product</h3>
         <form action="/seller/upload" method="POST" enctype="multipart/form-data">
-            <input type="text" name="name" placeholder="Product Name" required style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
-            <input type="number" name="original_price" placeholder="Original Price (₹)" required style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
-            <input type="number" name="final_price" placeholder="Selling Price (₹)" required style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
-            <input type="text" name="sizes" placeholder="Sizes (e.g. S, M, L, XL)" required style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
             
-            <select name="gender" required style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
+            <input type="text" name="name" placeholder="Product Name" required class="custom-input">
+            
+            <textarea name="description" placeholder="Product Description (Write a catchy description...)" required class="custom-textarea" style="min-height: 80px;"></textarea>
+            <textarea name="details" placeholder="Product Details (e.g. Fabric: 100% Cotton, Fit: Regular)" required class="custom-textarea" style="min-height: 60px;"></textarea>
+            
+            <label style="font-size: 11px; font-weight: bold; color: var(--primary-red); display:block; margin-bottom:3px;">Add Tags for Search (Start with #)</label>
+            <input type="text" name="tags" placeholder="e.g. #Anime #Oversized #Mal #Black" required class="custom-input">
+
+            <input type="number" name="original_price" placeholder="Original Price (₹)" required class="custom-input">
+            <input type="number" name="final_price" placeholder="Selling Price (₹)" required class="custom-input">
+            <input type="text" name="sizes" placeholder="Sizes (e.g. S, M, L, XL)" required class="custom-input">
+            
+            <select name="gender" required class="custom-input">
                 <option value="Men">Men</option>
                 <option value="Women">Women</option>
                 <option value="Unisex">Unisex</option>
             </select>
             
-            <div style="margin-bottom: 10px;">
+            <div style="margin-bottom: 10px; font-size: 13px; color: #555;">
                 <label><input type="checkbox" name="can_return"> 7 Days Returnable</label><br>
-                <label><input type="checkbox" name="can_replace"> 7 Days Replaceable</label>
+                <label style="margin-top: 5px; display: inline-block;"><input type="checkbox" name="can_replace"> 7 Days Replaceable</label>
             </div>
             
-            <input type="text" name="seller_upi" placeholder="Your UPI ID for Payouts (e.g. name@ybl)" required pattern="^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}$" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ff9900; border-radius: 6px; box-sizing: border-box; background: #fffcf5;">
+            <input type="text" name="seller_upi" placeholder="Your UPI ID for Payouts (e.g. name@ybl)" required pattern="^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}$" class="custom-input" style="border-color: #ff9900; background: #fffcf5; margin-bottom: 15px;">
 
-            <label style="font-size: 12px; font-weight: bold;">Main Image (Required):</label>
-            <input type="file" name="image1" accept="image/*" required style="margin-bottom: 10px;"><br>
-            <label style="font-size: 12px; font-weight: bold;">Extra Images (Optional):</label>
-            <input type="file" name="image2" accept="image/*" style="margin-bottom: 10px;"><br>
-            <input type="file" name="image3" accept="image/*" style="margin-bottom: 15px;"><br>
+            <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+                <label style="font-size: 12px; font-weight: bold; color: var(--text-dark);">Images:</label><br>
+                <input type="file" name="image1" accept="image/*" required style="margin-bottom: 8px; font-size: 12px;"><br>
+                <input type="file" name="image2" accept="image/*" style="margin-bottom: 8px; font-size: 12px;"><br>
+                <input type="file" name="image3" accept="image/*" style="margin-bottom: 15px; font-size: 12px;"><br>
 
-            <button type="submit" style="width: 100%; background: var(--primary-red); color: white; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Upload Product</button>
-            <button type="button" onclick="document.getElementById('uploadFormSection').style.display='none'" style="width: 100%; background: #ccc; color: #333; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px;">Cancel</button>
+                <label style="font-size: 12px; font-weight: bold; color: var(--text-dark);">Product Video (Optional):</label><br>
+                <input type="file" name="video" accept="video/*" style="margin-top: 5px; font-size: 12px;">
+                <div style="font-size: 10px; color: #888; margin-top: 3px;">* Max size 10MB (Short reel/video recommended)</div>
+            </div>
+
+            <button type="submit" style="width: 100%; background: var(--primary-red); color: white; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 15px;">Upload Product</button>
+            <button type="button" onclick="document.getElementById('uploadFormSection').style.display='none'" style="width: 100%; background: #e0e0e0; color: #333; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px;">Cancel</button>
         </form>
     </div>
 
