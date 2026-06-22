@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delivery Dashboard | Inwear</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f6f8; margin: 0; padding-bottom: 60px; }
+        .header { background: #1a1a2e; color: white; padding: 20px; text-align: center; font-weight: bold; }
+        .container { padding: 15px; }
+        .order-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 5px solid #28a745; }
+        .btn { display: block; width: 100%; padding: 12px; text-align: center; border-radius: 8px; font-weight: bold; text-decoration: none; margin-top: 10px; }
+        .btn-pickup { background-color: #007bff; color: white; }
+        .btn-delivered { background-color: #28a745; color: white; }
+        .status-badge { font-size: 12px; padding: 4px 8px; border-radius: 4px; background: #e9ecef; }
+    </style>
+</head>
+<body>
+    <div class="header">🚚 Delivery Panel</div>
+    <div class="container">
+        {% if orders %}
+            {% for order in orders %}
+            <div class="order-card">
+                <h3>Order #{{ order._id.to_string()[:8].upper() }}</h3>
+                <p><strong>Customer:</strong> {{ order.name }}</p>
+                <p><strong>Address:</strong> {{ order.address }}</p>
+                <p><strong>Status:</strong> <span class="status-badge">{{ order.status }}</span></p>
+                
+                {% if order.status == 'Ready for Pickup' %}
+                    <a href="{{ url_for('delivery.pickup_order', order_id=order._id) }}" class="btn btn-pickup">Start Delivery (Pickup)</a>
+                {% elif order.status == 'Out for Delivery' %}
+                    <a href="{{ url_for('delivery.complete_delivery', order_id=order._id) }}" class="btn btn-delivered">Mark as Delivered</a>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+            <p style="text-align: center;">No pending orders right now.</p>
+        {% endif %}
+        <a href="/" style="display: block; text-align: center; margin-top: 20px; color: #cc0000; font-weight: bold;">Back Home</a>
+    </div>
+</body>
+</html>
+
