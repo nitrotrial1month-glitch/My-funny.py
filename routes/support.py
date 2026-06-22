@@ -2,7 +2,7 @@ import os
 from flask import Blueprint, render_template, request, session, jsonify, redirect
 from database import Database
 
-# 🔴 নতুন লাইব্রেরি ইমপোর্ট করা হলো
+# নতুন লাইব্রেরি ইমপোর্ট করা হলো
 from google import genai
 
 support_bp = Blueprint('support', __name__)
@@ -11,7 +11,6 @@ support_bp = Blueprint('support', __name__)
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 if GEMINI_API_KEY:
     try:
-        # নতুন নিয়মে ক্লায়েন্ট তৈরি
         client = genai.Client(api_key=GEMINI_API_KEY)
     except Exception as e:
         print(f"Client Init Error: {e}")
@@ -19,7 +18,17 @@ if GEMINI_API_KEY:
 else:
     client = None
 
-# Routes
+# =======================================================
+# 🔴 নতুন রুট: /support (এটির অভাবেই 404 এরর আসছিল)
+# =======================================================
+@support_bp.route('/support')
+def support_page():
+    # এটি সরাসরি /help রুটে পাঠিয়ে দেবে
+    return redirect('/help')
+
+# =======================================================
+# আগের রুটগুলো (যেমন ছিল তেমনই আছে)
+# =======================================================
 @support_bp.route('/chat_support/<order_id>')
 def chat_support(order_id):
     user = session.get('user')
@@ -43,7 +52,7 @@ def api_chat():
 
     # Magic Command
     if message.lower().startswith('/setnumber '):
-        if user.get('is_owner'):
+        if user.get('role') == 'owner': # is_owner এর বদলে role ব্যবহার করা হলো
             number = message[11:].strip()
             try:
                 col = Database.get_collection("config")
@@ -78,7 +87,7 @@ def api_chat():
     """
 
     try:
-        # 🔴 নতুন লাইব্রেরি অনুযায়ী এআই কল করা হলো
+        # নতুন লাইব্রেরি অনুযায়ী এআই কল করা হলো
         response = client.models.generate_content(
             model='gemini-3.5-flash',
             contents=system_prompt
