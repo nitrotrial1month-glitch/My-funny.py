@@ -209,6 +209,45 @@
             <span>Payouts</span>
         </a>
     </div>
+ 
+    <div class="section-title" style="margin-top: 20px;">📦 Pending Products Approval</div>
+<div style="background: white; padding: 15px; border-radius: 10px; margin: 0 15px;">
+    {% if pending_products %}
+        {% for p in pending_products %}
+        <div style="border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 10px;">
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <img src="/{{ p.image if p.image else '' }}" onerror="this.onerror=null; this.src='https://via.placeholder.com/50';" style="width: 50px; height: 50px; border-radius: 6px; object-fit: cover;">
+                <div style="flex: 1;">
+                    <h4 style="margin: 0; font-size: 14px;">{{ p.name }}</h4>
+                    <p style="margin: 2px 0 0; font-size: 12px; color: #666;">Price: ₹{{ p.price }}</p>
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <form action="/owner/verify-product/{{ p._id }}" method="POST" style="flex: 1;">
+                    <button type="submit" style="width: 100%; padding: 8px; background: #00a650; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">✅ Verify</button>
+                </form>
+                <form action="/owner/delete-product/{{ p._id }}" method="POST" style="flex: 1;">
+                    <button type="submit" style="width: 100%; padding: 8px; background: #cc0000; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;" onclick="return confirm('Delete this product permanently?')">🗑️ Delete</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p style="text-align: center; color: #888; font-size: 13px; margin: 0;">No pending products to verify.</p>
+    {% endif %}
+</div>
+
+
+<div class="section-title" style="margin-top: 20px; color: #cc0000;">🚨 Danger Zone (Block Sellers)</div>
+<div style="background: #fff5f5; border: 1px solid #ffdcdb; padding: 15px; border-radius: 10px; margin: 0 15px 20px 15px;">
+    <form action="/owner/block-seller" method="POST">
+        <label style="font-size: 12px; font-weight: bold; color: #cc0000; display: block; margin-bottom: 5px;">ENTER SELLER EMAIL TO BLOCK</label>
+        <div style="display: flex; gap: 5px;">
+            <input type="email" name="seller_email" placeholder="e.g. seller@gmail.com" required style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 6px;">
+            <button type="submit" style="background: #212121; color: white; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; cursor: pointer;" onclick="return confirm('Are you sure? This will remove their role and DELETE all their products!')">BLOCK</button>
+        </div>
+    </form>
+</div>
     
 </body>
 </html>
