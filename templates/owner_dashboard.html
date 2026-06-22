@@ -7,7 +7,7 @@
     <style>
         :root {
             --primary-red: #cc0000;
-            --admin-dark: #1a1a2e; /* Darker theme for admin */
+            --admin-dark: #1a1a2e;
             --bg-color: #f4f6f8;
             --text-dark: #212121;
             --text-muted: #666666;
@@ -20,25 +20,23 @@
 
         body {
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg-color);
-            color: var(--text-dark);
+            margin: 0; padding: 0;
+            background-color: var(--bg-color); color: var(--text-dark);
             padding-bottom: 80px;
         }
 
         /* ================= 1. Admin Header ================= */
         .top-header {
-            background-color: var(--admin-dark);
-            color: var(--white);
+            background-color: var(--admin-dark); color: var(--white);
             padding: 20px 20px 40px 20px;
-            border-bottom-left-radius: 20px;
-            border-bottom-right-radius: 20px;
-            position: relative;
+            border-bottom-left-radius: 20px; border-bottom-right-radius: 20px;
         }
         .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .admin-title { font-size: 20px; font-weight: 900; display: flex; align-items: center; gap: 8px; letter-spacing: 0.5px; }
+        .admin-title { font-size: 20px; font-weight: 900; display: flex; align-items: center; gap: 8px; }
         .owner-badge { background: var(--primary-red); font-size: 10px; padding: 3px 8px; border-radius: 12px; font-weight: bold; }
+        
+        /* Logged in Admin Info */
+        .admin-info { font-size: 11px; color: #aaaaaa; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;}
         
         .revenue-label { font-size: 12px; color: #aaaaaa; }
         .revenue-amount { font-size: 32px; font-weight: 900; color: #00ff88; margin-top: 5px; }
@@ -46,22 +44,56 @@
         /* ================= 2. Quick Stats Grid ================= */
         .stats-grid {
             display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
-            padding: 0 15px; margin-top: -25px; /* Overlaps header */
+            padding: 0 15px; margin-top: -25px;
         }
         .stat-card {
             background: var(--white); padding: 15px 10px; border-radius: 12px;
             text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.08);
         }
         .stat-value { font-size: 18px; font-weight: 900; color: var(--text-dark); }
-        .stat-value.alert { color: var(--primary-red); } /* Highlight for pending tasks */
+        .stat-value.alert { color: var(--primary-red); }
         .stat-title { font-size: 11px; color: var(--text-muted); margin-top: 4px; font-weight: bold; }
 
-        /* ================= 3. Pending Approvals (The Main Work Area) ================= */
-        .section-title { padding: 20px 15px 10px 15px; font-size: 16px; font-weight: 900; color: var(--admin-dark); text-transform: uppercase; }
+        /* ================= 3. Role Management Section (NEW) ================= */
+        .section-title { padding: 20px 15px 10px 15px; font-size: 15px; font-weight: 900; color: var(--admin-dark); text-transform: uppercase; }
+        .role-management-box {
+            background: var(--white); margin: 0 15px; padding: 15px;
+            border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
         
-        .approval-list { padding: 0 15px; display: flex; flex-direction: column; gap: 15px; }
+        /* Search Bar */
+        .search-user { display: flex; gap: 8px; margin-bottom: 15px; }
+        .search-user input {
+            flex: 1; padding: 10px; border: 1px solid var(--border-color);
+            border-radius: 8px; font-size: 13px; outline: none; background: #f9f9f9;
+        }
+        .search-user button {
+            background: var(--admin-dark); color: white; border: none;
+            padding: 0 15px; border-radius: 8px; font-weight: bold; font-size: 12px; cursor: pointer;
+        }
+
+        /* User Result Card */
+        .user-role-card {
+            background: #f9f9f9; border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px;
+        }
+        .user-info-row { display: flex; align-items: center; gap: 12px; }
+        .user-info-row img { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--primary-red); }
+        .user-text h4 { margin: 0; font-size: 14px; color: var(--text-dark); }
+        .user-text p { margin: 2px 0 0; font-size: 11px; color: var(--text-muted); }
         
-        /* Verification Card Style */
+        .role-action-row { display: flex; gap: 8px; }
+        .role-action-row select {
+            flex: 1; padding: 8px; border: 1px solid var(--border-color);
+            border-radius: 6px; font-size: 13px; font-weight: bold; outline: none;
+        }
+        .btn-update-role {
+            background: var(--success-green); color: white; border: none;
+            padding: 8px 15px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer;
+        }
+
+        /* ================= 4. Pending Approvals ================= */
+        .approval-list { padding: 0 15px; display: flex; flex-direction: column; gap: 15px; margin-top: 10px; }
         .verification-card {
             background: var(--white); border-radius: 12px; padding: 15px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 4px solid var(--warning-orange);
@@ -73,15 +105,11 @@
         .req-details h3 { margin: 0 0 5px 0; font-size: 15px; color: var(--text-dark); }
         .req-details p { margin: 0; font-size: 12px; color: var(--text-muted); line-height: 1.4; }
         
-        /* Action Buttons */
         .action-btns { display: flex; gap: 10px; margin-top: 15px; }
         .btn-approve { flex: 1; background: var(--success-green); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; }
         .btn-decline { flex: 1; background: #fff0f0; color: var(--primary-red); border: 1px solid #ffd6d6; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; }
-        
-        /* Assured Badge specific button */
-        .btn-assured { width: 100%; background: var(--assured-blue); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; margin-top: 10px; }
 
-        /* ================= 4. Bottom Nav ================= */
+        /* ================= 5. Bottom Nav ================= */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; width: 100%;
             background-color: var(--white); display: flex; justify-content: space-around;
@@ -94,17 +122,19 @@
 </head>
 <body>
 
-    <!-- Admin Header -->
     <div class="top-header">
         <div class="header-top">
             <div class="admin-title">👑 INWEAR <span class="owner-badge">OWNER</span></div>
             <div style="font-size: 22px;">⚙️</div>
         </div>
+        <div class="admin-info">
+            Logged in as: <strong>kstomh05@gmail.com</strong> (Super Admin)
+        </div>
+        
         <div class="revenue-label">Total Platform Revenue</div>
         <div class="revenue-amount">₹1,45,200</div>
     </div>
 
-    <!-- Quick Stats -->
     <div class="stats-grid">
         <div class="stat-card">
             <div class="stat-value alert">3</div>
@@ -120,11 +150,36 @@
         </div>
     </div>
 
-    <!-- Action Center (Approvals) -->
+    <div class="section-title">Manage Partners & Roles</div>
+    <div class="role-management-box">
+        <div class="search-user">
+            <input type="text" placeholder="Enter inwear ID or Email...">
+            <button>Search</button>
+        </div>
+        
+        <div class="user-role-card">
+            <div class="user-info-row">
+                <img src="https://via.placeholder.com/40/2874f0/ffffff?text=D" alt="Avatar">
+                <div class="user-text">
+                    <h4>Partner_User1 (Discord)</h4>
+                    <p>ID: INW-839210</p>
+                </div>
+            </div>
+            
+            <div class="role-action-row">
+                <select name="user_role">
+                    <option value="user">User</option>
+                    <option value="seller">Seller</option>
+                    <option value="delivery">Delivery Boy</option>
+                    <option value="owner" selected>Owner / Admin</option> </select>
+                <button class="btn-update-role">Update Role</button>
+            </div>
+        </div>
+    </div>
+
     <div class="section-title">Action Required</div>
     <div class="approval-list">
 
-        <!-- 1. Seller Verification Card -->
         <div class="verification-card">
             <div class="card-header">
                 <span class="req-type">🏪 New Seller Request</span>
@@ -141,32 +196,8 @@
                 <button class="btn-approve">Verify & Approve</button>
             </div>
         </div>
-
-        <!-- 2. Product Verification Card -->
-        <div class="verification-card" style="border-left-color: var(--primary-red);">
-            <div class="card-header">
-                <span class="req-type">👕 Product Review</span>
-                <span class="req-date">1 hr ago</span>
-            </div>
-            <div class="req-details" style="display: flex; gap: 15px; margin-top: 10px;">
-                <img src="https://via.placeholder.com/60/f0f0f0/cc0000?text=Pic" alt="Prod" style="border-radius: 8px; width: 60px; height: 60px; object-fit: cover;">
-                <div>
-                    <h3>Oversized Anime T-Shirt</h3>
-                    <p><strong>Price:</strong> ₹699 | <strong>Stock:</strong> 50</p>
-                    <p><strong>AI Status:</strong> <span style="color: var(--success-green); font-weight: bold;">Image Matches Description</span></p>
-                </div>
-            </div>
-            <div class="action-btns">
-                <button class="btn-decline">Reject</button>
-                <button class="btn-approve">Go Live (Standard)</button>
-            </div>
-            <!-- The Premium Override Button -->
-            <button class="btn-assured">✨ Approve as 'inwear Assured'</button>
-        </div>
-
     </div>
 
-    <!-- Bottom Navigation -->
     <div class="bottom-nav">
         <a href="/owner-dashboard" class="nav-item active">
             <span class="nav-icon">📊</span>
