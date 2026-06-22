@@ -14,7 +14,6 @@
             --border-color: #e0e0e0;
             --success-green: #00a650;
             --warning-orange: #ff9900;
-            --assured-blue: #2874f0;
         }
 
         body {
@@ -26,91 +25,91 @@
             padding-bottom: 80px;
         }
 
-        /* ================= 1. Dashboard Header ================= */
+        /* ================= 1. Top Bar & Header ================= */
         .top-header {
-            background-color: var(--primary-red);
-            color: var(--white);
-            padding: 15px 20px 25px 20px;
-            border-bottom-left-radius: 20px;
-            border-bottom-right-radius: 20px;
-            box-shadow: 0 4px 10px rgba(204, 0, 0, 0.2);
-            position: relative;
+            background-color: var(--white);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
-        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .store-name { font-size: 18px; font-weight: bold; display: flex; align-items: center; gap: 8px; }
-        .store-badge { background: rgba(255,255,255,0.2); font-size: 10px; padding: 3px 8px; border-radius: 12px; }
-        .notification-icon { font-size: 20px; position: relative; }
-        .dot { position: absolute; top: 0; right: 0; width: 8px; height: 8px; background: #ffcc00; border-radius: 50%; }
-
-        .balance-label { font-size: 12px; opacity: 0.9; margin-bottom: 2px; }
-        .balance-amount { font-size: 28px; font-weight: 900; }
-
-        /* ================= 2. Stats Grid ================= */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            padding: 0 15px;
-            margin-top: -20px; /* Overlaps the red header slightly */
+        .store-profile { display: flex; align-items: center; gap: 10px; }
+        .store-logo {
+            width: 40px; height: 40px; border-radius: 50%;
+            background-color: #ffe6e6; color: var(--primary-red);
+            display: flex; justify-content: center; align-items: center;
+            font-weight: bold; font-size: 18px;
         }
+        .store-info h2 { margin: 0; font-size: 16px; display: flex; align-items: center; gap: 5px; }
+        .store-info p { margin: 2px 0 0; font-size: 11px; color: var(--success-green); font-weight: bold; }
+        .verified-tick { font-size: 14px; color: var(--assured-blue); }
+        .notification-btn { font-size: 22px; color: var(--text-dark); position: relative; }
+        .dot { position: absolute; top: 0; right: 0; width: 8px; height: 8px; background: var(--primary-red); border-radius: 50%; }
+
+        /* ================= 2. Wallet Card (Premium Look) ================= */
+        .wallet-container { padding: 15px; }
+        .wallet-card {
+            background: linear-gradient(135deg, #212121 0%, #3a3a3a 100%);
+            border-radius: 16px; padding: 20px; color: var(--white);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+            position: relative; overflow: hidden;
+        }
+        /* Background design element */
+        .wallet-card::after {
+            content: ''; position: absolute; right: -20px; top: -20px;
+            width: 100px; height: 100px; background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+        }
+        .balance-label { font-size: 12px; color: #aaaaaa; margin-bottom: 5px; }
+        .balance-amount { font-size: 32px; font-weight: 900; margin-bottom: 15px; letter-spacing: 0.5px; }
+        .wallet-actions { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; }
+        .linked-account { font-size: 11px; color: #cccccc; display: flex; align-items: center; gap: 5px; }
+        .withdraw-btn {
+            background-color: var(--primary-red); color: white; border: none;
+            padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: bold;
+            cursor: pointer; box-shadow: 0 2px 5px rgba(204,0,0,0.3);
+        }
+
+        /* ================= 3. Stats Grid ================= */
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 0 15px 15px 15px; }
         .stat-card {
-            background: var(--white);
-            padding: 15px 10px;
-            border-radius: 12px;
-            text-align: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            background: var(--white); padding: 15px 10px; border-radius: 12px;
+            text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.03);
         }
-        .stat-value { font-size: 18px; font-weight: bold; color: var(--text-dark); }
+        .stat-value { font-size: 18px; font-weight: 900; color: var(--text-dark); }
         .stat-title { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
 
-        /* ================= 3. Quick Actions ================= */
-        .section-title { padding: 20px 15px 10px 15px; font-size: 15px; font-weight: bold; color: var(--text-dark); }
-        
-        .action-row {
-            display: flex; gap: 15px; padding: 0 15px;
-        }
+        /* ================= 4. Quick Actions ================= */
+        .section-title { padding: 5px 15px 10px 15px; font-size: 15px; font-weight: bold; color: var(--text-dark); }
+        .action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 15px 15px 15px; }
         .action-btn {
-            flex: 1;
-            background: var(--white);
-            border: 1px solid var(--border-color);
-            padding: 15px;
-            border-radius: 12px;
-            text-align: center;
-            text-decoration: none;
-            color: var(--text-dark);
-            font-weight: bold;
-            font-size: 13px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-            transition: transform 0.1s;
+            background: var(--white); border: 1px solid var(--border-color); padding: 15px;
+            border-radius: 12px; text-align: center; text-decoration: none; color: var(--text-dark);
+            font-weight: bold; font-size: 13px; display: flex; flex-direction: column; align-items: center; gap: 8px;
         }
-        .action-btn:active { transform: scale(0.96); }
-        .action-icon { font-size: 24px; margin-bottom: 8px; display: block; }
-        
-        /* Special style for Add Product button */
-        .btn-primary { border-color: var(--primary-red); color: var(--primary-red); background: #fff5f5; }
+        .btn-primary { border-color: var(--primary-red); background: #fffafa; color: var(--primary-red); }
+        .action-icon { font-size: 24px; }
 
-        /* ================= 4. Recent Products List ================= */
+        /* ================= 5. Recent Products List ================= */
         .product-list { padding: 0 15px; display: flex; flex-direction: column; gap: 10px; }
         .product-item {
-            background: var(--white);
-            border-radius: 10px;
-            padding: 10px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+            background: var(--white); border-radius: 10px; padding: 12px;
+            display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.03);
         }
         .prod-img { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; background: #f0f0f0; }
         .prod-details { flex: 1; }
-        .prod-name { font-size: 13px; font-weight: bold; color: var(--text-dark); margin-bottom: 3px; }
-        .prod-price { font-size: 12px; color: var(--text-muted); }
+        .prod-name { font-size: 13px; font-weight: bold; color: var(--text-dark); margin-bottom: 4px; }
+        .prod-price { font-size: 12px; color: var(--text-muted); font-weight: bold; }
         
-        /* Status Badges */
-        .status-badge { font-size: 10px; font-weight: bold; padding: 3px 6px; border-radius: 4px; }
-        .status-verified { background: #e6f6ee; color: var(--success-green); }
+        .status-badge { font-size: 10px; font-weight: bold; padding: 4px 6px; border-radius: 4px; text-align: center; }
+        .status-live { background: #e6f6ee; color: var(--success-green); }
         .status-pending { background: #fff5e6; color: var(--warning-orange); }
 
-        /* ================= Bottom Nav ================= */
+        /* ================= 6. Bottom Navigation ================= */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; width: 100%;
             background-color: var(--white); display: flex; justify-content: space-around;
@@ -123,19 +122,36 @@
 </head>
 <body>
 
+    <!-- Header Section -->
     <div class="top-header">
-        <div class="header-top">
-            <div class="store-name">Urban Style <span class="store-badge">Verified</span></div>
-            <div class="notification-icon">🔔<span class="dot"></span></div>
+        <div class="store-profile">
+            <div class="store-logo">U</div>
+            <div class="store-info">
+                <h2>Urban Style <span class="verified-tick">✔️</span></h2>
+                <p>Verified Seller</p>
+            </div>
         </div>
-        <div class="balance-label">Total Earnings</div>
-        <div class="balance-amount">₹12,450.00</div>
+        <div class="notification-btn">🔔<span class="dot"></span></div>
     </div>
 
+    <!-- Wallet & Earnings Card -->
+    <div class="wallet-container">
+        <div class="wallet-card">
+            <div class="balance-label">Available Balance for Payout</div>
+            <div class="balance-amount">₹4,250.00</div>
+            <div class="wallet-actions">
+                <!-- Shows the UPI/Bank linked during registration -->
+                <div class="linked-account"><span>🏦</span> Linked: yourname@ybl</div>
+                <button class="withdraw-btn">Withdraw</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
     <div class="stats-grid">
         <div class="stat-card">
-            <div class="stat-value">45</div>
-            <div class="stat-title">Orders</div>
+            <div class="stat-value">28</div>
+            <div class="stat-title">Total Orders</div>
         </div>
         <div class="stat-card">
             <div class="stat-value">12</div>
@@ -143,43 +159,48 @@
         </div>
         <div class="stat-card">
             <div class="stat-value">4.8★</div>
-            <div class="stat-title">Rating</div>
+            <div class="stat-title">Store Rating</div>
         </div>
     </div>
 
-    <div class="section-title">Quick Actions</div>
+    <!-- Quick Actions -->
+    <div class="section-title">Store Management</div>
     <div class="action-row">
         <a href="/add-product" class="action-btn btn-primary">
             <span class="action-icon">➕</span> Add Product
         </a>
-        <a href="/seller-orders" class="action-btn">
+        <a href="/manage-orders" class="action-btn">
             <span class="action-icon">📦</span> Manage Orders
         </a>
     </div>
 
-    <div class="section-title">Recent Products</div>
+    <!-- Recent Products Tracker -->
+    <div class="section-title">Product Status</div>
     <div class="product-list">
         
+        <!-- Live Product -->
         <div class="product-item">
             <img src="https://via.placeholder.com/100/f0f0f0/cc0000?text=T-Shirt" alt="Product" class="prod-img">
             <div class="prod-details">
                 <div class="prod-name">Premium Anime T-Shirt</div>
                 <div class="prod-price">₹699</div>
             </div>
-            <div class="status-badge status-verified">🛡️ AI Verified</div>
+            <div class="status-badge status-live">🟢 Live</div>
         </div>
 
+        <!-- Pending Verification Product -->
         <div class="product-item">
             <img src="https://via.placeholder.com/100/f0f0f0/cc0000?text=Hoodie" alt="Product" class="prod-img">
             <div class="prod-details">
                 <div class="prod-name">Oversized Black Hoodie</div>
                 <div class="prod-price">₹999</div>
             </div>
-            <div class="status-badge status-pending">⏳ Pending Review</div>
+            <div class="status-badge status-pending">⏳ Pending AI Review</div>
         </div>
         
     </div>
 
+    <!-- Bottom Navigation -->
     <div class="bottom-nav">
         <a href="/dashboards" class="nav-item active">
             <span class="nav-icon">📊</span>
@@ -189,12 +210,15 @@
             <span class="nav-icon">👕</span>
             <span>Products</span>
         </a>
+        <a href="/seller-wallet" class="nav-item">
+            <span class="nav-icon">💳</span>
+            <span>Wallet</span>
+        </a>
         <a href="/account" class="nav-item">
             <span class="nav-icon">👤</span>
-            <span>Account</span>
+            <span>Profile</span>
         </a>
     </div>
 
 </body>
 </html>
-
