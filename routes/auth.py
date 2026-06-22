@@ -1,11 +1,11 @@
 import os
 import requests
 import random
-from flask import Blueprint, redirect, session, request, render_template, abort, url_for
+from flask import Blueprint, redirect, session, request, render_template, abort
 from functools import wraps
 from database import Database
 
-# 🔴 ১. এই ফাইলের জন্য Blueprint তৈরি করা হলো
+# 🔴 ১. Blueprint তৈরি করা হলো
 auth_bp = Blueprint('auth', __name__)
 
 # ⚠️ Discord OAuth2 Credentials
@@ -37,28 +37,27 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not session.get('user'):
-            return redirect('/account') # Redirect to login view
+            return redirect('/account') 
         return f(*args, **kwargs)
     return decorated_function
 
-# 👑 মাস্টার কি (Master Key) - Owner সব ড্যাশবোর্ডে যেতে পারবে!
+# 👑 Master Key: Owner (Super Admin) সব ড্যাশবোর্ডে যেতে পারবে!
 def role_required(*allowed_roles):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             user = get_current_user()
             
-            # যদি ইউজার লগইন করা না থাকে
             if not user:
                 abort(403, description="Access Denied: You must be logged in.")
             
             user_role = user.get("role")
             
-            # 👑 Master Key: Owner (Super Admin) সব ড্যাশবোর্ডে যেতে পারবে!
+            # Owner হলে যেকোনো ড্যাশবোর্ডে অ্যাক্সেস পাবে
             if user_role == "owner":
                 return f(*args, **kwargs)
                 
-            # অন্য ইউজারদের জন্য নির্দিষ্ট পারমিশন চেক করা
+            # অন্য ইউজারদের নির্দিষ্ট পারমিশন চেক করা
             if user_role not in allowed_roles:
                 abort(403, description="Access Denied: You do not have permission to view this page.")
                 
@@ -107,14 +106,9 @@ def discord_callback():
     if col is not None:
         db_user = col.find_one({"discord_id": discord_id})
         
-        # If user doesn't exist in DB, create a new profile
         if not db_user:
             random_id = f"INW-{random.randint(100000, 999999)}"
-            
-            # Determine initial role.
-            initial_role = "user"
-            if email == "kstomh05@gmail.com":
-                initial_role = "owner"
+            initial_role = "owner" if email == "kstomh05@gmail.com" else "user"
             
             new_user = {
                 "discord_id": discord_id,
@@ -126,16 +120,11 @@ def discord_callback():
             }
             col.insert_one(new_user)
             db_user = new_user
-            is_new_user = True
         else:
-            is_new_user = False
-            
-            # Failsafe: Check if email matches super admin but role isn't owner yet
             if email == "kstomh05@gmail.com" and db_user.get("role") != "owner":
                 col.update_one({"discord_id": discord_id}, {"$set": {"role": "owner"}})
                 db_user["role"] = "owner"
 
-    # Save to session
     session['user'] = {
         'id': discord_id,
         'role': db_user.get("role") if db_user else "user"
@@ -175,9 +164,9 @@ def smart_dashboard_redirect():
     if role == "owner":
         return redirect('/owner-dashboard')
     elif role == "seller":
-        return redirect('/seller-dashboard')
+        return redirect('/seller')
     elif role == "delivery":
-        return redirect('/delivery-dashboard')
+        return redirect('/delivery/dashboard')
     else:
         return redirect('/account')
 
@@ -192,5 +181,30 @@ def owner_dashboard():
     db_orders = Database.get_collection("orders")
     db_products = Database.get_collection("products")
     
-    total_users = db_users
+    total_users = db_users.count_documents({}) if db_users is not None else 0
+    total_orders = db_orders.count_documents({}) if db_orders is not None else 0
+    total_products = db_products.count_documents({}) if db_products is not None else 0
+    
+    pending_products = list(db_products.find({"status": "Pending"})) if db_products is not None else []
+    latest_orders = list(db_orders.find({}).sort("_id", -1).limit(20)) if db_orders is not None else []
+
+    return render_template('owner_dashboard.html', 
+                           current_user=user,
+                           total_users=total_users, 
+                           total_orders=total_orders,
+                           total_products=total_products,
+                           pending_products=pending_products,
+                           orders=latest_orders)
+
+
+# Forms
+@auth_bp.route('/apply-seller')
+@login_required
+def apply_seller():
+    return render_template('apply-seller.html')
+
+@auth_bp.route('/apply-delivery')
+@login_required
+def apply_delivery():
+    return render_template('apply-delivery.html')
     
