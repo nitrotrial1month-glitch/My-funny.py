@@ -2,195 +2,231 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seller Dashboard | inwear</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Apply for Seller - inwear</title>
     <style>
-        :root { --primary: #cc0000; --bg: #f4f6f9; --card-bg: #fff; --text: #333; }
-        body { background: var(--bg); font-family: 'Segoe UI', sans-serif; margin:0; padding:20px; color: var(--text); }
-        .container { max-width: 800px; margin: 0 auto; }
-        .header { text-align: center; margin-bottom: 30px; }
-        .header h1 { color: var(--primary); margin-bottom: 5px; }
-        
-        .card { background: var(--card-bg); border-radius: 12px; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .card h3 { margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; color: #444; }
-        
-        label { font-size: 14px; font-weight: 600; color: #555; display: block; margin-top: 15px; margin-bottom: 5px; }
-        input[type="text"], input[type="number"], textarea, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        
-        .btn { background: var(--primary); color: white; padding: 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; margin-top: 20px; }
-        .btn:hover { opacity: 0.9; }
-        
-        .product-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #eee; flex-wrap: wrap; gap: 15px; }
-        .product-info { display: flex; flex-direction: column; gap: 4px; }
-        .badge { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; color: white; width: max-content; }
-        .pending { background: #ff9800; }
-        .approved { background: #28a745; }
-        
-        /* Action Buttons Style */
-        .action-buttons { display: flex; gap: 10px; align-items: center; }
-        .btn-edit { background: #007bff; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 13px; font-weight: bold; }
-        .btn-edit:hover { background: #0056b3; }
-        .btn-delete { background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .btn-delete:hover { background: #c82333; }
-        
-        .notice { background: #e8f4fd; color: #0056b3; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #0056b3; font-size: 14px; }
-        .back-link { display: block; text-align: center; margin-top: 20px; color: var(--text); text-decoration: none; font-weight: bold; }
-        
-        /* New Styles for Flex Inputs */
-        .flex-row { display: flex; gap: 15px; margin-bottom: 15px; }
-        .flex-col { flex: 1; }
-        .policy-box { padding: 15px; border: 1px solid #ddd; border-radius: 6px; background: #fdfdfd; margin-bottom: 15px; }
-        .policy-box label { display: inline-block; margin-top: 0; margin-right: 15px; font-weight: normal; cursor: pointer; }
-        .file-input-group { margin-bottom: 10px; }
-        .file-input-group input { padding: 8px; border: 1px dashed #ccc; background: #fafafa; }
+        :root {
+            --primary-red: #cc0000;
+            --bg-color: #f1f2f4;
+            --text-dark: #212121;
+            --text-muted: #878787;
+            --white: #ffffff;
+            --border-color: #e0e0e0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+        }
+
+        /* ================= Top Bar ================= */
+        .top-bar {
+            background-color: var(--white);
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .back-btn { 
+            font-size: 22px; text-decoration: none; color: var(--text-dark); 
+            margin-right: 15px; font-weight: bold; line-height: 1;
+        }
+        .page-title { font-size: 18px; font-weight: bold; }
+
+        /* ================= Banner Section ================= */
+        .header-banner {
+            background: linear-gradient(135deg, var(--primary-red) 0%, #ff4d4d 100%);
+            color: white;
+            padding: 25px 20px;
+            text-align: center;
+        }
+        .header-banner h1 { margin: 0; font-size: 22px; }
+        .header-banner p { margin: 8px 0 0; font-size: 13px; opacity: 0.9; }
+
+        /* ================= Form Container ================= */
+        .form-container {
+            background-color: var(--white);
+            margin: -15px 15px 30px 15px;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            position: relative;
+        }
+
+        .input-group {
+            margin-bottom: 18px;
+        }
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--text-dark);
+            margin-bottom: 6px;
+        }
+        .input-group input[type="text"],
+        .input-group input[type="email"],
+        .input-group input[type="tel"],
+        .input-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            color: var(--text-dark);
+            background-color: #f9f9f9;
+            box-sizing: border-box;
+            outline: none;
+            transition: border 0.3s;
+        }
+        .input-group input:focus,
+        .input-group textarea:focus {
+            border-color: var(--primary-red);
+            background-color: var(--white);
+        }
+
+        /* ================= File Upload Custom UI ================= */
+        .file-upload-box {
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 25px 20px;
+            text-align: center;
+            background-color: #fafafa;
+            cursor: pointer;
+            transition: border 0.3s, background 0.3s;
+        }
+        .file-upload-box:hover {
+            border-color: var(--primary-red);
+            background-color: #fff5f5;
+        }
+        .file-icon {
+            font-size: 30px;
+            margin-bottom: 10px;
+        }
+        .file-text {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+        .file-upload-box input[type="file"] {
+            display: none; /* Hide default input */
+        }
+        .browse-btn {
+            background-color: var(--white);
+            border: 1px solid var(--border-color);
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            color: var(--text-dark);
+            pointer-events: none; /* Let the click pass to the box */
+        }
+
+        /* ================= Submit Button ================= */
+        .submit-btn {
+            width: 100%;
+            background-color: var(--primary-red);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            box-shadow: 0 4px 10px rgba(204, 0, 0, 0.2);
+            transition: transform 0.1s;
+        }
+        .submit-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Terms text */
+        .terms-text {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-align: center;
+            margin-top: 15px;
+            line-height: 1.5;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>⚙️ Seller Portal</h1>
-            <p>Welcome back, <strong>{{ user.username }}</strong></p>
-        </div>
 
-        <div class="notice">
-            <strong>ℹ️ Verification Required:</strong> Upload high-quality photos and videos. Products will be verified by the Owner before listing.
-        </div>
-
-        <div class="card">
-            <h3>Upload New Product</h3>
-            <form method="POST" enctype="multipart/form-data" action="/seller/upload">
-                <input type="text" name="name" placeholder="Product Name" required>
-                
-                <label>Short Description (For product card):</label>
-                <textarea name="short_desc" placeholder="Brief info..." rows="2" required></textarea>
-                
-                <label>Full Product Details (Fabric, Warranty, etc.):</label>
-                <textarea name="full_details" placeholder="Detailed specs..." rows="4" required></textarea>
-                
-                <label>Available Sizes (Comma separated):</label>
-                <input type="text" name="sizes" placeholder="e.g. S, M, L, XL" required>
-                
-                <div class="flex-row" style="margin-top: 15px;">
-                    <div class="flex-col">
-                        <label style="margin-top: 0;">Original Price (₹):</label>
-                        <input type="number" id="orig_price" name="original_price" required oninput="calculateDiscount()">
-                    </div>
-                    <div class="flex-col">
-                        <label style="margin-top: 0;">Final Price (₹):</label>
-                        <input type="number" id="final_price" name="final_price" placeholder="Leave empty if no discount" oninput="calculateDiscount()">
-                    </div>
-                </div>
-                <p id="discount_display" style="color: #28a745; font-weight: bold; margin-top: -5px; margin-bottom: 15px; font-size: 14px;"></p>
-                
-                <div class="flex-row">
-                    <div class="flex-col">
-                        <label style="margin-top: 0;">Target Gender:</label>
-                        <select name="gender" required>
-                            <option value="Men">Men (ছেলেদের)</option>
-                            <option value="Women">Women (মেয়েদের)</option>
-                            <option value="Unisex">Unisex (সবার জন্য)</option>
-                        </select>
-                    </div>
-                    <div class="flex-col">
-                        <label style="margin-top: 0;">Age Group:</label>
-                        <select name="age_group" required>
-                            <option value="Adults">Adults (বড়দের)</option>
-                            <option value="Kids">Kids (বাচ্চাদের)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <label>Product Policy (Select at least one):</label>
-                <div class="policy-box">
-                    <label>
-                        <input type="checkbox" name="can_return" id="can_return"> 7 Days Return Available
-                    </label> 
-                    <label>
-                        <input type="checkbox" name="can_replace" id="can_replace"> 7 Days Replacement Available
-                    </label>
-                </div>
-                
-                <label>Product Images (Max 3):</label>
-                <div class="file-input-group">
-                    <input type="file" name="image1" accept="image/*" required>
-                    <small style="display:block; color:#666; margin-bottom:8px;">* Main Image (Required)</small>
-                    
-                    <input type="file" name="image2" accept="image/*" style="margin-bottom:8px;">
-                    <input type="file" name="image3" accept="image/*">
-                </div>
-
-                <label>Product Video (Optional but recommended):</label>
-                <div class="file-input-group">
-                    <input type="file" name="video" accept="video/mp4,video/x-m4v,video/*">
-                </div>
-                
-                <button type="submit" class="btn">Submit for Review</button>
-            </form>
-        </div>
-
-        <div class="card">
-            <h3>Your Uploaded Products</h3>
-            {% for p in products %}
-            <div class="product-item">
-                <div class="product-info">
-                    <span style="font-weight:bold; font-size: 16px;">{{ p.name }}</span>
-                    <span>
-                        Price: ₹{{ p.price }} 
-                        {% if p.original_price and p.original_price > p.price %}
-                            <small style="text-decoration:line-through; color:gray;">(₹{{ p.original_price }})</small>
-                            <span style="color: #cc0000; font-weight: bold; font-size: 12px; margin-left: 5px;">
-                                {{ p.discount_percent }}% OFF
-                            </span>
-                        {% endif %}
-                    </span>
-                    <span class="badge {{ 'approved' if p.status == 'Approved' else 'pending' }}">
-                        {{ p.status or 'Pending' }}
-                    </span>
-                </div>
-                
-                <div class="action-buttons">
-                    {% if p.seller_id|string == user.id|string %}
-                        <a href="/seller/edit/{{ p._id }}" class="btn-edit">Edit</a>
-                        <form action="/delete_product/{{ p._id }}" method="POST" style="margin: 0;">
-                            <button type="submit" class="btn-delete">Delete</button>
-                        </form>
-                    {% else %}
-                        <span style="font-size: 12px; color: #888; font-style: italic;">Viewing Only</span>
-                    {% endif %}
-                </div>
-            </div>
-            {% endfor %}
-            {% if not products %}
-                <p style="text-align: center; color: #888;">No products uploaded yet.</p>
-            {% endif %}
-        </div>
-        
-        <a href="/" class="back-link">⬅ Back to Home</a>
+    <!-- Top Navigation Bar -->
+    <div class="top-bar">
+        <a href="/account" class="back-btn">‹</a>
+        <div class="page-title">Seller Application</div>
     </div>
 
+    <!-- Promotional Header -->
+    <div class="header-banner">
+        <h1>Sell on inwear</h1>
+        <p>Reach thousands of customers and grow your business with our 100% secure platform.</p>
+    </div>
+
+    <!-- Application Form -->
+    <!-- Added enctype="multipart/form-data" which is required for file uploads -->
+    <div class="form-container">
+        <form action="/submit-seller-application" method="POST" enctype="multipart/form-data">
+            
+            <div class="input-group">
+                <label>Store / Brand Name</label>
+                <input type="text" name="store_name" placeholder="e.g. Urban Style Store" required>
+            </div>
+
+            <div class="input-group">
+                <label>Contact Email</label>
+                <!-- We can auto-fill this using Jinja if needed: value="{{ current_user.email }}" -->
+                <input type="email" name="contact_email" placeholder="store@example.com" required>
+            </div>
+
+            <div class="input-group">
+                <label>Phone Number</label>
+                <input type="tel" name="phone_number" placeholder="+880 1XXX-XXXXXX" required>
+            </div>
+
+            <div class="input-group">
+                <label>Business Address / Location</label>
+                <textarea name="address" rows="3" placeholder="Enter your full business address..." required></textarea>
+            </div>
+
+            <!-- Custom Document Upload Section -->
+            <div class="input-group">
+                <label>Upload Document (NID / Trade License)</label>
+                <label class="file-upload-box" for="document_upload">
+                    <div class="file-icon">📄</div>
+                    <div class="file-text">Tap to select a clear photo or PDF of your document for verification.</div>
+                    <span class="browse-btn">Browse File</span>
+                    <!-- The actual file input is hidden but triggered when the box is clicked -->
+                    <input type="file" id="document_upload" name="document_file" accept=".jpg, .jpeg, .png, .pdf" required onchange="updateFileName(this)">
+                </label>
+                <div id="file_name_display" style="font-size: 12px; color: #00a650; margin-top: 8px; text-align: center; font-weight: bold; display: none;"></div>
+            </div>
+
+            <button type="submit" class="submit-btn">Submit Application</button>
+            
+            <p class="terms-text">By submitting this application, you agree to our <a href="#" style="color: var(--primary-red);">Seller Terms & Conditions</a>. Our admin team will verify your details within 24-48 hours.</p>
+        </form>
+    </div>
+
+    <!-- JavaScript to show the selected file name -->
     <script>
-    function calculateDiscount() {
-        let orig = parseFloat(document.getElementById('orig_price').value) || 0;
-        let finalInput = document.getElementById('final_price').value;
-        let final = parseFloat(finalInput);
-        let display = document.getElementById('discount_display');
-
-        if (finalInput.trim() === "" || isNaN(final)) {
-            display.innerText = "";
-            return;
+        function updateFileName(input) {
+            const fileNameDisplay = document.getElementById('file_name_display');
+            if (input.files && input.files.length > 0) {
+                fileNameDisplay.textContent = 'Selected: ' + input.files[0].name;
+                fileNameDisplay.style.display = 'block';
+            } else {
+                fileNameDisplay.style.display = 'none';
+            }
         }
-
-        if (orig > 0 && final > 0 && final < orig) {
-            let discount = ((orig - final) / orig) * 100;
-            display.innerText = "🎉 You are giving " + discount.toFixed(0) + "% discount!";
-            display.style.color = "#28a745";
-        } else if (final >= orig && orig > 0) {
-            display.innerText = "⚠️ Final price must be less than Original Price! (Or leave empty)";
-            display.style.color = "#cc0000";
-        } else {
-            display.innerText = "";
-        }
-    }
     </script>
+
 </body>
 </html>
