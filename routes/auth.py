@@ -171,7 +171,7 @@ def smart_dashboard_redirect():
         return redirect('/account')
 
 
-# 👑 ওনার (Owner) ড্যাশবোর্ড (রিয়েল-টাইম লাইভ ডেটা সহ)
+# 👑 ওনার (Owner) ড্যাশবোর্ড
 @auth_bp.route('/owner-dashboard')
 @role_required('owner')
 def owner_dashboard():
@@ -188,7 +188,6 @@ def owner_dashboard():
     pending_products = list(db_products.find({"status": "Pending"})) if db_products is not None else []
     latest_orders = list(db_orders.find({}).sort("_id", -1).limit(20)) if db_orders is not None else []
 
-    # 🔴 FIXED: owner_dashboard.html (আপনার রিকোয়েস্ট অনুযায়ী আন্ডারস্কোর)
     return render_template('owner_dashboard.html', 
                            current_user=user,
                            total_users=total_users, 
@@ -198,17 +197,31 @@ def owner_dashboard():
                            orders=latest_orders)
 
 
-# 🏪 সেলার (Seller) ড্যাশবোর্ড (লাইভ প্রোডাক্ট সহ)
+# 🏪 সেলার (Seller) ড্যাশবোর্ড
 @auth_bp.route('/seller-dashboard')
 @role_required('seller', 'owner')
 def seller_dashboard():
     user = get_current_user()
     
-    col = Database.get_collection("products")
-    seller_products = list(col.find({"seller_id": str(user['id'])})) if col is not None else []
+    # 🔴 FIXED KeyError: 'id'
+    user_id = user.get('discord_id') or user.get('id')
     
-    # 🔴 FIXED: seller_dashboard.html (আপনার রিকোয়েস্ট অনুযায়ী আন্ডারস্কোর)
+    col = Database.get_collection("products")
+    seller_products = list(col.find({"seller_id": str(user_id)})) if col is not None else []
+    
     return render_template('seller_dashboard.html', current_user=user, products=seller_products)
+
+
+# 🛵 ডেলিভারি (Delivery) ড্যাশবোর্ড
+@auth_bp.route('/delivery-dashboard')
+@role_required('delivery', 'owner')
+def delivery_dashboard():
+    user = get_current_user()
+    
+    col = Database.get_collection("orders")
+    active_orders = list(col.find({"status": "Confirmed"}).sort("_id", -1)) if col is not None else []
+    
+    return render_template('delivery_dashboard.html', current_user=user, orders=active_orders)
 
 
 # Forms
@@ -223,7 +236,7 @@ def apply_delivery():
     return render_template('apply-delivery.html')
     
 # ==========================================
-# 🚀 Form Submission Handlers (Auto-Approve for now)
+# 🚀 Form Submission Handlers
 # ==========================================
 
 @auth_bp.route('/submit-seller-application', methods=['POST'])
@@ -232,11 +245,9 @@ def submit_seller_application():
     user = session.get('user')
     col = Database.get_collection("users")
     
-    # ইউজারকে ডেটাবেসে 'seller' হিসেবে আপডেট করা হচ্ছে
     if col is not None:
         col.update_one({"discord_id": user['id']}, {"$set": {"role": "seller"}})
     
-    # সেশন আপডেট করে সেলার ড্যাশবোর্ডে পাঠানো হচ্ছে
     session['user']['role'] = 'seller'
     session.modified = True
     return redirect('/seller-dashboard')
@@ -248,12 +259,10 @@ def submit_delivery_application():
     user = session.get('user')
     col = Database.get_collection("users")
     
-    # ইউজারকে ডেটাবেসে 'delivery' বয় হিসেবে আপডেট করা হচ্ছে
     if col is not None:
         col.update_one({"discord_id": user['id']}, {"$set": {"role": "delivery"}})
     
-    # সেশন আপডেট করে ডেলিভারি ড্যাশবোর্ডে পাঠানো হচ্ছে
     session['user']['role'] = 'delivery'
     session.modified = True
-    return redirect('/delivery/dashboard')
+    return redirect('/delivery-dashboard')
     
