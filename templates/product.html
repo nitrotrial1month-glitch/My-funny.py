@@ -12,14 +12,22 @@
         .top-bar { padding: 15px; background: white; display: flex; align-items: center; gap: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
         .back-btn { text-decoration: none; color: var(--text-dark); font-size: 20px; font-weight: bold; }
         
-        /* Product Image */
-        .product-img-wrapper { width: 100%; background: #fff; display: flex; justify-content: center; align-items: center; }
-        .product-img { width: 100%; max-width: 500px; aspect-ratio: 3/4; object-fit: cover; }
+        /* 🔴 NEW: Media Scroller (Images + Video) */
+        .media-wrapper { position: relative; background: #fff; }
+        .media-scroller { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none; }
+        .media-scroller::-webkit-scrollbar { display: none; }
+        .media-item { flex: 0 0 100%; width: 100%; aspect-ratio: 3/4; object-fit: cover; scroll-snap-align: start; background: #f9f9f9; }
+        .scroll-hint { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); color: white; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: bold; pointer-events: none; }
         
         /* Details Container */
         .details-container { padding: 20px; background: white; margin-top: 5px; border-radius: 12px 12px 0 0; }
-        h2 { margin: 0 0 5px 0; font-size: 18px; color: var(--text-dark); }
-        .short-desc { color: #888; font-size: 13px; margin: 0 0 15px 0; }
+        h2 { margin: 0 0 5px 0; font-size: 18px; color: var(--text-dark); line-height: 1.3; }
+        
+        /* 🔴 Tags Section */
+        .tags-container { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 15px 0; }
+        .tag { background: #ffe6e6; color: var(--primary); padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+
+        .short-desc { color: #666; font-size: 13px; margin: 0 0 15px 0; line-height: 1.5; }
         
         /* Pricing */
         .price-section { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
@@ -28,14 +36,18 @@
         .discount-badge { background: var(--primary); color: white; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
         
         /* Sizes */
-        .section-label { font-weight: bold; margin-top: 20px; margin-bottom: 10px; display: block; color: #444; font-size: 14px; }
+        .section-label { font-weight: bold; margin-top: 20px; margin-bottom: 10px; display: block; color: #212121; font-size: 14px; border-bottom: 1px solid #eee; padding-bottom: 5px;}
         .size-container { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
         .size-btn { padding: 8px 16px; border: 1px solid #ddd; border-radius: 6px; background: white; cursor: pointer; font-size: 13px; font-weight: 500; }
         .size-btn:hover, .size-btn:focus { border-color: var(--primary); color: var(--primary); background: #fff5f5; }
         
-        /* Details Box */
-        .full-details { white-space: pre-wrap; line-height: 1.6; font-size: 13px; color: #555; background: #f8f8f8; padding: 15px; border-radius: 8px; border: 1px solid #eee; }
+        /* 🔴 Details Box */
+        .full-details { white-space: pre-wrap; line-height: 1.6; font-size: 13px; color: #444; background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 10px; }
         
+        /* 🔴 Policies (Return/Replace) */
+        .policy-box { display: flex; gap: 15px; margin-top: 15px; background: #f5fdf7; padding: 12px; border-radius: 8px; border: 1px dashed #00a650; }
+        .policy-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #007b3b; font-weight: bold; }
+
         /* Fixed Bottom Action Buttons */
         .action-btns { display: flex; gap: 10px; position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 10px 15px; box-sizing: border-box; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000;}
         .btn { flex: 1; padding: 14px; border: none; border-radius: 6px; font-weight: bold; text-align: center; cursor: pointer; text-decoration: none; font-size: 15px; }
@@ -59,13 +71,42 @@
         <span style="font-weight: bold; font-size: 16px;">Product Details</span>
     </div>
 
-    <div class="product-img-wrapper">
-        <img src="/{{ product.image }}" class="product-img" alt="{{ product.name }}" onerror="this.src='https://via.placeholder.com/400';">
+    <!-- 🔴 NEW: Media Scroller for Images and Video -->
+    <div class="media-wrapper">
+        <div class="media-scroller">
+            <!-- All uploaded extra images -->
+            {% if product.extra_images %}
+                {% for img in product.extra_images %}
+                    <img src="/{{ img }}" class="media-item" alt="Product Image">
+                {% endfor %}
+            {% elif product.image %}
+                <!-- Fallback to main image if extra_images list is empty -->
+                <img src="/{{ product.image }}" class="media-item" alt="Product Image" onerror="this.src='https://via.placeholder.com/400';">
+            {% endif %}
+
+            <!-- Product Video -->
+            {% if product.video %}
+                <video src="/{{ product.video }}" class="media-item" controls preload="metadata" poster="/{{ product.image }}"></video>
+            {% endif %}
+        </div>
+        
+        <!-- Swipe Hint indicator -->
+        {% if (product.extra_images and product.extra_images|length > 1) or product.video %}
+            <div class="scroll-hint">Swipe to see more ➔</div>
+        {% endif %}
     </div>
     
     <div class="details-container">
         <h2>{{ product.name }}</h2>
-        <p class="short-desc">{{ product.description }}</p>
+
+        <!-- 🔴 NEW: Display Tags -->
+        {% if product.tags %}
+        <div class="tags-container">
+            {% for tag in product.tags %}
+                <span class="tag">{{ tag }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
         
         <div class="price-section">
             <span class="current-price">₹{{ product.price }}</span>
@@ -77,6 +118,11 @@
             {% endif %}
         </div>
 
+        <!-- 🔴 UPDATED: Description -->
+        {% if product.description %}
+            <p class="short-desc">{{ product.description }}</p>
+        {% endif %}
+
         {% if product.sizes %}
         <span class="section-label">Select Size</span>
         <div class="size-container">
@@ -86,15 +132,30 @@
         </div>
         {% endif %}
 
+        <!-- 🔴 UPDATED: Product Details -->
         {% if product.full_details %}
         <span class="section-label">Product Details</span>
         <div class="full-details">{{ product.full_details }}</div>
+        {% endif %}
+
+        <!-- 🔴 NEW: Policies (Return/Replace) -->
+        {% if product.policies %}
+            {% if product.policies.return_eligible or product.policies.replace_eligible %}
+            <div class="policy-box">
+                {% if product.policies.return_eligible %}
+                    <div class="policy-item">✅ 7 Days Return</div>
+                {% endif %}
+                {% if product.policies.replace_eligible %}
+                    <div class="policy-item">🔄 7 Days Replacement</div>
+                {% endif %}
+            </div>
+            {% endif %}
         {% endif %}
     </div>
 
     {% if seller_products %}
     <div class="seller-section">
-        <span class="section-label" style="margin-top: 0;">More from this Seller</span>
+        <span class="section-label" style="margin-top: 0; border:none;">More from this Seller</span>
         <div class="product-grid">
             {% for sp in seller_products %}
                 {% if sp._id|string != product._id|string %}
@@ -111,9 +172,9 @@
     </div>
     {% endif %}
 
-     <div class="action-btns">
-     <a href="/add_to_cart/{{ product._id | string }}" class="btn add-cart">Add to Cart</a>
-     <a href="/checkout/{{ product._id | string }}" class="btn buy-now">Buy Now</a>
+    <div class="action-btns">
+        <a href="/add_to_cart/{{ product._id | string }}" class="btn add-cart">Add to Cart</a>
+        <a href="/checkout/{{ product._id | string }}" class="btn buy-now">Buy Now</a>
     </div>
 
 </body>
