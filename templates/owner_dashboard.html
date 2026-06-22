@@ -2,137 +2,189 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Control | Owner Panel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Owner Panel - inwear</title>
     <style>
-        :root { --primary: #cc0000; --bg: #f4f6f9; --card-bg: #fff; --text: #333; }
-        body { background: var(--bg); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin:0; padding:20px; color: var(--text); }
-        .dashboard-container { max-width: 1200px; margin: 0 auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .header h1 { margin: 0; color: var(--primary); }
+        :root {
+            --primary-red: #cc0000;
+            --admin-dark: #1a1a2e; /* Darker theme for admin */
+            --bg-color: #f4f6f8;
+            --text-dark: #212121;
+            --text-muted: #666666;
+            --white: #ffffff;
+            --border-color: #e0e0e0;
+            --success-green: #00a650;
+            --warning-orange: #ff9900;
+            --assured-blue: #2874f0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            padding-bottom: 80px;
+        }
+
+        /* ================= 1. Admin Header ================= */
+        .top-header {
+            background-color: var(--admin-dark);
+            color: var(--white);
+            padding: 20px 20px 40px 20px;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            position: relative;
+        }
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .admin-title { font-size: 20px; font-weight: 900; display: flex; align-items: center; gap: 8px; letter-spacing: 0.5px; }
+        .owner-badge { background: var(--primary-red); font-size: 10px; padding: 3px 8px; border-radius: 12px; font-weight: bold; }
         
-        .grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
-        @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+        .revenue-label { font-size: 12px; color: #aaaaaa; }
+        .revenue-amount { font-size: 32px; font-weight: 900; color: #00ff88; margin-top: 5px; }
+
+        /* ================= 2. Quick Stats Grid ================= */
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+            padding: 0 15px; margin-top: -25px; /* Overlaps header */
+        }
+        .stat-card {
+            background: var(--white); padding: 15px 10px; border-radius: 12px;
+            text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        }
+        .stat-value { font-size: 18px; font-weight: 900; color: var(--text-dark); }
+        .stat-value.alert { color: var(--primary-red); } /* Highlight for pending tasks */
+        .stat-title { font-size: 11px; color: var(--text-muted); margin-top: 4px; font-weight: bold; }
+
+        /* ================= 3. Pending Approvals (The Main Work Area) ================= */
+        .section-title { padding: 20px 15px 10px 15px; font-size: 16px; font-weight: 900; color: var(--admin-dark); text-transform: uppercase; }
         
-        .card { background: var(--card-bg); border-radius: 12px; padding: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .card h3 { margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; color: #444; }
+        .approval-list { padding: 0 15px; display: flex; flex-direction: column; gap: 15px; }
         
-        input, textarea { width: 100%; padding: 12px; margin: 8px 0 15px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-family: inherit; }
+        /* Verification Card Style */
+        .verification-card {
+            background: var(--white); border-radius: 12px; padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 4px solid var(--warning-orange);
+        }
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .req-type { font-size: 11px; font-weight: bold; color: var(--text-muted); background: #f0f0f0; padding: 3px 8px; border-radius: 4px; }
+        .req-date { font-size: 11px; color: #999; }
         
-        .btn { background: var(--primary); color: white; padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; font-size: 15px; transition: 0.3s; }
-        .btn:hover { opacity: 0.9; }
+        .req-details h3 { margin: 0 0 5px 0; font-size: 15px; color: var(--text-dark); }
+        .req-details p { margin: 0; font-size: 12px; color: var(--text-muted); line-height: 1.4; }
         
-        .btn-approve { background: #28a745; width: auto; padding: 8px 12px; font-size: 13px; }
-        .btn-delete { background: #dc3545; width: auto; padding: 8px 12px; font-size: 13px; }
-        .btn-toggle { background: #007bff; width: auto; padding: 8px 12px; font-size: 13px; }
+        /* Action Buttons */
+        .action-btns { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-approve { flex: 1; background: var(--success-green); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; }
+        .btn-decline { flex: 1; background: #fff0f0; color: var(--primary-red); border: 1px solid #ffd6d6; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
-        th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background: #f8f9fa; color: #555; font-weight: 600; }
-        
-        .badge { padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; color: white; }
-        .badge.pending { background: #ff9800; }
-        .badge.approved { background: #28a745; }
-        
-        .back-link { display: inline-block; margin-top: 20px; color: var(--primary); text-decoration: none; font-weight: bold; }
+        /* Assured Badge specific button */
+        .btn-assured { width: 100%; background: var(--assured-blue); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; margin-top: 10px; }
+
+        /* ================= 4. Bottom Nav ================= */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background-color: var(--white); display: flex; justify-content: space-around;
+            padding: 10px 0; box-shadow: 0 -5px 15px rgba(0,0,0,0.05); z-index: 1000;
+        }
+        .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: var(--text-muted); font-size: 12px; font-weight: bold; }
+        .nav-item.active { color: var(--admin-dark); }
+        .nav-icon { font-size: 22px; margin-bottom: 3px; }
     </style>
 </head>
 <body>
-    <div class="dashboard-container">
-        <div class="header">
-            <h1>👑 Owner Dashboard</h1>
-            <div>Logged in as: <strong>{{ user.username }}</strong></div>
+
+    <!-- Admin Header -->
+    <div class="top-header">
+        <div class="header-top">
+            <div class="admin-title">👑 INWEAR <span class="owner-badge">OWNER</span></div>
+            <div style="font-size: 22px;">⚙️</div>
         </div>
-
-        <div class="grid">
-            <div>
-                <div class="card">
-                    <h3>➕ Quick Sell (Auto-Approve)</h3>
-                    <form method="POST" enctype="multipart/form-data">
-                        <label>Product Name</label>
-                        <input type="text" name="name" placeholder="E.g., Black Anime Edition" required>
-                        
-                        <label>Description</label>
-                        <textarea name="desc" placeholder="Product details..." rows="3"></textarea>
-                        
-                        <label>Price (₹)</label>
-                        <input type="number" name="price" placeholder="499" required>
-                        
-                        <label>Product Image</label>
-                        <input type="file" name="image" accept="image/*" required>
-                        
-                        <button type="submit" class="btn">Upload to Store</button>
-                    </form>
-                </div>
-            </div>
-
-            <div>
-                <div class="card">
-                    <h3>📦 Product Approvals & Management</h3>
-                    <div style="overflow-x: auto;">
-                        <table>
-                            <tr>
-                                <th>Product</th>
-                                <th>Price</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                            {% for p in products %}
-                            <tr>
-                                <td><strong>{{ p.name }}</strong></td>
-                                <td>₹{{ p.price }}</td>
-                                <td>
-                                    <span class="badge {{ 'approved' if p.status == 'Approved' else 'pending' }}">
-                                        {{ p.status }}
-                                    </span>
-                                </td>
-                                <td style="display: flex; gap: 5px;">
-                                    {% if p.status == 'Pending' %}
-                                    <form action="/approve_product/{{ p._id }}" method="POST">
-                                        <button type="submit" class="btn btn-approve">Approve</button>
-                                    </form>
-                                    {% endif %}
-                                    <form action="/delete_product/{{ p._id }}" method="POST">
-                                        <button type="submit" class="btn btn-delete">Delete</button>
-                                    </form>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </table>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <h3>👥 Manage Sellers</h3>
-                    <div style="overflow-x: auto;">
-                        <table>
-                            <tr>
-                                <th>Discord ID / User</th>
-                                <th>Seller Access</th>
-                                <th>Action</th>
-                            </tr>
-                            {% for u in all_users %}
-                            <tr>
-                                <td>{{ u.username }} <br><small style="color:#888;">{{ u.discord_id }}</small></td>
-                                <td>
-                                    <span style="color: {{ 'green' if u.seller_access else 'red' }}; font-weight: bold;">
-                                        {{ "✅ Active" if u.seller_access else "❌ Revoked" }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <form action="/toggle_seller/{{ u.discord_id }}" method="POST">
-                                        <button type="submit" class="btn btn-toggle">Toggle Access</button>
-                                    </form>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <a href="/" class="back-link">⬅ Back to Store</a>
+        <div class="revenue-label">Total Platform Revenue</div>
+        <div class="revenue-amount">₹1,45,200</div>
     </div>
+
+    <!-- Quick Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value alert">3</div>
+            <div class="stat-title">Pending Sellers</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value alert">5</div>
+            <div class="stat-title">Products Review</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">124</div>
+            <div class="stat-title">Total Sales</div>
+        </div>
+    </div>
+
+    <!-- Action Center (Approvals) -->
+    <div class="section-title">Action Required</div>
+    <div class="approval-list">
+
+        <!-- 1. Seller Verification Card -->
+        <div class="verification-card">
+            <div class="card-header">
+                <span class="req-type">🏪 New Seller Request</span>
+                <span class="req-date">10 mins ago</span>
+            </div>
+            <div class="req-details">
+                <h3>Urban Style Store</h3>
+                <p><strong>Contact:</strong> +91 9876543210</p>
+                <p><strong>UPI ID:</strong> urban@ybl</p>
+                <p style="color: var(--assured-blue); margin-top: 5px;">📄 Aadhaar Document Attached</p>
+            </div>
+            <div class="action-btns">
+                <button class="btn-decline">Decline</button>
+                <button class="btn-approve">Verify & Approve</button>
+            </div>
+        </div>
+
+        <!-- 2. Product Verification Card -->
+        <div class="verification-card" style="border-left-color: var(--primary-red);">
+            <div class="card-header">
+                <span class="req-type">👕 Product Review</span>
+                <span class="req-date">1 hr ago</span>
+            </div>
+            <div class="req-details" style="display: flex; gap: 15px; margin-top: 10px;">
+                <img src="https://via.placeholder.com/60/f0f0f0/cc0000?text=Pic" alt="Prod" style="border-radius: 8px; width: 60px; height: 60px; object-fit: cover;">
+                <div>
+                    <h3>Oversized Anime T-Shirt</h3>
+                    <p><strong>Price:</strong> ₹699 | <strong>Stock:</strong> 50</p>
+                    <p><strong>AI Status:</strong> <span style="color: var(--success-green); font-weight: bold;">Image Matches Description</span></p>
+                </div>
+            </div>
+            <div class="action-btns">
+                <button class="btn-decline">Reject</button>
+                <button class="btn-approve">Go Live (Standard)</button>
+            </div>
+            <!-- The Premium Override Button -->
+            <button class="btn-assured">✨ Approve as 'inwear Assured'</button>
+        </div>
+
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <a href="/owner-dashboard" class="nav-item active">
+            <span class="nav-icon">📊</span>
+            <span>Panel</span>
+        </a>
+        <a href="/admin-sellers" class="nav-item">
+            <span class="nav-icon">👥</span>
+            <span>Sellers</span>
+        </a>
+        <a href="/admin-deliveries" class="nav-item">
+            <span class="nav-icon">🛵</span>
+            <span>Fleet</span>
+        </a>
+        <a href="/admin-payouts" class="nav-item">
+            <span class="nav-icon">💸</span>
+            <span>Payouts</span>
+        </a>
+    </div>
+
 </body>
 </html>
