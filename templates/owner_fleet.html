@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fleet Management - inwear</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f6f8; margin: 0; padding: 20px; color: #333; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .back-btn { text-decoration: none; color: #cc0000; font-weight: bold; font-size: 14px; }
+        .fleet-card { background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .fleet-info h4 { margin: 0; font-size: 16px; color: #212121; }
+        .fleet-info p { margin: 4px 0 0; font-size: 12px; color: #666; }
+        .fire-btn { background: #ffe6e6; color: #cc0000; border: 1px solid #cc0000; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>🛵 Active Fleet</h2>
+        <a href="/owner-dashboard" class="back-btn">‹ Back to Panel</a>
+    </div>
+
+    {% if fleet %}
+        {% for boy in fleet %}
+        <div class="fleet-card">
+            <div class="fleet-info">
+                <h4>{{ boy.username }}</h4>
+                <p>Email: {{ boy.email }}</p>
+                <p>ID: {{ boy.inwear_id }}</p>
+            </div>
+            <form action="/owner/remove-delivery/{{ boy.discord_id }}" method="POST">
+                <button type="submit" class="fire-btn" onclick="return confirm('Are you sure you want to remove this delivery partner?')">Remove</button>
+            </form>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p style="text-align: center; color: #888;">No active delivery partners found.</p>
+    {% endif %}
+</body>
+</html>
+
