@@ -107,7 +107,7 @@
             box-sizing: border-box;
         }
 
-        /* 🔴 Login Screen CSS (লগইন না থাকলে এটি দেখাবে) */
+        /* 🔴 Login Screen CSS */
         .login-container {
             text-align: center; padding: 40px 20px; background: var(--white);
             margin: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
@@ -138,7 +138,6 @@
         <div class="page-title">My Account</div>
     </div>
 
-    <!-- 🔴 লগইন চেক: যদি ইউজার লগইন করে থাকে -->
     {% if current_user %}
         
         <div class="profile-header">
@@ -168,7 +167,6 @@
                 <div class="list-left"><span style="font-size: 18px;">✏️</span> Edit Profile</div>
                 <div class="arrow-right">›</div>
             </a>
-            <!-- 🔴 লিঙ্কটি আপডেট করা হয়েছে (saved_addresses) যাতে 404 এরর না আসে -->
             <a href="/saved_addresses" class="list-item">
                 <div class="list-left"><span style="font-size: 18px;">📍</span> Saved Addresses</div>
                 <div class="arrow-right">›</div>
@@ -180,42 +178,43 @@
             
             {% set role = current_user.get('role', 'user') %}
             
-            <!-- Owner Logic -->
             {% if role == 'owner' %}
-            <a href="/dashboards" class="list-item">
+            <a href="/owner-dashboard" class="list-item">
                 <div class="list-left"><span style="font-size: 18px;">👑</span> Owner Panel</div>
                 <div class="arrow-right">›</div>
             </a>
             {% endif %}
 
-            <!-- Seller Logic -->
-            {% if role == 'seller' %}
-            <a href="/dashboards" class="list-item status-approved">
-                <div class="list-left"><span style="font-size: 18px;">✅</span> <span style="color: #00a650;">Approved Seller (Go to Panel)</span></div>
+            {% if role == 'seller' or role == 'owner' %}
+            <a href="/seller-dashboard" class="list-item status-approved">
+                <div class="list-left"><span style="font-size: 18px;">✅</span> 
+                    <span style="color: #00a650;">{{ 'Seller Panel' if role == 'seller' else 'Access Seller Panel' }}</span>
+                </div>
                 <div class="arrow-right" style="color: #00a650;">›</div>
             </a>
             {% elif role == 'pending_seller' %}
             <div class="list-item status-pending">
                 <div class="list-left"><span style="font-size: 18px;">⏳</span> <span style="color: #ff9900;">Seller Application Pending</span></div>
             </div>
-            {% elif role in ['user', 'delivery'] %}
+            {% else %}
             <a href="/apply-seller" class="list-item">
                 <div class="list-left"><span style="font-size: 18px;">🏪</span> Apply for Seller</div>
                 <div class="arrow-right">›</div>
             </a>
             {% endif %}
 
-            <!-- Delivery Logic -->
-            {% if role == 'delivery' %}
-            <a href="/dashboards" class="list-item status-approved">
-                <div class="list-left"><span style="font-size: 18px;">✅</span> <span style="color: #00a650;">Approved Delivery Boy (Go to Panel)</span></div>
+            {% if role == 'delivery' or role == 'owner' %}
+            <a href="/delivery-dashboard" class="list-item status-approved">
+                <div class="list-left"><span style="font-size: 18px;">✅</span> 
+                    <span style="color: #00a650;">{{ 'Delivery Panel' if role == 'delivery' else 'Access Delivery Panel' }}</span>
+                </div>
                 <div class="arrow-right" style="color: #00a650;">›</div>
             </a>
             {% elif role == 'pending_delivery' %}
             <div class="list-item status-pending">
                 <div class="list-left"><span style="font-size: 18px;">⏳</span> <span style="color: #ff9900;">Delivery Application Pending</span></div>
             </div>
-            {% elif role in ['user', 'seller'] %}
+            {% else %}
             <a href="/apply-delivery" class="list-item">
                 <div class="list-left"><span style="font-size: 18px;">🛵</span> Apply for Delivery Boy</div>
                 <div class="arrow-right">›</div>
@@ -226,7 +225,6 @@
 
         <a href="/logout" class="logout-btn">🚪 Log Out Account</a>
 
-    <!-- 🔴 যদি ইউজার লগইন না করে থাকে -->
     {% else %}
         <div class="login-container">
             <h2>Welcome to inwear</h2>
@@ -242,14 +240,12 @@
         </div>
     {% endif %}
 
-    <!-- ================= Bottom Navigation ================= -->
     <div class="bottom-nav">
         <a href="/" class="nav-item">
             <span class="nav-icon">🏠</span>
             <span>Home</span>
         </a>
         
-        <!-- 🔴 Panel Button Logic (শুধু পারমিশন থাকলে দেখাবে) -->
         {% if current_user and current_user.get('role') in ['owner', 'seller', 'delivery'] %}
         <a href="/dashboards" class="nav-item">
             <span class="nav-icon">📊</span>
