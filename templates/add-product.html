@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Add Product - inwear</title>
+    <style>
+        :root {
+            --primary-red: #cc0000;
+            --bg-color: #f1f2f4;
+            --text-dark: #212121;
+            --text-muted: #878787;
+            --white: #ffffff;
+            --border-color: #e0e0e0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            padding-bottom: 30px;
+        }
+
+        /* ================= 1. Top Bar ================= */
+        .top-bar {
+            background-color: var(--white); padding: 15px; display: flex; align-items: center;
+            border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 100;
+        }
+        .back-btn { font-size: 22px; text-decoration: none; color: var(--text-dark); margin-right: 15px; font-weight: bold; line-height: 1; }
+        .page-title { font-size: 18px; font-weight: bold; }
+
+        /* ================= 2. Form Container ================= */
+        .form-container {
+            background-color: var(--white); margin: 15px; padding: 20px;
+            border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        .section-label {
+            font-size: 14px; font-weight: 800; color: var(--text-dark);
+            margin: 20px 0 15px 0; padding-bottom: 5px; border-bottom: 2px solid #f0f0f0;
+        }
+        .section-label:first-child { margin-top: 0; }
+
+        .input-group { margin-bottom: 18px; }
+        .input-group label { display: block; font-size: 13px; font-weight: bold; color: var(--text-muted); margin-bottom: 6px; }
+        .input-group input, .input-group textarea, .input-group select {
+            width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px;
+            font-size: 14px; color: var(--text-dark); background-color: #f9f9f9; box-sizing: border-box; outline: none; transition: 0.3s;
+        }
+        .input-group input:focus, .input-group textarea:focus, .input-group select:focus {
+            border-color: var(--primary-red); background-color: var(--white);
+        }
+
+        /* ================= 3. Image Upload Grid ================= */
+        .image-upload-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 10px;
+        }
+        .upload-box {
+            aspect-ratio: 1; border: 2px dashed #ccc; border-radius: 8px;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background-color: #fafafa; cursor: pointer; color: var(--text-muted); transition: 0.3s;
+            position: relative; overflow: hidden;
+        }
+        .upload-box:hover { border-color: var(--primary-red); background-color: #fff5f5; color: var(--primary-red); }
+        .upload-icon { font-size: 24px; margin-bottom: 4px; }
+        .upload-text { font-size: 10px; font-weight: bold; }
+        .upload-box input[type="file"] { display: none; }
+        
+        .helper-text { font-size: 11px; color: #ff9900; font-weight: bold; margin-bottom: 15px; }
+
+        /* ================= 4. Grid Rows (For Price/Stock) ================= */
+        .grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+        /* ================= 5. Checkbox/Variants ================= */
+        .variant-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px; }
+        .variant-box {
+            border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 6px;
+            font-size: 12px; font-weight: bold; color: var(--text-dark); cursor: pointer;
+            background: #f9f9f9; user-select: none; transition: 0.2s;
+        }
+        /* Hidden real checkboxes */
+        .variant-group input[type="checkbox"] { display: none; }
+        /* When checkbox is checked, style the adjacent label (.variant-box) */
+        .variant-group input[type="checkbox"]:checked + .variant-box {
+            background-color: var(--primary-red); color: white; border-color: var(--primary-red);
+        }
+
+        /* ================= 6. Submit Button ================= */
+        .submit-btn {
+            width: 100%; background-color: var(--text-dark); color: white; border: none;
+            padding: 15px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;
+            margin-top: 10px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); transition: 0.1s;
+        }
+        .submit-btn:active { transform: scale(0.98); }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <a href="/seller-dashboard" class="back-btn">‹</a>
+        <div class="page-title">Add New Product</div>
+    </div>
+
+    <div class="form-container">
+        <!-- Must use multipart/form-data for image uploads -->
+        <form action="/submit-product" method="POST" enctype="multipart/form-data">
+            
+            <!-- 1. Media Section -->
+            <div class="section-label">1. Product Media</div>
+            <div class="helper-text">💡 Clear images increase the chance of AI Approval!</div>
+            
+            <div class="image-upload-grid">
+                <!-- Main Image -->
+                <label class="upload-box">
+                    <div class="upload-icon">📸</div>
+                    <div class="upload-text">Front View</div>
+                    <input type="file" name="image_1" accept="image/*" required>
+                </label>
+                <!-- Image 2 -->
+                <label class="upload-box">
+                    <div class="upload-icon">📸</div>
+                    <div class="upload-text">Back View</div>
+                    <input type="file" name="image_2" accept="image/*">
+                </label>
+                <!-- Image 3 -->
+                <label class="upload-box">
+                    <div class="upload-icon">🏷️</div>
+                    <div class="upload-text">Fabric Detail</div>
+                    <input type="file" name="image_3" accept="image/*">
+                </label>
+            </div>
+
+            <!-- 2. Basic Details -->
+            <div class="section-label">2. Basic Details</div>
+            
+            <div class="input-group">
+                <label>Product Title</label>
+                <input type="text" name="title" placeholder="e.g. Premium Anime Oversized T-Shirt" required>
+            </div>
+            <div class="input-group">
+                <label>Category</label>
+                <select name="category" required>
+                    <option value="" disabled selected>Select Category</option>
+                    <option value="men">Men's T-Shirt</option>
+                    <option value="women">Women's T-Shirt</option>
+                    <option value="oversized">Oversized / Baggy</option>
+                    <option value="anime">Anime Collection</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Description</label>
+                <textarea name="description" rows="4" placeholder="Write a catchy description about the product..." required></textarea>
+            </div>
+
+            <!-- 3. Quality & Specs (For inwear Assured) -->
+            <div class="section-label">3. Quality Specifications</div>
+            
+            <div class="grid-row">
+                <div class="input-group">
+                    <label>Fabric Material</label>
+                    <select name="material" required>
+                        <option value="100_cotton">100% Cotton</option>
+                        <option value="polycotton">Poly Cotton</option>
+                        <option value="microfiber">Microfiber</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Fabric GSM</label>
+                    <select name="gsm" required>
+                        <option value="180">180 GSM</option>
+                        <option value="200">200 GSM</option>
+                        <option value="220">220 GSM (Premium)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 4. Pricing & Stock -->
+            <div class="section-label">4. Pricing & Inventory</div>
+            
+            <div class="grid-row">
+                <div class="input-group">
+                    <label>MRP (₹)</label>
+                    <input type="number" name="mrp" placeholder="e.g. 999" required>
+                </div>
+                <div class="input-group">
+                    <label>Selling Price (₹)</label>
+                    <input type="number" name="price" placeholder="e.g. 699" required>
+                </div>
+            </div>
+            <div class="input-group">
+                <label>Available Stock</label>
+                <input type="number" name="stock" placeholder="Total pieces available" required>
+            </div>
+
+            <!-- 5. Variants (Sizes) -->
+            <div class="section-label">5. Available Sizes</div>
+            <div class="input-group">
+                <div class="variant-group">
+                    <!-- Checkbox styling trick applied here -->
+                    <label>
+                        <input type="checkbox" name="sizes" value="S">
+                        <div class="variant-box">S</div>
+                    </label>
+                    <label>
+                        <input type="checkbox" name="sizes" value="M">
+                        <div class="variant-box">M</div>
+                    </label>
+                    <label>
+                        <input type="checkbox" name="sizes" value="L">
+                        <div class="variant-box">L</div>
+                    </label>
+                    <label>
+                        <input type="checkbox" name="sizes" value="XL">
+                        <div class="variant-box">XL</div>
+                    </label>
+                    <label>
+                        <input type="checkbox" name="sizes" value="XXL">
+                        <div class="variant-box">XXL</div>
+                    </label>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn">Send for AI Verification</button>
+        </form>
+    </div>
+
+</body>
+</html>
+
