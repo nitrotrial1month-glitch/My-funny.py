@@ -22,7 +22,7 @@
             padding: 0;
             background-color: var(--bg-color);
             color: var(--text-dark);
-            padding-bottom: 70px; /* Space for bottom nav */
+            padding-bottom: 70px;
         }
 
         /* ================= 1. Top Sticky Header ================= */
@@ -58,7 +58,7 @@
         }
         .delivery-banner-text h3 { margin: 0; color: var(--text-dark); font-size: 15px; }
         .delivery-banner-text p { margin: 5px 0 0; font-size: 11px; color: var(--text-muted); }
-        .delivery-btn { background: var(--primary-red); color: white; text-decoration: none; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+        .delivery-btn-banner { background: var(--primary-red); color: white; text-decoration: none; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; }
 
         .main-content { padding: 0 10px 10px 10px; }
         .product-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
@@ -83,15 +83,16 @@
             background-color: var(--white); display: flex; justify-content: space-around;
             padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000;
         }
-        .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: var(--primary-red); font-size: 12px; font-weight: bold; cursor: pointer; position: relative; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: var(--text-muted); font-size: 12px; font-weight: bold; cursor: pointer; position: relative; transition: color 0.2s; }
+        .nav-item:active, .nav-item.active { color: var(--primary-red); }
         .nav-icon { font-size: 22px; margin-bottom: 3px; }
         .cart-badge { position: absolute; top: -5px; right: 5px; background: #ff9900; color: white; font-size: 10px; padding: 2px 5px; border-radius: 10px; font-weight: bold; }
 
         /* ================= 4. Premium Bottom Sheet (Panel Menu) ================= */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.6); /* Dark semi-transparent background */
-            backdrop-filter: blur(2px); /* Adds a premium blur effect to the background */
+            background: rgba(0, 0, 0, 0.6); 
+            backdrop-filter: blur(2px); 
             z-index: 1001;
             display: none; opacity: 0;
             transition: opacity 0.3s ease;
@@ -100,10 +101,10 @@
         .bottom-sheet {
             position: fixed; bottom: -100%; left: 0; width: 100%;
             background: var(--white); z-index: 1002;
-            border-radius: 24px 24px 0 0; /* Extremely rounded top corners */
+            border-radius: 24px 24px 0 0; 
             padding: 15px 20px 30px 20px;
             box-shadow: 0 -5px 20px rgba(0,0,0,0.15);
-            transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth spring-like curve */
+            transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
             box-sizing: border-box;
         }
 
@@ -132,7 +133,7 @@
             transition: transform 0.1s, background 0.2s;
             border: 1px solid #f0f0f0;
         }
-        .sheet-link-btn:active { transform: scale(0.98); } /* Push effect on tap */
+        .sheet-link-btn:active { transform: scale(0.98); } 
         
         .btn-left { display: flex; align-items: center; gap: 15px; }
         
@@ -171,7 +172,7 @@
             <h3>🛵 Earn with Inwear</h3>
             <p>Join as a delivery partner today!</p>
         </div>
-        <a href="/delivery-recruitment" class="delivery-btn">Apply Now</a>
+        <a href="/apply-delivery" class="delivery-btn-banner">Apply Now</a>
     </div>
 
     <div class="main-content">
@@ -188,31 +189,21 @@
                     <div class="secure-info"><span>✔</span> Quality Checked</div>
                 </div>
             </a>
-            <a href="#" class="product-card">
-                <div class="product-img-container">
-                    <div class="inwear-assured-badge"><span class="assured-icon">✓</span>inwear Assured</div>
-                    <div class="wishlist-btn">♡</div>
-                    <img src="https://via.placeholder.com/260x300/f0f0f0/cc0000?text=T-Shirt" alt="Product" class="product-img">
-                </div>
-                <div class="product-info">
-                    <div class="product-title">Classic Black T-Shirt</div>
-                    <div class="price-container"><span class="product-price">₹499</span></div>
-                    <div class="secure-info"><span>✔</span> Quality Checked</div>
-                </div>
-            </a>
         </div>
     </div>
 
     <div class="bottom-nav">
-        <a href="/" class="nav-item">
+        <a href="/" class="nav-item active">
             <span class="nav-icon">🏠</span>
             <span>Home</span>
         </a>
         
+        {% if session.get('user') and session['user'].get('role') in ['owner', 'seller', 'delivery'] %}
         <a href="#" class="nav-item" onclick="openPanel(event)">
             <span class="nav-icon">📊</span>
             <span>Panel</span>
         </a>
+        {% endif %}
         
         <a href="/account" class="nav-item">
             <span class="nav-icon">👤</span>
@@ -225,52 +216,57 @@
         </a>
     </div>
 
+    {% if session.get('user') and session['user'].get('role') in ['owner', 'seller', 'delivery'] %}
     <div class="modal-overlay" id="panelOverlay" onclick="closePanel()"></div>
     
     <div class="bottom-sheet" id="panelSheet">
         <div class="drag-handle"></div> 
         
         <div class="sheet-header">
-            <h3>Select Your Panel</h3>
+            <h3>Workspace Panel</h3>
             <div class="close-btn" onclick="closePanel()">✕</div>
         </div>
         
         <div class="sheet-content">
-            <a href="/owner-dashboard" class="sheet-link-btn admin-btn">
-                <div class="btn-left">
-                    <span style="font-size: 22px;">👑</span>
-                    <span>Admin Workspace</span>
-                </div>
-                <span class="arrow-right">›</span>
-            </a>
+            {% set role = session['user'].get('role') %}
             
-            <a href="/seller-dashboard" class="sheet-link-btn seller-btn">
-                <div class="btn-left">
-                    <span style="font-size: 22px;">🏪</span>
-                    <span>Seller Dashboard</span>
-                </div>
-                <span class="arrow-right">›</span>
-            </a>
-            
-            <a href="/delivery-dashboard" class="sheet-link-btn delivery-btn">
-                <div class="btn-left">
-                    <span style="font-size: 22px;">🛵</span>
-                    <span>Delivery Hub</span>
-                </div>
-                <span class="arrow-right">›</span>
-            </a>
+            {% if role == 'owner' %}
+                <a href="/owner-dashboard" class="sheet-link-btn admin-btn">
+                    <div class="btn-left"><span style="font-size: 22px;">👑</span><span>Admin Workspace</span></div>
+                    <span class="arrow-right">›</span>
+                </a>
+                <a href="/seller-dashboard" class="sheet-link-btn seller-btn">
+                    <div class="btn-left"><span style="font-size: 22px;">🏪</span><span>Seller Dashboard</span></div>
+                    <span class="arrow-right">›</span>
+                </a>
+                <a href="/delivery-dashboard" class="sheet-link-btn delivery-btn">
+                    <div class="btn-left"><span style="font-size: 22px;">🛵</span><span>Delivery Hub</span></div>
+                    <span class="arrow-right">›</span>
+                </a>
+                
+            {% elif role == 'seller' %}
+                <a href="/seller-dashboard" class="sheet-link-btn seller-btn">
+                    <div class="btn-left"><span style="font-size: 22px;">🏪</span><span>Seller Dashboard</span></div>
+                    <span class="arrow-right">›</span>
+                </a>
+                
+            {% elif role == 'delivery' %}
+                <a href="/delivery-dashboard" class="sheet-link-btn delivery-btn">
+                    <div class="btn-left"><span style="font-size: 22px;">🛵</span><span>Delivery Dashboard</span></div>
+                    <span class="arrow-right">›</span>
+                </a>
+            {% endif %}
         </div>
     </div>
 
     <script>
         function openPanel(event) {
-            event.preventDefault(); // Prevent page jump
+            event.preventDefault(); 
             const overlay = document.getElementById('panelOverlay');
             const sheet = document.getElementById('panelSheet');
             
             overlay.style.display = 'block';
             
-            // Short delay to allow display:block to apply before animating opacity
             setTimeout(() => {
                 overlay.style.opacity = '1';
                 sheet.style.bottom = '0';
@@ -284,12 +280,12 @@
             overlay.style.opacity = '0';
             sheet.style.bottom = '-100%';
             
-            // Wait for animation to finish (0.3s) before hiding completely
             setTimeout(() => {
                 overlay.style.display = 'none';
             }, 300);
         }
     </script>
+    {% endif %}
 
 </body>
 </html>
