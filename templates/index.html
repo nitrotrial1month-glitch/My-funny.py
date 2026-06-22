@@ -32,7 +32,7 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.08);
         }
         .header-top-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; }
-        .brand-name { font-size: 26px; font-weight: 800; color: var(--primary-red); letter-spacing: 1px; text-transform: lowercase; }
+        .brand-name { font-size: 26px; font-weight: 800; color: var(--primary-red); letter-spacing: 1px; text-transform: lowercase; text-decoration: none; }
         .top-right-icon { color: var(--primary-red); font-size: 22px; cursor: pointer; }
         
         .search-container { padding: 0 15px 10px 15px; }
@@ -40,12 +40,13 @@
         .search-box input { flex: 1; border: none; background: transparent; outline: none; font-size: 15px; padding-left: 8px; }
         .search-box .voice-icon { font-size: 18px; color: #555; cursor: pointer; }
 
+        /* 🔴 FIXED: Category Scroll */
         .category-scroll {
             display: flex; overflow-x: auto; padding: 10px 15px; gap: 20px;
             background: #fff; border-top: 1px solid #f0f0f0; scrollbar-width: none; 
         }
         .category-scroll::-webkit-scrollbar { display: none; }
-        .cat-item { display: flex; flex-direction: column; align-items: center; min-width: 60px; cursor: pointer; }
+        .cat-item { display: flex; flex-direction: column; align-items: center; min-width: 60px; text-decoration: none; cursor: pointer; }
         .cat-icon { font-size: 24px; background: #f8f8f8; padding: 10px; border-radius: 12px; margin-bottom: 5px; }
         .cat-text { font-size: 12px; font-weight: bold; color: var(--primary-red); }
 
@@ -54,20 +55,24 @@
             background: linear-gradient(135deg, #ffe0e0 0%, #fff0f0 100%);
             margin: 15px; padding: 15px; border-radius: 10px;
             display: flex; align-items: center; justify-content: space-between;
-            border: 1px dashed var(--primary-red);
+            border: 1px dashed var(--primary-red); text-decoration: none;
         }
         .delivery-banner-text h3 { margin: 0; color: var(--text-dark); font-size: 15px; }
         .delivery-banner-text p { margin: 5px 0 0; font-size: 11px; color: var(--text-muted); }
-        .delivery-btn-banner { background: var(--primary-red); color: white; text-decoration: none; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+        .delivery-btn-banner { background: var(--primary-red); color: white; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; }
 
         .main-content { padding: 0 10px 10px 10px; }
         .product-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-        .product-card { background-color: var(--white); border-radius: 6px; overflow: hidden; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; flex-direction: column; text-decoration: none; color: inherit; }
+        
+        /* 🔴 FIXED: Product Card Clickable Style */
+        .product-card { background-color: var(--white); border-radius: 6px; overflow: hidden; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; flex-direction: column; text-decoration: none; color: inherit; transition: transform 0.2s; }
+        .product-card:active { transform: scale(0.98); }
+        
         .product-img-container { width: 100%; aspect-ratio: 3/4; background-color: #f9f9f9; display: flex; justify-content: center; align-items: center; position: relative; }
         .product-img { width: 100%; height: 100%; object-fit: cover; }
-        .wishlist-btn { position: absolute; top: 8px; right: 8px; background: rgba(255, 255, 255, 0.9); border-radius: 50%; width: 28px; height: 28px; display: flex; justify-content: center; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 16px; color: #ccc; }
+        .wishlist-btn { position: absolute; top: 8px; right: 8px; background: rgba(255, 255, 255, 0.9); border-radius: 50%; width: 28px; height: 28px; display: flex; justify-content: center; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 16px; color: #ccc; z-index: 10; }
         
-        .inwear-assured-badge { position: absolute; top: 8px; left: 8px; background-color: var(--assured-blue); color: white; font-size: 10px; font-style: italic; font-weight: 900; padding: 3px 6px; border-radius: 4px; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.15); letter-spacing: 0.5px; }
+        .inwear-assured-badge { position: absolute; top: 8px; left: 8px; background-color: var(--assured-blue); color: white; font-size: 10px; font-style: italic; font-weight: 900; padding: 3px 6px; border-radius: 4px; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.15); letter-spacing: 0.5px; z-index: 10; }
         .assured-icon { background-color: white; color: var(--assured-blue); border-radius: 50%; width: 12px; height: 12px; display: flex; justify-content: center; align-items: center; font-size: 9px; font-weight: bold; font-style: normal; }
         
         .product-info { padding: 10px; }
@@ -89,59 +94,20 @@
         .cart-badge { position: absolute; top: -5px; right: 5px; background: #ff9900; color: white; font-size: 10px; padding: 2px 5px; border-radius: 10px; font-weight: bold; }
 
         /* ================= 4. Premium Bottom Sheet (Panel Menu) ================= */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.6); 
-            backdrop-filter: blur(2px); 
-            z-index: 1001;
-            display: none; opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .bottom-sheet {
-            position: fixed; bottom: -100%; left: 0; width: 100%;
-            background: var(--white); z-index: 1002;
-            border-radius: 24px 24px 0 0; 
-            padding: 15px 20px 30px 20px;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.15);
-            transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
-            box-sizing: border-box;
-        }
-
-        .drag-handle {
-            width: 40px; height: 5px; background-color: #e0e0e0;
-            border-radius: 10px; margin: 0 auto 20px auto;
-        }
-
-        .sheet-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 20px;
-        }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(2px); z-index: 1001; display: none; opacity: 0; transition: opacity 0.3s ease; }
+        .bottom-sheet { position: fixed; bottom: -100%; left: 0; width: 100%; background: var(--white); z-index: 1002; border-radius: 24px 24px 0 0; padding: 15px 20px 30px 20px; box-shadow: 0 -5px 20px rgba(0,0,0,0.15); transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-sizing: border-box; }
+        .drag-handle { width: 40px; height: 5px; background-color: #e0e0e0; border-radius: 10px; margin: 0 auto 20px auto; }
+        .sheet-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .sheet-header h3 { margin: 0; font-size: 18px; color: var(--text-dark); font-weight: 800; }
-        .close-btn { 
-            background: #f1f2f4; border-radius: 50%; width: 30px; height: 30px;
-            display: flex; justify-content: center; align-items: center;
-            font-size: 14px; color: var(--text-dark); cursor: pointer; font-weight: bold;
-        }
-
+        .close-btn { background: #f1f2f4; border-radius: 50%; width: 30px; height: 30px; display: flex; justify-content: center; align-items: center; font-size: 14px; color: var(--text-dark); cursor: pointer; font-weight: bold; }
         .sheet-content { display: flex; flex-direction: column; gap: 12px; }
-
-        .sheet-link-btn {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 15px 20px; border-radius: 16px;
-            text-decoration: none; font-weight: bold; font-size: 15px;
-            transition: transform 0.1s, background 0.2s;
-            border: 1px solid #f0f0f0;
-        }
+        .sheet-link-btn { display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; border-radius: 16px; text-decoration: none; font-weight: bold; font-size: 15px; transition: transform 0.1s, background 0.2s; border: 1px solid #f0f0f0; }
         .sheet-link-btn:active { transform: scale(0.98); } 
-        
         .btn-left { display: flex; align-items: center; gap: 15px; }
         
-        /* Modern UI Colors for Panel Options */
         .admin-btn { background: linear-gradient(135deg, #fff5f5 0%, #ffebee 100%); color: var(--primary-red); border-color: #ffdcdb; }
         .seller-btn { background: linear-gradient(135deg, #f5f9ff 0%, #e3f2fd 100%); color: #1976d2; border-color: #cce4ff; }
         .delivery-btn { background: linear-gradient(135deg, #f5fff6 0%, #e8f5e9 100%); color: #2e7d32; border-color: #ccecd0; }
-        
         .arrow-right { font-size: 18px; opacity: 0.5; }
     </style>
 </head>
@@ -149,7 +115,7 @@
 
     <div class="top-header">
         <div class="header-top-row">
-            <div class="brand-name">inwear</div>
+            <a href="/" class="brand-name">inwear</a>
             <div class="top-right-icon">🔔</div> 
         </div>
         <div class="search-container">
@@ -160,35 +126,44 @@
             </div>
         </div>
         <div class="category-scroll">
-            <div class="cat-item"><div class="cat-icon">👕</div><div class="cat-text">Men</div></div>
-            <div class="cat-item"><div class="cat-icon">👗</div><div class="cat-text">Women</div></div>
-            <div class="cat-item"><div class="cat-icon">🛹</div><div class="cat-text">Oversized</div></div>
-            <div class="cat-item"><div class="cat-icon">⛩️</div><div class="cat-text">Anime</div></div>
+            <a href="/category/men" class="cat-item"><div class="cat-icon">👕</div><div class="cat-text">Men</div></a>
+            <a href="/category/women" class="cat-item"><div class="cat-icon">👗</div><div class="cat-text">Women</div></a>
+            <a href="/category/oversized" class="cat-item"><div class="cat-icon">🛹</div><div class="cat-text">Oversized</div></a>
+            <a href="/category/anime" class="cat-item"><div class="cat-icon">⛩️</div><div class="cat-text">Anime</div></a>
         </div>
     </div>
 
-    <div class="delivery-banner">
+    <a href="/delivery/register" class="delivery-banner">
         <div class="delivery-banner-text">
             <h3>🛵 Earn with Inwear</h3>
             <p>Join as a delivery partner today!</p>
         </div>
-        <a href="/apply-delivery" class="delivery-btn-banner">Apply Now</a>
-    </div>
+        <div class="delivery-btn-banner">Apply Now</div>
+    </a>
 
     <div class="main-content">
         <div class="product-grid">
-            <a href="#" class="product-card">
-                <div class="product-img-container">
-                    <div class="inwear-assured-badge"><span class="assured-icon">✓</span>inwear Assured</div>
-                    <div class="wishlist-btn">♡</div>
-                    <img src="https://via.placeholder.com/260x300/f0f0f0/cc0000?text=T-Shirt" alt="Product" class="product-img">
+            {% if products %}
+                {% for product in products %}
+                <a href="/product/{{ product._id }}" class="product-card">
+                    <div class="product-img-container">
+                        <div class="inwear-assured-badge"><span class="assured-icon">✓</span>inwear Assured</div>
+                        <div class="wishlist-btn" onclick="event.preventDefault(); alert('Added to wishlist!');">♡</div>
+                        <img src="/{{ product.image if product.image else 'static/placeholder.png' }}" onerror="this.src='/static/placeholder.png'" alt="{{ product.name }}" class="product-img">
+                    </div>
+                    <div class="product-info">
+                        <div class="product-title">{{ product.name }}</div>
+                        <div class="price-container"><span class="product-price">₹{{ product.price }}</span></div>
+                        <div class="secure-info"><span>✔</span> Quality Checked</div>
+                    </div>
+                </a>
+                {% endfor %}
+            {% else %}
+                <div style="grid-column: 1 / -1; text-align: center; padding: 40px 20px; color: #878787;">
+                    <h3>No Products Found!</h3>
+                    <p>We are adding new products soon.</p>
                 </div>
-                <div class="product-info">
-                    <div class="product-title">Premium Anime Oversized</div>
-                    <div class="price-container"><span class="product-price">₹699</span></div>
-                    <div class="secure-info"><span>✔</span> Quality Checked</div>
-                </div>
-            </a>
+            {% endif %}
         </div>
     </div>
 
@@ -231,27 +206,27 @@
             {% set role = session['user'].get('role') %}
             
             {% if role == 'owner' %}
-                <a href="/owner-dashboard" class="sheet-link-btn admin-btn">
+                <a href="#" onclick="alert('Admin Panel Coming Soon!')" class="sheet-link-btn admin-btn">
                     <div class="btn-left"><span style="font-size: 22px;">👑</span><span>Admin Workspace</span></div>
                     <span class="arrow-right">›</span>
                 </a>
-                <a href="/seller-dashboard" class="sheet-link-btn seller-btn">
+                <a href="/seller" class="sheet-link-btn seller-btn">
                     <div class="btn-left"><span style="font-size: 22px;">🏪</span><span>Seller Dashboard</span></div>
                     <span class="arrow-right">›</span>
                 </a>
-                <a href="/delivery-dashboard" class="sheet-link-btn delivery-btn">
+                <a href="/delivery/dashboard" class="sheet-link-btn delivery-btn">
                     <div class="btn-left"><span style="font-size: 22px;">🛵</span><span>Delivery Hub</span></div>
                     <span class="arrow-right">›</span>
                 </a>
                 
             {% elif role == 'seller' %}
-                <a href="/seller-dashboard" class="sheet-link-btn seller-btn">
+                <a href="/seller" class="sheet-link-btn seller-btn">
                     <div class="btn-left"><span style="font-size: 22px;">🏪</span><span>Seller Dashboard</span></div>
                     <span class="arrow-right">›</span>
                 </a>
                 
             {% elif role == 'delivery' %}
-                <a href="/delivery-dashboard" class="sheet-link-btn delivery-btn">
+                <a href="/delivery/dashboard" class="sheet-link-btn delivery-btn">
                     <div class="btn-left"><span style="font-size: 22px;">🛵</span><span>Delivery Dashboard</span></div>
                     <span class="arrow-right">›</span>
                 </a>
