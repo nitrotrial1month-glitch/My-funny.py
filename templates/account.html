@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>My Account | inwear</title>
+    <title>Account - inwear</title>
     <style>
         :root {
             --primary-red: #cc0000;
@@ -15,110 +15,208 @@
         }
 
         body {
-            background-color: var(--bg-color);
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
             padding: 0;
+            background-color: var(--bg-color);
             color: var(--text-dark);
-            padding-bottom: 80px;
+            padding-bottom: 70px;
         }
 
-        .account-container {
-            max-width: 500px;
-            margin: 0 auto;
-            background: var(--bg-color);
-            min-height: 100vh;
-            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        /* ================= Top Bar ================= */
+        .top-bar {
+            background-color: var(--white);
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .back-btn { font-size: 20px; text-decoration: none; color: var(--text-dark); margin-right: 15px; font-weight: bold; }
+        .page-title { font-size: 18px; font-weight: bold; }
+
+        /* ================= Profile Section ================= */
+        .profile-header {
+            background-color: var(--white);
+            padding: 20px 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        .profile-avatar {
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            border: 2px solid var(--primary-red);
+            display: flex; justify-content: center; align-items: center;
+            background-color: #f9f9f9; font-size: 30px; color: var(--text-muted);
+        }
+        .profile-info h2 { margin: 0; font-size: 20px; color: var(--text-dark); }
+        .profile-info p { margin: 5px 0 0; font-size: 12px; color: var(--text-muted); }
+
+        /* ================= Action Grid (Orders, Wishlist, etc.) ================= */
+        .action-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            background-color: var(--white);
+            margin-bottom: 10px;
+        }
+        .action-item {
+            padding: 15px;
+            display: flex; align-items: center; gap: 10px;
+            text-decoration: none; color: var(--text-dark);
+            border-right: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px; font-weight: bold;
+        }
+        .action-item:nth-child(even) { border-right: none; }
+        .action-icon { font-size: 20px; }
+
+        /* ================= List Sections ================= */
+        .section-title {
+            padding: 15px 15px 5px 15px;
+            font-size: 12px; font-weight: bold; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .list-group {
+            background-color: var(--white);
+            margin-bottom: 10px;
+        }
+        .list-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px; text-decoration: none; color: var(--text-dark);
+            border-bottom: 1px solid #f5f5f5; font-size: 14px; font-weight: 500;
+        }
+        .list-item:last-child { border-bottom: none; }
+        .list-left { display: flex; align-items: center; gap: 10px; }
+        .arrow-right { color: #ccc; font-size: 18px; }
+
+        /* Status Colors */
+        .status-approved { background-color: #f8fff8; border-left: 4px solid #00a650; }
+        .status-pending { background-color: #fff9e6; border-left: 4px solid #ff9900; }
+
+        /* ================= Logout Button ================= */
+        .logout-btn {
+            display: block; width: 100%; padding: 15px;
+            background-color: var(--white); color: var(--primary-red);
+            text-align: center; text-decoration: none; font-weight: bold; font-size: 15px;
+            margin-top: 10px; margin-bottom: 20px; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);
         }
 
-        .profile-card { background-color: var(--white); padding: 25px 20px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid var(--border-color); }
-        .profile-avatar { width: 55px; height: 55px; background-color: #f0f5ff; border: 2px solid var(--primary-red); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
-        .profile-info { flex: 1; }
-        .profile-info h2 { margin: 0; font-size: 18px; font-weight: 700; color: var(--text-dark); }
-        .profile-info p { margin: 4px 0 0 0; font-size: 13px; color: var(--text-muted); }
-
-        .features-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background-color: var(--border-color); margin-top: 10px; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); }
-        .grid-item { background-color: var(--white); padding: 18px 15px; display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-dark); font-size: 14px; font-weight: 600; }
-        .grid-icon { font-size: 20px; color: var(--primary-red); }
-
-        .menu-section { background-color: var(--white); margin-top: 10px; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); }
-        .section-title { padding: 12px 20px; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #f0f0f0; margin: 0; background-color: #fafafa; }
-        .menu-link { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; text-decoration: none; color: var(--text-dark); border-bottom: 1px solid #f0f0f0; font-size: 15px; font-weight: 500; }
-        .link-content { display: flex; align-items: center; gap: 12px; }
-        .link-icon { font-size: 18px; width: 24px; text-align: center; }
-        .chevron-arrow { color: #b0b0b0; font-size: 14px; font-weight: bold; }
-
-        .logout-box { margin-top: 15px; background-color: var(--white); border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); text-align: center; }
-        .logout-action-btn { display: block; padding: 15px; color: var(--primary-red); text-decoration: none; font-weight: 700; font-size: 15px; }
-
-        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--white); display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: var(--text-muted); font-size: 12px; font-weight: bold; }
+        /* ================= Bottom Navigation (Same as index.html) ================= */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background-color: var(--white); display: flex; justify-content: space-around;
+            padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000;
+        }
+        .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: var(--text-muted); font-size: 12px; font-weight: bold; position: relative; }
         .nav-item.active { color: var(--primary-red); }
         .nav-icon { font-size: 22px; margin-bottom: 3px; }
     </style>
 </head>
 <body>
 
-    <div class="account-container">
-        <div class="profile-card">
-            <div class="profile-avatar">👤</div>
-            <div class="profile-info">
-                <h2>{{ user.get('username') if user else 'Inwear User' }}</h2>
-                <p>Premium Member | inwear Store</p>
-            </div>
-        </div>
+    <div class="top-bar">
+        <div class="page-title">My Account</div>
+    </div>
 
-        <div class="features-grid">
-            <a href="/orders" class="grid-item"><span class="grid-icon">📦</span><span>My Orders</span></a>
-            <a href="/wishlist" class="grid-item"><span class="grid-icon">❤️</span><span>My Wishlist</span></a>
-            <a href="/coupons" class="grid-item"><span class="grid-icon">🎫</span><span>Coupons</span></a>
-            <a href="/help" class="grid-item"><span class="grid-icon">🎧</span><span>Help Center</span></a>
-        </div>
-
-        <div class="menu-section">
-            <h3 class="section-title">Account Settings</h3>
-            <a href="/edit_profile" class="menu-link">
-                <div class="link-content"><span class="link-icon" style="color: #007bff;">✏️</span><span>Edit Profile</span></div>
-                <span class="chevron-arrow">❯</span>
-            </a>
-            <a href="/saved_addresses" class="menu-link">
-                <div class="link-content"><span class="link-icon" style="color: #28a745;">📍</span><span>Saved Addresses</span></div>
-                <span class="chevron-arrow">❯</span>
-            </a>
-        </div>
-
-        <div class="menu-section">
-            <h3 class="section-title">Earn with inwear</h3>
-            {% if user and user.get('is_owner') %}
-                <a href="/owner" class="menu-link">
-                    <div class="link-content"><span class="link-icon">👑</span><span>Owner Panel</span></div>
-                    <span class="chevron-arrow">❯</span>
-                </a>
-            {% endif %}
-
-            {% if user and (user.get('is_seller') or user.get('is_owner')) %}
-                <a href="/seller" class="menu-link">
-                    <div class="link-content"><span class="link-icon" style="color: #ff9800;">🏪</span><span>Go to Seller Dashboard</span></div>
-                    <span class="chevron-arrow">❯</span>
-                </a>
-            {% else %}
-                <a href="https://discord.gg/QBEaZWrJv3" target="_blank" class="menu-link">
-                    <div class="link-content"><span class="link-icon" style="color: #ff9800;">🏪</span><span>Sell on inwear (Join Discord)</span></div>
-                    <span class="chevron-arrow">❯</span>
-                </a>
-            {% endif %}
-        </div>
-
-        <div class="logout-box">
-            <a href="/logout" class="logout-action-btn">🚪 Log Out Account</a>
-        </div>
-
-        <div class="bottom-nav">
-            <a href="/" class="nav-item"><span class="nav-icon">🏠</span><span>Home</span></a>
-            <a href="/account" class="nav-item active"><span class="nav-icon">👤</span><span>Account</span></a>
-            <a href="/cart" class="nav-item"><span class="nav-icon">🛒</span><span>Cart</span></a>
+    <div class="profile-header">
+        <div class="profile-avatar">👤</div>
+        <div class="profile-info">
+            <h2>{{ current_user.name | default('Shubho Mridha') }}</h2>
+            <p>{{ current_user.email | default('Premium Member | inwear Store') }}</p>
         </div>
     </div>
+
+    <div class="action-grid">
+        <a href="/orders" class="action-item"><span class="action-icon">📦</span> My Orders</a>
+        <a href="/wishlist" class="action-item"><span class="action-icon">❤️</span> My Wishlist</a>
+        <a href="/coupons" class="action-item"><span class="action-icon">🎫</span> Coupons</a>
+        <a href="/support" class="action-item"><span class="action-icon">🎧</span> Help Center</a>
+    </div>
+
+    <div class="section-title">Account Settings</div>
+    <div class="list-group">
+        <a href="/edit-profile" class="list-item">
+            <div class="list-left"><span style="font-size: 18px;">✏️</span> Edit Profile</div>
+            <div class="arrow-right">›</div>
+        </a>
+        <a href="/addresses" class="list-item">
+            <div class="list-left"><span style="font-size: 18px;">📍</span> Saved Addresses</div>
+            <div class="arrow-right">›</div>
+        </a>
+    </div>
+
+    <div class="section-title">Earn With inwear</div>
+    <div class="list-group">
+        
+        {% if current_user.role == 'owner' %}
+        <a href="/dashboards" class="list-item">
+            <div class="list-left"><span style="font-size: 18px;">👑</span> Owner Panel</div>
+            <div class="arrow-right">›</div>
+        </a>
+        {% endif %}
+
+        {% if current_user.role == 'seller' %}
+        <a href="/dashboards" class="list-item status-approved">
+            <div class="list-left"><span style="font-size: 18px;">✅</span> <span style="color: #00a650;">Approved Seller (Go to Panel)</span></div>
+            <div class="arrow-right" style="color: #00a650;">›</div>
+        </a>
+        {% elif current_user.role == 'pending_seller' %}
+        <div class="list-item status-pending">
+            <div class="list-left"><span style="font-size: 18px;">⏳</span> <span style="color: #ff9900;">Seller Application Pending</span></div>
+        </div>
+        {% elif current_user.role == 'user' %}
+        <a href="/apply-seller" class="list-item">
+            <div class="list-left"><span style="font-size: 18px;">🏪</span> Apply for Seller</div>
+            <div class="arrow-right">›</div>
+        </a>
+        {% endif %}
+
+        {% if current_user.role == 'delivery' %}
+        <a href="/dashboards" class="list-item status-approved">
+            <div class="list-left"><span style="font-size: 18px;">✅</span> <span style="color: #00a650;">Approved Delivery Boy (Go to Panel)</span></div>
+            <div class="arrow-right" style="color: #00a650;">›</div>
+        </a>
+        {% elif current_user.role == 'pending_delivery' %}
+        <div class="list-item status-pending">
+            <div class="list-left"><span style="font-size: 18px;">⏳</span> <span style="color: #ff9900;">Delivery Application Pending</span></div>
+        </div>
+        {% elif current_user.role == 'user' %}
+        <a href="/apply-delivery" class="list-item">
+            <div class="list-left"><span style="font-size: 18px;">🛵</span> Apply for Delivery Boy</div>
+            <div class="arrow-right">›</div>
+        </a>
+        {% endif %}
+
+    </div>
+
+    <a href="/logout" class="logout-btn">🚪 Log Out Account</a>
+
+    <div class="bottom-nav">
+        <a href="/" class="nav-item">
+            <span class="nav-icon">🏠</span>
+            <span>Home</span>
+        </a>
+        
+        {% if current_user.role in ['owner', 'seller', 'delivery'] %}
+        <a href="/dashboards" class="nav-item">
+            <span class="nav-icon">📊</span>
+            <span>Panel</span>
+        </a>
+        {% endif %}
+        
+        <a href="/account" class="nav-item active">
+            <span class="nav-icon">👤</span>
+            <span>Account</span>
+        </a>
+        <a href="/cart" class="nav-item">
+            <span class="nav-icon">🛒</span>
+            <span>Cart</span>
+        </a>
+    </div>
+
 </body>
 </html>
-
