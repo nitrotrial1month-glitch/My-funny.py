@@ -35,7 +35,6 @@
         .admin-title { font-size: 20px; font-weight: 900; display: flex; align-items: center; gap: 8px; }
         .owner-badge { background: var(--primary-red); font-size: 10px; padding: 3px 8px; border-radius: 12px; font-weight: bold; }
         
-        /* Logged in Admin Info */
         .admin-info { font-size: 11px; color: #aaaaaa; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;}
         
         .revenue-label { font-size: 12px; color: #aaaaaa; }
@@ -54,50 +53,29 @@
         .stat-value.alert { color: var(--primary-red); }
         .stat-title { font-size: 11px; color: var(--text-muted); margin-top: 4px; font-weight: bold; }
 
-        /* ================= 3. Role Management Section (NEW) ================= */
+        /* ================= 3. Role Management Section ================= */
         .section-title { padding: 20px 15px 10px 15px; font-size: 15px; font-weight: 900; color: var(--admin-dark); text-transform: uppercase; }
         .role-management-box {
             background: var(--white); margin: 0 15px; padding: 15px;
             border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
-        
-        /* Search Bar */
         .search-user { display: flex; gap: 8px; margin-bottom: 15px; }
-        .search-user input {
-            flex: 1; padding: 10px; border: 1px solid var(--border-color);
-            border-radius: 8px; font-size: 13px; outline: none; background: #f9f9f9;
-        }
-        .search-user button {
-            background: var(--admin-dark); color: white; border: none;
-            padding: 0 15px; border-radius: 8px; font-weight: bold; font-size: 12px; cursor: pointer;
-        }
+        .search-user input { flex: 1; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 13px; outline: none; background: #f9f9f9; }
+        .search-user button { background: var(--admin-dark); color: white; border: none; padding: 0 15px; border-radius: 8px; font-weight: bold; font-size: 12px; cursor: pointer; }
 
-        /* User Result Card */
-        .user-role-card {
-            background: #f9f9f9; border: 1px solid var(--border-color);
-            border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px;
-        }
+        .user-role-card { background: #f9f9f9; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
         .user-info-row { display: flex; align-items: center; gap: 12px; }
         .user-info-row img { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--primary-red); }
         .user-text h4 { margin: 0; font-size: 14px; color: var(--text-dark); }
         .user-text p { margin: 2px 0 0; font-size: 11px; color: var(--text-muted); }
         
         .role-action-row { display: flex; gap: 8px; }
-        .role-action-row select {
-            flex: 1; padding: 8px; border: 1px solid var(--border-color);
-            border-radius: 6px; font-size: 13px; font-weight: bold; outline: none;
-        }
-        .btn-update-role {
-            background: var(--success-green); color: white; border: none;
-            padding: 8px 15px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer;
-        }
+        .role-action-row select { flex: 1; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; font-weight: bold; outline: none; }
+        .btn-update-role { background: var(--success-green); color: white; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; }
 
         /* ================= 4. Pending Approvals ================= */
         .approval-list { padding: 0 15px; display: flex; flex-direction: column; gap: 15px; margin-top: 10px; }
-        .verification-card {
-            background: var(--white); border-radius: 12px; padding: 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 4px solid var(--warning-orange);
-        }
+        .verification-card { background: var(--white); border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 4px solid var(--warning-orange); }
         .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
         .req-type { font-size: 11px; font-weight: bold; color: var(--text-muted); background: #f0f0f0; padding: 3px 8px; border-radius: 4px; }
         .req-date { font-size: 11px; color: #999; }
@@ -106,15 +84,11 @@
         .req-details p { margin: 0; font-size: 12px; color: var(--text-muted); line-height: 1.4; }
         
         .action-btns { display: flex; gap: 10px; margin-top: 15px; }
-        .btn-approve { flex: 1; background: var(--success-green); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; }
-        .btn-decline { flex: 1; background: #fff0f0; color: var(--primary-red); border: 1px solid #ffd6d6; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; }
+        .btn-approve { flex: 1; background: var(--success-green); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; text-align: center; text-decoration: none; display: inline-block; }
+        .btn-decline { flex: 1; background: #fff0f0; color: var(--primary-red); border: 1px solid #ffd6d6; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; text-align: center; text-decoration: none; display: inline-block; }
 
         /* ================= 5. Bottom Nav ================= */
-        .bottom-nav {
-            position: fixed; bottom: 0; left: 0; width: 100%;
-            background-color: var(--white); display: flex; justify-content: space-around;
-            padding: 10px 0; box-shadow: 0 -5px 15px rgba(0,0,0,0.05); z-index: 1000;
-        }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--white); display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -5px 15px rgba(0,0,0,0.05); z-index: 1000; }
         .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: var(--text-muted); font-size: 12px; font-weight: bold; }
         .nav-item.active { color: var(--admin-dark); }
         .nav-icon { font-size: 22px; margin-bottom: 3px; }
@@ -128,25 +102,33 @@
             <div style="font-size: 22px;">⚙️</div>
         </div>
         <div class="admin-info">
-            Logged in as: <strong>kstomh05@gmail.com</strong> (Super Admin)
+            Logged in as: <strong>{{ current_user.email | default('Super Admin') }}</strong>
         </div>
         
-        <div class="revenue-label">Total Platform Revenue</div>
-        <div class="revenue-amount">₹1,45,200</div>
+        <div class="revenue-label">Total Platform Revenue (Approx)</div>
+        <div class="revenue-amount">
+            {% set total_rev = [0] %}
+            {% for o in orders %}
+                {% if o.status != 'Cancelled' %}
+                    {% set _ = total_rev.append(total_rev.pop() + o.get('total_price', 0)|float) %}
+                {% endif %}
+            {% endfor %}
+            ₹{{ total_rev[0] }}
+        </div>
     </div>
 
     <div class="stats-grid">
         <div class="stat-card">
-            <div class="stat-value alert">3</div>
-            <div class="stat-title">Pending Sellers</div>
+            <div class="stat-value">{{ total_users }}</div>
+            <div class="stat-title">Total Users</div>
         </div>
         <div class="stat-card">
-            <div class="stat-value alert">5</div>
+            <div class="stat-value alert">{{ pending_products|length }}</div>
             <div class="stat-title">Products Review</div>
         </div>
         <div class="stat-card">
-            <div class="stat-value">124</div>
-            <div class="stat-title">Total Sales</div>
+            <div class="stat-value">{{ total_orders }}</div>
+            <div class="stat-title">Total Orders</div>
         </div>
     </div>
 
@@ -171,31 +153,40 @@
                     <option value="user">User</option>
                     <option value="seller">Seller</option>
                     <option value="delivery">Delivery Boy</option>
-                    <option value="owner" selected>Owner / Admin</option> </select>
+                    <option value="owner" selected>Owner / Admin</option> 
+                </select>
                 <button class="btn-update-role">Update Role</button>
             </div>
         </div>
     </div>
 
-    <div class="section-title">Action Required</div>
+    <div class="section-title">Action Required (Pending Products)</div>
     <div class="approval-list">
-
-        <div class="verification-card">
-            <div class="card-header">
-                <span class="req-type">🏪 New Seller Request</span>
-                <span class="req-date">10 mins ago</span>
+        {% if pending_products %}
+            {% for product in pending_products %}
+            <div class="verification-card">
+                <div class="card-header">
+                    <span class="req-type">📦 New Product Request</span>
+                    <span class="req-date">Waiting</span>
+                </div>
+                <div class="req-details">
+                    <h3>{{ product.name|truncate(30, True, '...') }}</h3>
+                    <p><strong>Price:</strong> ₹{{ product.price }}</p>
+                    <p><strong>Seller ID:</strong> {{ product.seller_id[-8:] }}</p>
+                    <p style="color: var(--assured-blue); margin-top: 5px;">📄 Waiting for Admin Approval</p>
+                </div>
+                <div class="action-btns">
+                    <a href="#" class="btn-decline">Reject</a>
+                    <a href="/product/{{ product._id }}" class="btn-approve">Review Product</a>
+                </div>
             </div>
-            <div class="req-details">
-                <h3>Urban Style Store</h3>
-                <p><strong>Contact:</strong> +91 9876543210</p>
-                <p><strong>UPI ID:</strong> urban@ybl</p>
-                <p style="color: var(--assured-blue); margin-top: 5px;">📄 Aadhaar Document Attached</p>
+            {% endfor %}
+        {% else %}
+            <div style="text-align: center; padding: 20px; color: #878787; font-size: 13px;">
+                <span style="font-size: 30px; display: block; margin-bottom: 10px;">🎉</span>
+                All caught up! No pending approvals.
             </div>
-            <div class="action-btns">
-                <button class="btn-decline">Decline</button>
-                <button class="btn-approve">Verify & Approve</button>
-            </div>
-        </div>
+        {% endif %}
     </div>
 
     <div class="bottom-nav">
@@ -203,9 +194,9 @@
             <span class="nav-icon">📊</span>
             <span>Panel</span>
         </a>
-        <a href="/admin-sellers" class="nav-item">
-            <span class="nav-icon">👥</span>
-            <span>Sellers</span>
+        <a href="/" class="nav-item">
+            <span class="nav-icon">🏠</span>
+            <span>Home</span>
         </a>
         <a href="/admin-deliveries" class="nav-item">
             <span class="nav-icon">🛵</span>
