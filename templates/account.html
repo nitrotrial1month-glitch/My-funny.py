@@ -34,7 +34,6 @@
             top: 0;
             z-index: 100;
         }
-        .back-btn { font-size: 20px; text-decoration: none; color: var(--text-dark); margin-right: 15px; font-weight: bold; }
         .page-title { font-size: 18px; font-weight: bold; }
 
         /* ================= Profile Section ================= */
@@ -52,11 +51,13 @@
             border: 2px solid var(--primary-red);
             display: flex; justify-content: center; align-items: center;
             background-color: #f9f9f9; font-size: 30px; color: var(--text-muted);
+            overflow: hidden;
         }
-        .profile-info h2 { margin: 0; font-size: 20px; color: var(--text-dark); }
+        .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .profile-info h2 { margin: 0; font-size: 20px; color: var(--text-dark); text-transform: capitalize; }
         .profile-info p { margin: 5px 0 0; font-size: 12px; color: var(--text-muted); }
 
-        /* ================= Action Grid (Orders, Wishlist, etc.) ================= */
+        /* ================= Action Grid ================= */
         .action-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -97,21 +98,36 @@
         .status-approved { background-color: #f8fff8; border-left: 4px solid #00a650; }
         .status-pending { background-color: #fff9e6; border-left: 4px solid #ff9900; }
 
-        /* ================= Logout Button ================= */
+        /* ================= Buttons ================= */
         .logout-btn {
             display: block; width: 100%; padding: 15px;
             background-color: var(--white); color: var(--primary-red);
             text-align: center; text-decoration: none; font-weight: bold; font-size: 15px;
             margin-top: 10px; margin-bottom: 20px; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);
+            box-sizing: border-box;
         }
 
-        /* ================= Bottom Navigation (Same as index.html) ================= */
+        /* 🔴 Login Screen CSS (লগইন না থাকলে এটি দেখাবে) */
+        .login-container {
+            text-align: center; padding: 40px 20px; background: var(--white);
+            margin: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .login-container h2 { margin-top: 0; color: var(--text-dark); }
+        .login-btn {
+            display: flex; align-items: center; justify-content: center; gap: 10px; 
+            width: 100%; padding: 14px; border-radius: 8px; text-decoration: none; 
+            font-weight: bold; margin-bottom: 15px; color: white; font-size: 15px; box-sizing: border-box;
+        }
+        .google-btn { background: #db4437; }
+        .discord-btn { background: #5865F2; }
+
+        /* ================= Bottom Navigation ================= */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; width: 100%;
             background-color: var(--white); display: flex; justify-content: space-around;
             padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000;
         }
-        .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: var(--text-muted); font-size: 12px; font-weight: bold; position: relative; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: var(--text-muted); font-size: 12px; font-weight: bold; position: relative; transition: color 0.2s; }
         .nav-item.active { color: var(--primary-red); }
         .nav-icon { font-size: 22px; margin-bottom: 3px; }
     </style>
@@ -122,86 +138,119 @@
         <div class="page-title">My Account</div>
     </div>
 
-    <div class="profile-header">
-        <div class="profile-avatar">👤</div>
-        <div class="profile-info">
-            <h2>{{ current_user.name | default('Shubho Mridha') }}</h2>
-            <p>{{ current_user.email | default('Premium Member | inwear Store') }}</p>
-        </div>
-    </div>
-
-    <div class="action-grid">
-        <a href="/orders" class="action-item"><span class="action-icon">📦</span> My Orders</a>
-        <a href="/wishlist" class="action-item"><span class="action-icon">❤️</span> My Wishlist</a>
-        <a href="/coupons" class="action-item"><span class="action-icon">🎫</span> Coupons</a>
-        <a href="/support" class="action-item"><span class="action-icon">🎧</span> Help Center</a>
-    </div>
-
-    <div class="section-title">Account Settings</div>
-    <div class="list-group">
-        <a href="/edit-profile" class="list-item">
-            <div class="list-left"><span style="font-size: 18px;">✏️</span> Edit Profile</div>
-            <div class="arrow-right">›</div>
-        </a>
-        <a href="/addresses" class="list-item">
-            <div class="list-left"><span style="font-size: 18px;">📍</span> Saved Addresses</div>
-            <div class="arrow-right">›</div>
-        </a>
-    </div>
-
-    <div class="section-title">Earn With inwear</div>
-    <div class="list-group">
+    <!-- 🔴 লগইন চেক: যদি ইউজার লগইন করে থাকে -->
+    {% if current_user %}
         
-        {% if current_user.role == 'owner' %}
-        <a href="/dashboards" class="list-item">
-            <div class="list-left"><span style="font-size: 18px;">👑</span> Owner Panel</div>
-            <div class="arrow-right">›</div>
-        </a>
-        {% endif %}
-
-        {% if current_user.role == 'seller' %}
-        <a href="/dashboards" class="list-item status-approved">
-            <div class="list-left"><span style="font-size: 18px;">✅</span> <span style="color: #00a650;">Approved Seller (Go to Panel)</span></div>
-            <div class="arrow-right" style="color: #00a650;">›</div>
-        </a>
-        {% elif current_user.role == 'pending_seller' %}
-        <div class="list-item status-pending">
-            <div class="list-left"><span style="font-size: 18px;">⏳</span> <span style="color: #ff9900;">Seller Application Pending</span></div>
+        <div class="profile-header">
+            <div class="profile-avatar">
+                {% if current_user.get('avatar') %}
+                    <img src="{{ current_user.get('avatar') }}" alt="Profile">
+                {% else %}
+                    👤
+                {% endif %}
+            </div>
+            <div class="profile-info">
+                <h2>{{ current_user.get('username', 'Inwear Member') }}</h2>
+                <p>{{ current_user.get('email', 'Premium Member | inwear Store') }}</p>
+            </div>
         </div>
-        {% elif current_user.role == 'user' %}
-        <a href="/apply-seller" class="list-item">
-            <div class="list-left"><span style="font-size: 18px;">🏪</span> Apply for Seller</div>
-            <div class="arrow-right">›</div>
-        </a>
-        {% endif %}
 
-        {% if current_user.role == 'delivery' %}
-        <a href="/dashboards" class="list-item status-approved">
-            <div class="list-left"><span style="font-size: 18px;">✅</span> <span style="color: #00a650;">Approved Delivery Boy (Go to Panel)</span></div>
-            <div class="arrow-right" style="color: #00a650;">›</div>
-        </a>
-        {% elif current_user.role == 'pending_delivery' %}
-        <div class="list-item status-pending">
-            <div class="list-left"><span style="font-size: 18px;">⏳</span> <span style="color: #ff9900;">Delivery Application Pending</span></div>
+        <div class="action-grid">
+            <a href="/orders" class="action-item"><span class="action-icon">📦</span> My Orders</a>
+            <a href="/wishlist" class="action-item"><span class="action-icon">❤️</span> My Wishlist</a>
+            <a href="/coupons" class="action-item"><span class="action-icon">🎫</span> Coupons</a>
+            <a href="/support" class="action-item"><span class="action-icon">🎧</span> Help Center</a>
         </div>
-        {% elif current_user.role == 'user' %}
-        <a href="/apply-delivery" class="list-item">
-            <div class="list-left"><span style="font-size: 18px;">🛵</span> Apply for Delivery Boy</div>
-            <div class="arrow-right">›</div>
-        </a>
-        {% endif %}
 
-    </div>
+        <div class="section-title">Account Settings</div>
+        <div class="list-group">
+            <a href="/edit-profile" class="list-item">
+                <div class="list-left"><span style="font-size: 18px;">✏️</span> Edit Profile</div>
+                <div class="arrow-right">›</div>
+            </a>
+            <!-- 🔴 লিঙ্কটি আপডেট করা হয়েছে (saved_addresses) যাতে 404 এরর না আসে -->
+            <a href="/saved_addresses" class="list-item">
+                <div class="list-left"><span style="font-size: 18px;">📍</span> Saved Addresses</div>
+                <div class="arrow-right">›</div>
+            </a>
+        </div>
 
-    <a href="/logout" class="logout-btn">🚪 Log Out Account</a>
+        <div class="section-title">Earn With inwear</div>
+        <div class="list-group">
+            
+            {% set role = current_user.get('role', 'user') %}
+            
+            <!-- Owner Logic -->
+            {% if role == 'owner' %}
+            <a href="/dashboards" class="list-item">
+                <div class="list-left"><span style="font-size: 18px;">👑</span> Owner Panel</div>
+                <div class="arrow-right">›</div>
+            </a>
+            {% endif %}
 
+            <!-- Seller Logic -->
+            {% if role == 'seller' %}
+            <a href="/dashboards" class="list-item status-approved">
+                <div class="list-left"><span style="font-size: 18px;">✅</span> <span style="color: #00a650;">Approved Seller (Go to Panel)</span></div>
+                <div class="arrow-right" style="color: #00a650;">›</div>
+            </a>
+            {% elif role == 'pending_seller' %}
+            <div class="list-item status-pending">
+                <div class="list-left"><span style="font-size: 18px;">⏳</span> <span style="color: #ff9900;">Seller Application Pending</span></div>
+            </div>
+            {% elif role in ['user', 'delivery'] %}
+            <a href="/apply-seller" class="list-item">
+                <div class="list-left"><span style="font-size: 18px;">🏪</span> Apply for Seller</div>
+                <div class="arrow-right">›</div>
+            </a>
+            {% endif %}
+
+            <!-- Delivery Logic -->
+            {% if role == 'delivery' %}
+            <a href="/dashboards" class="list-item status-approved">
+                <div class="list-left"><span style="font-size: 18px;">✅</span> <span style="color: #00a650;">Approved Delivery Boy (Go to Panel)</span></div>
+                <div class="arrow-right" style="color: #00a650;">›</div>
+            </a>
+            {% elif role == 'pending_delivery' %}
+            <div class="list-item status-pending">
+                <div class="list-left"><span style="font-size: 18px;">⏳</span> <span style="color: #ff9900;">Delivery Application Pending</span></div>
+            </div>
+            {% elif role in ['user', 'seller'] %}
+            <a href="/apply-delivery" class="list-item">
+                <div class="list-left"><span style="font-size: 18px;">🛵</span> Apply for Delivery Boy</div>
+                <div class="arrow-right">›</div>
+            </a>
+            {% endif %}
+
+        </div>
+
+        <a href="/logout" class="logout-btn">🚪 Log Out Account</a>
+
+    <!-- 🔴 যদি ইউজার লগইন না করে থাকে -->
+    {% else %}
+        <div class="login-container">
+            <h2>Welcome to inwear</h2>
+            <p style="color: var(--text-muted); margin-bottom: 25px; font-size: 14px;">Login or create an account to manage your orders, wishlist, and more.</p>
+            
+            <a href="/login/google" class="login-btn google-btn">
+                <span style="font-size: 18px; background: white; border-radius: 50%; padding: 2px;">🌐</span> Continue with Google
+            </a>
+            
+            <a href="/login/discord" class="login-btn discord-btn">
+                <span style="font-size: 18px;">🎮</span> Continue with Discord
+            </a>
+        </div>
+    {% endif %}
+
+    <!-- ================= Bottom Navigation ================= -->
     <div class="bottom-nav">
         <a href="/" class="nav-item">
             <span class="nav-icon">🏠</span>
             <span>Home</span>
         </a>
         
-        {% if current_user.role in ['owner', 'seller', 'delivery'] %}
+        <!-- 🔴 Panel Button Logic (শুধু পারমিশন থাকলে দেখাবে) -->
+        {% if current_user and current_user.get('role') in ['owner', 'seller', 'delivery'] %}
         <a href="/dashboards" class="nav-item">
             <span class="nav-icon">📊</span>
             <span>Panel</span>
