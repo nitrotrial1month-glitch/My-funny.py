@@ -9,10 +9,14 @@
         .header { background: #1a1a2e; color: white; padding: 20px; text-align: center; font-weight: bold; }
         .container { padding: 15px; }
         .order-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 5px solid #28a745; }
-        .btn { display: block; width: 100%; padding: 12px; text-align: center; border-radius: 8px; font-weight: bold; text-decoration: none; margin-top: 10px; }
+        .btn { display: block; width: 100%; padding: 12px; text-align: center; border-radius: 8px; font-weight: bold; text-decoration: none; margin-top: 10px; cursor: pointer; border: none; font-size: 14px; }
         .btn-pickup { background-color: #007bff; color: white; }
         .btn-delivered { background-color: #28a745; color: white; }
         .status-badge { font-size: 12px; padding: 4px 8px; border-radius: 4px; background: #e9ecef; }
+        
+        /* OTP Input Styling */
+        .otp-section { margin-top: 15px; padding-top: 15px; border-top: 1px dashed #e0e0e0; display: flex; gap: 10px; }
+        .otp-input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; outline: none; text-align: center; letter-spacing: 2px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -21,23 +25,34 @@
         {% if orders %}
             {% for order in orders %}
             <div class="order-card">
-                <h3>Order #{{ order._id.to_string()[:8].upper() }}</h3>
+                <h3>Order #{{ order._id|string|truncate(8, True, '')|upper }}</h3>
                 <p><strong>Customer:</strong> {{ order.name }}</p>
+                <p><strong>Phone:</strong> {{ order.phone }}</p>
                 <p><strong>Address:</strong> {{ order.address }}</p>
+                <p><strong>To Collect (COD):</strong> ₹{{ order.total_price }}</p>
                 <p><strong>Status:</strong> <span class="status-badge">{{ order.status }}</span></p>
                 
-                {% if order.status == 'Ready for Pickup' %}
-                    <a href="{{ url_for('delivery.pickup_order', order_id=order._id) }}" class="btn btn-pickup">Start Delivery (Pickup)</a>
+                {% if order.status == 'Confirmed' %}
+                    <form action="/delivery/send_otp/{{ order._id }}" method="POST">
+                        <button type="submit" class="btn btn-pickup">Accept & Send OTP to Customer</button>
+                    </form>
+                    
                 {% elif order.status == 'Out for Delivery' %}
-                    <a href="{{ url_for('delivery.complete_delivery', order_id=order._id) }}" class="btn btn-delivered">Mark as Delivered</a>
+                    <form action="/delivery/verify_otp/{{ order._id }}" method="POST" class="otp-section">
+                        <input type="text" name="otp" class="otp-input" placeholder="Enter 4-Digit PIN" required maxlength="4">
+                        <button type="submit" class="btn btn-delivered" style="flex: 1; margin-top: 0;">Verify & Mark Delivered</button>
+                    </form>
                 {% endif %}
             </div>
             {% endfor %}
         {% else %}
-            <p style="text-align: center;">No pending orders right now.</p>
+            <div style="text-align: center; padding: 40px; color: #888;">
+                <span style="font-size: 40px; display: block; margin-bottom: 10px;">📦</span>
+                <p>No pending orders right now.</p>
+            </div>
         {% endif %}
-        <a href="/" style="display: block; text-align: center; margin-top: 20px; color: #cc0000; font-weight: bold;">Back Home</a>
+        
+        <a href="/" style="display: block; text-align: center; margin-top: 20px; color: #cc0000; font-weight: bold; text-decoration: none;">← Back to Home</a>
     </div>
 </body>
 </html>
-
