@@ -29,21 +29,15 @@
         .search-box input { flex: 1; border: none; background: transparent; outline: none; font-size: 15px; padding-left: 8px; }
         .search-box .voice-icon { font-size: 18px; color: #555; cursor: pointer; }
 
-        /* Category Scroll (Fixed) */
-        .category-scroll { display: flex; overflow-x: auto; padding: 10px 15px; gap: 20px; background: #fff; border-top: 1px solid #f0f0f0; scrollbar-width: none; }
+        /* Category Scroll (Spaced evenly) */
+        .category-scroll { display: flex; overflow-x: auto; padding: 12px 15px; background: #fff; border-top: 1px solid #f0f0f0; scrollbar-width: none; justify-content: space-between; }
         .category-scroll::-webkit-scrollbar { display: none; }
-        .cat-item { display: flex; flex-direction: column; align-items: center; min-width: 60px; text-decoration: none; cursor: pointer; }
-        .cat-icon { font-size: 24px; background: #f8f8f8; padding: 10px; border-radius: 12px; margin-bottom: 5px; }
+        .cat-item { display: flex; flex-direction: column; align-items: center; min-width: 60px; text-decoration: none; cursor: pointer; flex: 1; }
+        .cat-icon { font-size: 24px; background: #f8f8f8; padding: 12px; border-radius: 14px; margin-bottom: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
         .cat-text { font-size: 12px; font-weight: bold; color: var(--primary-red); }
 
-        /* Promo Banner */
-        .delivery-banner { background: linear-gradient(135deg, #ffe0e0 0%, #fff0f0 100%); margin: 15px; padding: 15px; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; border: 1px dashed var(--primary-red); text-decoration: none; color: inherit; }
-        .delivery-banner-text h3 { margin: 0; font-size: 15px; color: var(--text-dark); }
-        .delivery-banner-text p { margin: 5px 0 0; font-size: 11px; color: var(--text-muted); }
-        .delivery-btn-banner { background: var(--primary-red); color: white; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; }
-
-        /* Product Grid (Fixed) */
-        .main-content { padding: 0 10px 10px 10px; }
+        /* Product Grid */
+        .main-content { padding: 15px 10px 10px 10px; }
         .product-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
         .product-card { background-color: var(--white); border-radius: 6px; overflow: hidden; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; flex-direction: column; text-decoration: none; color: inherit; transition: transform 0.2s; }
         .product-card:active { transform: scale(0.98); }
@@ -108,14 +102,6 @@
         </div>
     </div>
 
-    <a href="/delivery/register" class="delivery-banner">
-        <div class="delivery-banner-text">
-            <h3>🛵 Earn with Inwear</h3>
-            <p>Join as a delivery partner today!</p>
-        </div>
-        <div class="delivery-btn-banner">Apply Now</div>
-    </a>
-
     <div class="main-content">
         <div class="product-grid">
             {% if products %}
@@ -124,7 +110,7 @@
                     <div class="product-img-container">
                         <div class="inwear-assured-badge"><span class="assured-icon">✓</span>inwear Assured</div>
                         <div class="wishlist-btn" onclick="event.preventDefault(); alert('Added to wishlist!');">♡</div>
-                        <img src="/{{ product.image if product.image else 'static/placeholder.png' }}" onerror="this.src='/static/placeholder.png'" alt="{{ product.name }}" class="product-img">
+                        <img src="/{{ product.image if product.image else '' }}" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x400/f4f6f8/cc0000?text=No+Image';" alt="{{ product.name }}" class="product-img">
                     </div>
                     <div class="product-info">
                         <div class="product-title">{{ product.name }}</div>
@@ -184,23 +170,23 @@
                     <div class="btn-left"><span style="font-size: 22px;">👑</span><span>Admin Workspace</span></div>
                     <span class="arrow-right">›</span>
                 </a>
-                <a href="/seller" class="sheet-link-btn seller-btn">
+                <a href="/seller-dashboard" class="sheet-link-btn seller-btn">
                     <div class="btn-left"><span style="font-size: 22px;">🏪</span><span>Seller Dashboard</span></div>
                     <span class="arrow-right">›</span>
                 </a>
-                <a href="/delivery/dashboard" class="sheet-link-btn delivery-btn">
+                <a href="/delivery-dashboard" class="sheet-link-btn delivery-btn">
                     <div class="btn-left"><span style="font-size: 22px;">🛵</span><span>Delivery Hub</span></div>
                     <span class="arrow-right">›</span>
                 </a>
                 
             {% elif role == 'seller' %}
-                <a href="/seller" class="sheet-link-btn seller-btn">
+                <a href="/seller-dashboard" class="sheet-link-btn seller-btn">
                     <div class="btn-left"><span style="font-size: 22px;">🏪</span><span>Seller Dashboard</span></div>
                     <span class="arrow-right">›</span>
                 </a>
                 
             {% elif role == 'delivery' %}
-                <a href="/delivery/dashboard" class="sheet-link-btn delivery-btn">
+                <a href="/delivery-dashboard" class="sheet-link-btn delivery-btn">
                     <div class="btn-left"><span style="font-size: 22px;">🛵</span><span>Delivery Dashboard</span></div>
                     <span class="arrow-right">›</span>
                 </a>
