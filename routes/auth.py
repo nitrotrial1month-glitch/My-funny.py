@@ -222,3 +222,38 @@ def apply_seller():
 def apply_delivery():
     return render_template('apply-delivery.html')
     
+# ==========================================
+# 🚀 Form Submission Handlers (Auto-Approve for now)
+# ==========================================
+
+@auth_bp.route('/submit-seller-application', methods=['POST'])
+@login_required
+def submit_seller_application():
+    user = session.get('user')
+    col = Database.get_collection("users")
+    
+    # ইউজারকে ডেটাবেসে 'seller' হিসেবে আপডেট করা হচ্ছে
+    if col is not None:
+        col.update_one({"discord_id": user['id']}, {"$set": {"role": "seller"}})
+    
+    # সেশন আপডেট করে সেলার ড্যাশবোর্ডে পাঠানো হচ্ছে
+    session['user']['role'] = 'seller'
+    session.modified = True
+    return redirect('/seller-dashboard')
+
+
+@auth_bp.route('/submit-delivery-application', methods=['POST'])
+@login_required
+def submit_delivery_application():
+    user = session.get('user')
+    col = Database.get_collection("users")
+    
+    # ইউজারকে ডেটাবেসে 'delivery' বয় হিসেবে আপডেট করা হচ্ছে
+    if col is not None:
+        col.update_one({"discord_id": user['id']}, {"$set": {"role": "delivery"}})
+    
+    # সেশন আপডেট করে ডেলিভারি ড্যাশবোর্ডে পাঠানো হচ্ছে
+    session['user']['role'] = 'delivery'
+    session.modified = True
+    return redirect('/delivery/dashboard')
+    
