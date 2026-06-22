@@ -62,3 +62,22 @@ def block_seller():
                 
     return redirect('/owner-dashboard')
   
+# ==========================================
+# 🗑️ GLOBAL PRODUCT DELETE (By ID or Name)
+# ==========================================
+@owner_controls_bp.route('/owner/delete-product-global', methods=['POST'])
+@role_required('owner')
+def delete_product_global():
+    query = request.form.get('product_query', '').strip()
+    db_products = Database.get_collection("products")
+    
+    if db_products is not None and query:
+        # যদি ইনপুটটি ২৪ ক্যারেক্টারের হয় (মানে এটি একটি MongoDB Object ID)
+        if len(query) == 24 and all(c in '0123456789abcdefABCDEF' for c in query):
+            db_products.delete_one({"_id": ObjectId(query)})
+        else:
+            # যদি ইনপুটটি নাম হয়, তবে নামের সাথে মিলিয়ে ডিলিট করবে (Case Insensitive)
+            db_products.delete_many({"name": {"$regex": f"^{query}$", "$options": "i"}})
+            
+    return redirect('/owner-dashboard')
+    
