@@ -75,7 +75,7 @@
     <div class="wallet-container">
         <div class="wallet-card">
             <div class="balance-label">Available Balance for Payout</div>
-            <div class="balance-amount">₹0.00</div>
+            <div class="balance-amount">₹{{ "%.2f"|format(current_user.wallet_balance if current_user.wallet_balance else 0) }}</div>
             <div class="wallet-actions">
                 <div class="linked-account"><span>🏦</span> Linked: Setup UPI via Product Add</div>
                 <button class="withdraw-btn" onclick="alert('Wallet system activating soon!')">Withdraw</button>
@@ -112,36 +112,51 @@
     <div class="product-list">
         {% if products %}
             {% for p in products %}
-            <a href="/seller/edit/{{ p._id }}" class="product-item">
-                <img src="/{{ p.image if p.image else 'static/placeholder.png' }}" onerror="this.src='/static/placeholder.png'" alt="Product" class="prod-img">
-                <div class="prod-details">
-                    <div class="prod-name">{{ p.name|truncate(25, True) }}</div>
-                    <div class="prod-price">₹{{ p.price }}</div>
-                </div>
-                {% if p.status == 'Pending' %}
-                    <div class="status-badge status-pending">⏳ Pending Review</div>
-                {% else %}
-                    <div class="status-badge status-live">🟢 Live</div>
-                {% endif %}
-            </a>
+            <div class="product-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--white); border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.03);">
+                
+                <!-- 🔴 প্রোডাক্টের উপর ক্লিক করলে এডিট পেজে যাবে -->
+                <a href="/seller/edit/{{ p._id }}" style="display: flex; align-items: center; gap: 12px; flex: 1; text-decoration: none; color: inherit;">
+                    <img src="/{{ p.image if p.image else '' }}" onerror="this.onerror=null; this.src='https://via.placeholder.com/50';" alt="Product" class="prod-img" style="width: 50px; height: 50px; border-radius: 6px; object-fit: cover; background: #f0f0f0;">
+                    <div class="prod-details">
+                        <div class="prod-name" style="font-size: 13px; font-weight: bold; color: var(--text-dark); margin-bottom: 4px;">{{ p.name|truncate(20, True) }}</div>
+                        <div class="prod-price" style="font-size: 12px; color: var(--text-muted); font-weight: bold;">₹{{ p.price }}</div>
+                    </div>
+                    {% if p.status == 'Pending' %}
+                        <div class="status-badge status-pending" style="font-size: 10px; font-weight: bold; padding: 4px 6px; border-radius: 4px; background: #fff5e6; color: var(--warning-orange);">⏳ Pending</div>
+                    {% else %}
+                        <div class="status-badge status-live" style="font-size: 10px; font-weight: bold; padding: 4px 6px; border-radius: 4px; background: #e6f6ee; color: var(--success-green);">🟢 Live</div>
+                    {% endif %}
+                </a>
+
+                <!-- 🔴 ডিলিট বাটন -->
+                <form action="/seller/delete/{{ p._id }}" method="POST" style="margin: 0; margin-left: 10px;">
+                    <button type="submit" onclick="return confirm('Are you sure you want to delete this product? This action cannot be undone!');" style="background: transparent; border: none; font-size: 18px; cursor: pointer; padding: 5px; opacity: 0.7; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">🗑️</button>
+                </form>
+
+            </div>
             {% endfor %}
         {% else %}
             <p style="text-align: center; color: #888; font-size: 13px;">You haven't uploaded any products yet.</p>
         {% endif %}
     </div>
 
+    <!-- 🔴 NEW UPLOAD FORM (Description, Details, Tags, Video) -->
     <div id="uploadFormSection" style="display: none; padding: 20px; background: white; margin-top: 20px; border-top: 2px solid #f0f0f0;">
         <h3 style="color: var(--primary-red);">Upload New Product</h3>
         <form action="/seller/upload" method="POST" enctype="multipart/form-data">
             
+            <!-- Basic Details -->
             <input type="text" name="name" placeholder="Product Name" required class="custom-input">
             
+            <!-- Description and Details -->
             <textarea name="description" placeholder="Product Description (Write a catchy description...)" required class="custom-textarea" style="min-height: 80px;"></textarea>
             <textarea name="details" placeholder="Product Details (e.g. Fabric: 100% Cotton, Fit: Regular)" required class="custom-textarea" style="min-height: 60px;"></textarea>
             
+            <!-- Hashtags for Search -->
             <label style="font-size: 11px; font-weight: bold; color: var(--primary-red); display:block; margin-bottom:3px;">Add Tags for Search (Start with #)</label>
             <input type="text" name="tags" placeholder="e.g. #Anime #Oversized #Mal #Black" required class="custom-input">
 
+            <!-- Price and Sizes -->
             <input type="number" name="original_price" placeholder="Original Price (₹)" required class="custom-input">
             <input type="number" name="final_price" placeholder="Selling Price (₹)" required class="custom-input">
             <input type="text" name="sizes" placeholder="Sizes (e.g. S, M, L, XL)" required class="custom-input">
@@ -159,12 +174,14 @@
             
             <input type="text" name="seller_upi" placeholder="Your UPI ID for Payouts (e.g. name@ybl)" required pattern="^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}$" class="custom-input" style="border-color: #ff9900; background: #fffcf5; margin-bottom: 15px;">
 
+            <!-- Media Section (Images and Video) -->
             <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
                 <label style="font-size: 12px; font-weight: bold; color: var(--text-dark);">Images:</label><br>
                 <input type="file" name="image1" accept="image/*" required style="margin-bottom: 8px; font-size: 12px;"><br>
                 <input type="file" name="image2" accept="image/*" style="margin-bottom: 8px; font-size: 12px;"><br>
                 <input type="file" name="image3" accept="image/*" style="margin-bottom: 15px; font-size: 12px;"><br>
 
+                <!-- Video Upload -->
                 <label style="font-size: 12px; font-weight: bold; color: var(--text-dark);">Product Video (Optional):</label><br>
                 <input type="file" name="video" accept="video/*" style="margin-top: 5px; font-size: 12px;">
                 <div style="font-size: 10px; color: #888; margin-top: 3px;">* Max size 10MB (Short reel/video recommended)</div>
@@ -173,6 +190,22 @@
             <button type="submit" style="width: 100%; background: var(--primary-red); color: white; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 15px;">Upload Product</button>
             <button type="button" onclick="document.getElementById('uploadFormSection').style.display='none'" style="width: 100%; background: #e0e0e0; color: #333; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px;">Cancel</button>
         </form>
+    </div>
+
+    <!-- Bottom Nav -->
+    <div class="bottom-nav">
+        <a href="/" class="nav-item">
+            <span class="nav-icon">🏠</span>
+            <span>Home</span>
+        </a>
+        <a href="/dashboards" class="nav-item active">
+            <span class="nav-icon">📊</span>
+            <span>Panel</span>
+        </a>
+        <a href="/account" class="nav-item">
+            <span class="nav-icon">👤</span>
+            <span>Account</span>
+        </a>
     </div>
 
 </body>
