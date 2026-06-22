@@ -166,7 +166,7 @@ def smart_dashboard_redirect():
     elif role == "seller":
         return redirect('/seller-dashboard')
     elif role == "delivery":
-        return redirect('/delivery/dashboard')
+        return redirect('/delivery-dashboard')
     else:
         return redirect('/account')
 
