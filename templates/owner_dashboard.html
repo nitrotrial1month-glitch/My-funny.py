@@ -25,58 +25,39 @@
             padding-bottom: 80px;
         }
 
-        /* ================= 1. Admin Header ================= */
-        .top-header {
-            background-color: var(--admin-dark); color: var(--white);
-            padding: 20px 20px 40px 20px;
-            border-bottom-left-radius: 20px; border-bottom-right-radius: 20px;
-        }
+        /* Admin Header & Stats */
+        .top-header { background-color: var(--admin-dark); color: var(--white); padding: 20px 20px 40px 20px; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; }
         .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .admin-title { font-size: 20px; font-weight: 900; display: flex; align-items: center; gap: 8px; }
         .owner-badge { background: var(--primary-red); font-size: 10px; padding: 3px 8px; border-radius: 12px; font-weight: bold; }
-        
         .admin-info { font-size: 11px; color: #aaaaaa; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;}
-        
         .revenue-label { font-size: 12px; color: #aaaaaa; }
         .revenue-amount { font-size: 32px; font-weight: 900; color: #00ff88; margin-top: 5px; }
 
-        /* ================= 2. Quick Stats Grid ================= */
-        .stats-grid {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
-            padding: 0 15px; margin-top: -25px;
-        }
-        .stat-card {
-            background: var(--white); padding: 15px 10px; border-radius: 12px;
-            text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-        }
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 0 15px; margin-top: -25px; }
+        .stat-card { background: var(--white); padding: 15px 10px; border-radius: 12px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
         .stat-value { font-size: 18px; font-weight: 900; color: var(--text-dark); }
         .stat-value.alert { color: var(--primary-red); }
         .stat-title { font-size: 11px; color: var(--text-muted); margin-top: 4px; font-weight: bold; }
 
-        /* ================= 3. Common Section Styles ================= */
         .section-title { padding: 25px 15px 10px 15px; font-size: 15px; font-weight: 900; color: var(--admin-dark); text-transform: uppercase; }
         .card-container { background: var(--white); margin: 0 15px; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 15px; }
         
-        /* Buttons */
         .btn { padding: 8px 12px; border: none; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; text-decoration: none; display: inline-block; text-align: center; }
         .btn-green { background: var(--success-green); color: white; }
         .btn-red { background: var(--primary-red); color: white; }
         .btn-dark { background: var(--admin-dark); color: white; }
         
-        /* Verification Images */
+        /* Verification Images - Updated with cursor */
         .doc-images { display: flex; gap: 10px; margin-top: 10px; overflow-x: auto; padding-bottom: 5px; }
-        .doc-images img { width: 80px; height: 80px; object-fit: cover; border-radius: 6px; border: 1px solid #ccc; }
+        .doc-images img { width: 80px; height: 80px; object-fit: cover; border-radius: 6px; border: 1px solid #ccc; cursor: zoom-in; }
         .doc-label { font-size: 10px; color: #888; text-align: center; margin-top: 4px; }
 
-        /* Ledger Table for Commission */
-        .ledger-item { border-bottom: 1px solid #eee; padding-bottom: 12px; margin-bottom: 12px; }
-        .ledger-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-        .ledger-flex { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
-        .ledger-flex strong { color: var(--text-dark); }
-        .amt-commission { color: var(--primary-red); font-weight: bold; }
-        .amt-payable { color: var(--success-green); font-weight: bold; font-size: 14px; }
+        /* 🔴 NEW: Image Modal Styles */
+        .img-modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .img-modal img { max-width: 95%; max-height: 90%; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .close-modal { position: absolute; top: 20px; right: 20px; color: white; font-size: 35px; font-weight: bold; cursor: pointer; }
 
-        /* Bottom Nav */
         .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--white); display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -5px 15px rgba(0,0,0,0.05); z-index: 1000; }
         .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: var(--text-muted); font-size: 12px; font-weight: bold; }
         .nav-item.active { color: var(--admin-dark); }
@@ -85,14 +66,17 @@
 </head>
 <body>
 
+    <div id="imgModal" class="img-modal" onclick="closeModal()">
+        <span class="close-modal">&times;</span>
+        <img id="modalImage" src="">
+    </div>
+
     <div class="top-header">
         <div class="header-top">
             <div class="admin-title">👑 INWEAR <span class="owner-badge">OWNER</span></div>
             <div style="font-size: 22px;">⚙️</div>
         </div>
-        <div class="admin-info">
-            Logged in as: <strong>{{ current_user.email | default('Super Admin') }}</strong>
-        </div>
+        <div class="admin-info">Logged in as: <strong>{{ current_user.email | default('Super Admin') }}</strong></div>
         
         <div class="revenue-label">Total Platform Revenue (Approx)</div>
         <div class="revenue-amount">
@@ -107,55 +91,19 @@
     </div>
 
     <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-value">{{ total_users }}</div>
-            <div class="stat-title">Total Users</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value alert">{{ pending_products|length }}</div>
-            <div class="stat-title">Products Review</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">{{ pending_sellers|length + pending_deliveries|length }}</div>
-            <div class="stat-title">Pending KYC</div>
-        </div>
+        <div class="stat-card"><div class="stat-value">{{ total_users }}</div><div class="stat-title">Total Users</div></div>
+        <div class="stat-card"><div class="stat-value alert">{{ pending_products|length }}</div><div class="stat-title">Products Review</div></div>
+        <div class="stat-card"><div class="stat-value">{{ pending_sellers|length + pending_deliveries|length }}</div><div class="stat-title">Pending KYC</div></div>
     </div>
 
-    <div class="section-title">💰 Financials & Payouts (10% Comm.)</div>
+    <div class="section-title">💰 Seller Ledger (Search)</div>
     <div class="card-container" style="background: #fffdf5; border: 1px solid #ffeba1;">
-        {% if orders %}
-            {% for o in orders[:10] %}  {% set selling_price = o.get('total_price', 0)|float %}
-            {% set commission = selling_price * 0.10 %}
-            {% set seller_earning = selling_price - commission %}
-            
-            <div class="ledger-item">
-                <div class="ledger-flex" style="color: #666;">
-                    <span>Order: #{{ o._id | string | truncate(8, True, '') }}</span>
-                    <span>Status: <strong>{{ o.status | default('Delivered') }}</strong></span>
-                </div>
-                <div class="ledger-flex">
-                    <span>Seller ID:</span>
-                    <strong>{{ o.seller_id | default('Unknown') }}</strong>
-                </div>
-                <div class="ledger-flex">
-                    <span>Item Price:</span>
-                    <strong>₹{{ selling_price }}</strong>
-                </div>
-                <div class="ledger-flex">
-                    <span>inwear Fee (10%):</span>
-                    <span class="amt-commission">- ₹{{ commission|round(2) }}</span>
-                </div>
-                <div class="ledger-flex" style="margin-top: 8px; border-top: 1px dashed #ccc; padding-top: 8px;">
-                    <span>Payable to Seller:</span>
-                    <span class="amt-payable">₹{{ seller_earning|round(2) }}</span>
-                </div>
-            </div>
-            {% endfor %}
-        {% else %}
-            <p style="text-align: center; color: #888; font-size: 13px; margin: 0;">No active orders found for calculation.</p>
-        {% endif %}
+        <form action="/owner/seller-ledger" method="GET" style="display: flex; gap: 5px;">
+            <input type="text" name="seller_query" placeholder="Enter Seller Email or ID..." required style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; outline: none;">
+            <button type="submit" class="btn btn-dark">🔍 Search</button>
+        </form>
+        <p style="font-size: 11px; color: #888; margin: 8px 0 0 0; text-align: center;">Find a seller to view their total sales, platform fees (10%), and payable amount.</p>
     </div>
-
 
     <div class="section-title">⏳ Verification Hub (KYC)</div>
     
@@ -174,11 +122,11 @@
             
             <div class="doc-images">
                 <div>
-                    <img src="/static/uploads/{{ s.application_data.profile_image }}" alt="Selfie" onerror="this.src='https://via.placeholder.com/80?text=No+Photo'">
+                    <img src="/static/uploads/{{ s.application_data.profile_image }}" onclick="openModal(this.src)" alt="Selfie" onerror="this.src='https://via.placeholder.com/80?text=No+Photo'">
                     <div class="doc-label">Selfie</div>
                 </div>
                 <div>
-                    <img src="/static/uploads/{{ s.application_data.kyc_image }}" alt="KYC Doc" onerror="this.src='https://via.placeholder.com/80?text=No+Doc'">
+                    <img src="/static/uploads/{{ s.application_data.kyc_image }}" onclick="openModal(this.src)" alt="KYC Doc" onerror="this.src='https://via.placeholder.com/80?text=No+Doc'">
                     <div class="doc-label">ID Doc</div>
                 </div>
             </div>
@@ -203,22 +151,21 @@
             <div style="font-size: 12px; color: #555; line-height: 1.6;">
                 <strong>Phone:</strong> {{ d.application_data.phone }}<br>
                 <strong>Vehicle:</strong> {{ d.application_data.vehicle | upper }}<br>
-                <strong>Area:</strong> {{ d.application_data.area }}<br>
                 <strong>Doc Type:</strong> {{ d.application_data.id_type | upper }} ({{ d.application_data.id_number }})
             </div>
             
             <div class="doc-images">
                 <div>
-                    <img src="/static/uploads/{{ d.application_data.profile_image }}" alt="Selfie" onerror="this.src='https://via.placeholder.com/80?text=No+Photo'">
+                    <img src="/static/uploads/{{ d.application_data.profile_image }}" onclick="openModal(this.src)" alt="Selfie" onerror="this.src='https://via.placeholder.com/80?text=No+Photo'">
                     <div class="doc-label">Selfie</div>
                 </div>
                 <div>
-                    <img src="/static/uploads/{{ d.application_data.kyc_image }}" alt="KYC Doc" onerror="this.src='https://via.placeholder.com/80?text=No+Doc'">
+                    <img src="/static/uploads/{{ d.application_data.kyc_image }}" onclick="openModal(this.src)" alt="KYC Doc" onerror="this.src='https://via.placeholder.com/80?text=No+Doc'">
                     <div class="doc-label">ID Doc</div>
                 </div>
                 {% if d.application_data.dl_image %}
                 <div>
-                    <img src="/static/uploads/{{ d.application_data.dl_image }}" alt="Driving License">
+                    <img src="/static/uploads/{{ d.application_data.dl_image }}" onclick="openModal(this.src)" alt="Driving License">
                     <div class="doc-label">License</div>
                 </div>
                 {% endif %}
@@ -239,7 +186,7 @@
             {% for p in pending_products %}
             <div style="border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 10px;">
                 <div style="display: flex; gap: 10px; align-items: center;">
-                    <img src="/{{ p.image if p.image else '' }}" onerror="this.onerror=null; this.src='https://via.placeholder.com/50';" style="width: 50px; height: 50px; border-radius: 6px; object-fit: cover;">
+                    <img src="/{{ p.image if p.image else '' }}" onclick="openModal(this.src)" onerror="this.onerror=null; this.src='https://via.placeholder.com/50';" style="width: 50px; height: 50px; border-radius: 6px; object-fit: cover; cursor: zoom-in;">
                     <div style="flex: 1;">
                         <h4 style="margin: 0; font-size: 14px;">{{ p.name }}</h4>
                         <p style="margin: 2px 0 0; font-size: 12px; color: #666;">Price: ₹{{ p.price }}</p>
@@ -262,7 +209,6 @@
 
     <div class="section-title" style="color: #cc0000;">🚨 Danger Zone</div>
     <div class="card-container" style="background: #fff5f5; border: 1px solid #ffdcdb; margin-bottom: 20px;">
-        
         <form action="/owner/delete-product-global" method="POST" style="margin-bottom: 20px;">
             <label style="font-size: 12px; font-weight: bold; color: #cc0000; display: block; margin-bottom: 5px;">DELETE ANY PRODUCT</label>
             <div style="display: flex; gap: 5px;">
@@ -270,9 +216,7 @@
                 <button type="submit" class="btn btn-red" onclick="return confirm('WARNING: Are you sure?')">DELETE</button>
             </div>
         </form>
-
         <hr style="border: 0; border-top: 1px dashed #ffcccc; margin: 15px 0;">
-
         <form action="/owner/block-seller" method="POST">
             <label style="font-size: 12px; font-weight: bold; color: #cc0000; display: block; margin-bottom: 5px;">BAN SELLER ACCOUNT</label>
             <div style="display: flex; gap: 5px;">
@@ -283,24 +227,24 @@
     </div>
 
     <div class="bottom-nav">
-        <a href="/dashboards" class="nav-item active">
-            <span class="nav-icon">📊</span>
-            <span>Panel</span>
-        </a>
-        <a href="/" class="nav-item">
-            <span class="nav-icon">🏠</span>
-            <span>Home</span>
-        </a>
-        <a href="/owner/fleet" class="nav-item">
-            <span class="nav-icon">🛵</span>
-            <span>Fleet</span>
-        </a>
-        <a href="/owner/payouts" class="nav-item">
-            <span class="nav-icon">💸</span>
-            <span>Payouts</span>
-        </a>
+        <a href="/dashboards" class="nav-item active"><span class="nav-icon">📊</span><span>Panel</span></a>
+        <a href="/" class="nav-item"><span class="nav-icon">🏠</span><span>Home</span></a>
+        <a href="/owner/fleet" class="nav-item"><span class="nav-icon">🛵</span><span>Fleet</span></a>
+        <a href="/owner/payouts" class="nav-item"><span class="nav-icon">💸</span><span>Payouts</span></a>
     </div>
     
+    <script>
+        function openModal(imgSrc) {
+            const modal = document.getElementById('imgModal');
+            const modalImg = document.getElementById('modalImage');
+            if(!imgSrc.includes('via.placeholder.com')) {
+                modal.style.display = 'flex';
+                modalImg.src = imgSrc;
+            }
+        }
+        function closeModal() {
+            document.getElementById('imgModal').style.display = 'none';
+        }
+    </script>
 </body>
-    </html>
-    
+</html>
