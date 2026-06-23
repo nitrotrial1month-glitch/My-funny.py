@@ -10,80 +10,170 @@
         .header { background: white; padding: 15px; display: flex; align-items: center; border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 100; }
         .card { background: white; margin-top: 10px; padding: 15px; border-bottom: 1px solid #eee; }
         .card-title { font-size: 16px; font-weight: 600; margin-bottom: 15px; color: #333; }
-        .form-control { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 10px; box-sizing: border-box; }
-        .address-box { border: 1px solid #ddd; padding: 12px; border-radius: 6px; margin-bottom: 10px; display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
-        .btn-add { background: none; border: none; color: var(--fk-blue); font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .bottom-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 15px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; }
-        .btn-continue { background: var(--fk-yellow); border: none; padding: 12px 30px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .form-control { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 10px; box-sizing: border-box; font-family: inherit; }
+        .address-box { border: 1px solid #ddd; padding: 12px; border-radius: 6px; margin-bottom: 10px; display: flex; gap: 10px; align-items: flex-start; cursor: pointer; transition: 0.2s; }
+        .address-box:hover, .address-box.selected { border-color: var(--fk-blue); background: #f4f8ff; }
+        .btn-add { background: none; border: none; color: var(--fk-blue); font-weight: bold; cursor: pointer; margin-top: 10px; padding: 0; }
+        .bottom-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 15px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; z-index: 1000;}
+        .btn-continue { background: var(--fk-yellow); border: none; padding: 12px 30px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 15px; }
+        
+        /* 🔴 Billing Summary specific styles */
+        .bill-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; color: #555; }
+        .bill-total { display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; border-top: 1px dashed #ccc; padding-top: 10px; margin-top: 5px; color: var(--text); }
+        .free-tag { color: #388e3c; font-weight: bold; }
     </style>
 </head>
-<body>
+<body onload="initCheckout()">
 
     <form action="/process_checkout" method="POST" id="checkoutForm">
         <input type="hidden" name="is_direct" value="{{ is_direct }}">
         {% if is_direct %}<input type="hidden" name="product_id" value="{{ direct_product_id }}">{% endif %}
 
         <div class="header">
-            <a href="javascript:history.back()" style="margin-right:15px; text-decoration:none; color:#333;">←</a>
+            <a href="javascript:history.back()" style="margin-right:15px; text-decoration:none; color:#333; font-size: 20px;">←</a>
             <h1 style="font-size: 18px; margin: 0;">Checkout</h1>
         </div>
 
+        <!-- 📍 DELIVERY ADDRESS SECTION -->
         <div class="card">
             <h2 class="card-title">Delivery Address</h2>
             
             {% if saved_addresses %}
                 {% for add in saved_addresses %}
-                <label class="address-box">
-                    <input type="radio" name="saved_addr" onclick="useSaved('{{add.name}}', '{{add.phone}}', '{{add.address}}')">
+                <label class="address-box {% if add.is_default %}selected{% endif %}">
+                    <!-- 🔴 When clicked, it passes the pincode to JS for live calculation -->
+                    <input type="radio" name="address_selection" value="{{ loop.index0 }}" {% if add.is_default %}checked{% endif %} onclick="calculateDelivery('{{ add.pincode }}')">
                     <div>
-                        <div style="font-weight:bold;">{{ add.name }}</div>
-                        <div style="font-size:13px;">{{ add.address }}</div>
-                        <div style="font-size:12px; font-weight:bold;">Ph: {{ add.phone }}</div>
+                        <div style="font-weight:bold;">{{ add.name }} {% if add.is_default %}<span style="color:#2874f0; font-size:10px;">(DEFAULT)</span>{% endif %}</div>
+                        <div style="font-size:13px; margin: 4px 0;">{{ add.address }}</div>
+                        <div style="font-size:12px; font-weight:bold; color: #555;">PIN: {{ add.pincode }} | Ph: {{ add.phone }}</div>
                     </div>
                 </label>
                 {% endfor %}
+            {% else %}
+                <p style="font-size: 13px; color: #cc0000; font-weight: bold;">No saved address found. Please enter a delivery address below.</p>
             {% endif %}
 
-            <button type="button" class="btn-add" onclick="showNewForm()">+ Add / Edit Address</button>
+            <button type="button" class="btn-add" onclick="showNewForm()">+ Add New Address</button>
             
-            <div id="newAddressForm" style="display:none; margin-top:15px;">
-                <input type="text" name="name" id="cName" class="form-control" placeholder="Full Name" required>
-                <input type="tel" name="phone" id="cPhone" class="form-control" placeholder="10-digit Phone" required pattern="[0-9]{10}">
-                <textarea name="address" id="cAddress" class="form-control" rows="3" placeholder="Full Address" required></textarea>
+            <!-- 🔴 NEW ADDRESS FORM -->
+            <div id="newAddressForm" style="{% if saved_addresses %}display:none;{% else %}display:block;{% endif %} margin-top:15px; border-top: 1px solid #eee; padding-top: 15px;">
+                <input type="radio" name="address_selection" value="new" id="newAddrRadio" style="display:none;" {% if not saved_addresses %}checked{% endif %}>
+                
+                <input type="text" name="name" class="form-control" placeholder="Full Name" {% if not saved_addresses %}required{% endif %}>
+                <input type="tel" name="phone" class="form-control" placeholder="10-digit Phone" pattern="[0-9]{10}" {% if not saved_addresses %}required{% endif %}>
+                
+                <!-- Explicit Pincode -->
+                <input type="text" name="new_pincode" id="newPincode" class="form-control" placeholder="6-digit Pincode" pattern="[0-9]{6}" onkeyup="if(this.value.length === 6) calculateDelivery(this.value)" {% if not saved_addresses %}required{% endif %}>
+                
+                <textarea name="address" class="form-control" rows="3" placeholder="Full Address" {% if not saved_addresses %}required{% endif %}></textarea>
+                <div style="font-size: 11px; color: #888;">* This address will be automatically saved to your profile.</div>
             </div>
         </div>
 
+        <!-- 📦 ORDER SUMMARY -->
         <div class="card">
             <h2 class="card-title">Order Summary</h2>
             {% for item in items %}
-            <div style="display:flex; gap:10px; margin-bottom:10px;">
-                <img src="/{{ item.image }}" style="width:50px; height:50px; object-fit:cover;">
-                <div style="font-size:14px;">{{ item.name }} - <strong>₹{{ item.price }}</strong></div>
+            <div style="display:flex; gap:10px; margin-bottom:10px; padding-bottom:10px; border-bottom: 1px solid #f0f0f0;">
+                <img src="/{{ item.image }}" style="width:50px; height:50px; object-fit:cover; border-radius: 6px;">
+                <div>
+                    <div style="font-size:14px; font-weight: 500;">{{ item.name|truncate(35, True) }}</div>
+                    <div style="font-size:14px; font-weight: bold; margin-top: 4px;">₹{{ item.price }}</div>
+                </div>
             </div>
             {% endfor %}
+
+            <!-- 🔴 BILLING DETAILS (Live Update) -->
+            <div style="background: #f9f9f9; padding: 12px; border-radius: 6px; margin-top: 15px;">
+                <div class="bill-row">
+                    <span>Items Total</span>
+                    <span id="items-price">₹{{ total_price }}</span>
+                </div>
+                <div class="bill-row">
+                    <span>Delivery Charge</span>
+                    <span id="delivery-charge" class="free-tag">Calculating...</span>
+                </div>
+                <div class="bill-total">
+                    <span>Total Amount</span>
+                    <span id="final-total">₹{{ total_price }}</span>
+                </div>
+            </div>
         </div>
 
-        <div class="card">
-            <h2 class="card-title">Payment</h2>
-            <label><input type="radio" name="payment_method" value="Online" checked> Online (UPI)</label><br>
-            <label><input type="radio" name="payment_method" value="COD"> Cash on Delivery</label>
+        <!-- 💳 PAYMENT -->
+        <div class="card" style="margin-bottom: 30px;">
+            <h2 class="card-title">Payment Options</h2>
+            <label style="display: block; margin-bottom: 10px; font-size: 14px;"><input type="radio" name="payment_method" value="Online" checked> 📱 Online Payment (UPI / Card)</label>
+            <label style="display: block; font-size: 14px;"><input type="radio" name="payment_method" value="COD"> 💵 Cash on Delivery</label>
         </div>
 
         <div class="bottom-bar">
-            <div style="font-weight:bold; font-size:18px;">₹{{ total_price }}</div>
+            <div>
+                <div style="font-size: 12px; color: #555;">Total Amount</div>
+                <div style="font-weight:900; font-size:20px;" id="bottom-total">₹{{ total_price }}</div>
+            </div>
             <button type="submit" class="btn-continue">Place Order</button>
         </div>
     </form>
 
     <script>
-        function useSaved(name, phone, address) {
-            document.getElementById('newAddressForm').style.display = "block";
-            document.getElementById('cName').value = name;
-            document.getElementById('cPhone').value = phone;
-            document.getElementById('cAddress').value = address;
+        const basePrice = {{ total_price }}; // From Python backend
+        
+        function initCheckout() {
+            // Find which radio is checked initially and calculate delivery
+            const checkedRadio = document.querySelector('input[name="address_selection"]:checked');
+            if(checkedRadio && checkedRadio.value !== 'new') {
+                // To get pincode, we passed it in onclick HTML attribute. We simulate it here.
+                checkedRadio.click();
+            } else if (document.getElementById('newPincode').value.length === 6) {
+                calculateDelivery(document.getElementById('newPincode').value);
+            } else {
+                document.getElementById('delivery-charge').innerText = "Enter Pincode";
+                document.getElementById('delivery-charge').style.color = "#cc0000";
+            }
         }
+
         function showNewForm() {
             document.getElementById('newAddressForm').style.display = "block";
+            document.getElementById('newAddrRadio').checked = true;
+            document.getElementById('delivery-charge').innerText = "Enter Pincode";
+            
+            // Mark fields required
+            document.querySelectorAll('#newAddressForm .form-control').forEach(el => el.required = true);
+        }
+
+        // 🔴 MAGIC: AJAX Call to calculate delivery
+        function calculateDelivery(userPincode) {
+            document.getElementById('delivery-charge').innerText = "Calculating...";
+            document.getElementById('delivery-charge').style.color = "#555";
+            
+            // Here we send the pincode to our Python backend to calculate distance
+            fetch('/calculate_delivery', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pincode: userPincode })
+            })
+            .then(res => res.json())
+            .then(data => {
+                let dCharge = data.charge; // e.g. 0, 40, or 80
+                let finalPrice = basePrice + dCharge;
+
+                if (dCharge === 0) {
+                    document.getElementById('delivery-charge').innerText = "FREE";
+                    document.getElementById('delivery-charge').className = "free-tag";
+                } else {
+                    document.getElementById('delivery-charge').innerText = "₹" + dCharge;
+                    document.getElementById('delivery-charge').className = "";
+                    document.getElementById('delivery-charge').style.color = "#cc0000";
+                }
+
+                document.getElementById('final-total').innerText = "₹" + finalPrice;
+                document.getElementById('bottom-total').innerText = "₹" + finalPrice;
+            })
+            .catch(err => {
+                console.error("Delivery calc error");
+            });
         }
     </script>
 </body>
