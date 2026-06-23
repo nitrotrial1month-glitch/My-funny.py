@@ -34,13 +34,10 @@
         .old-price { color: #888; text-decoration: line-through; font-size: 16px; }
         .discount-badge { background: var(--primary); color: white; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
         
-        /* 🔴 UPDATED: Auto Delivery Checker Box */
-        .delivery-box { background: #fdfdfd; margin: 20px 0; border-radius: 8px; border: 1px solid #e0e0e0; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.02);}
-        .delivery-box-title { font-size: 14px; font-weight: bold; color: var(--text-dark); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
-        .pin-input-group { display: flex; align-items: center; background: white; border: 1px solid #ccc; border-radius: 6px; overflow: hidden; padding: 2px; }
-        .pin-input-group input { flex: 1; border: none; padding: 12px; outline: none; font-size: 14px; font-weight: bold; letter-spacing: 1px; color: var(--text-dark); text-align: center; }
-        .pin-input-group input:focus { border: 1px solid var(--primary); border-radius: 4px; }
-        .delivery-msg { font-size: 12px; margin-top: 10px; color: #555; display: flex; align-items: center; gap: 6px; line-height: 1.4; font-weight: 500;}
+        /* 🔴 Auto Delivery Checker Box */
+        .delivery-box { background: #fdfdfd; margin: 20px 0; border-radius: 8px; border: 1px dashed #ccc; padding: 15px; }
+        .delivery-box-title { font-size: 14px; font-weight: bold; color: var(--text-dark); margin-bottom: 5px; display: flex; align-items: center; gap: 6px; }
+        .delivery-msg { font-size: 13px; color: #555; line-height: 1.4; font-weight: 500;}
         .free-delivery-text { color: #00a650; font-weight: bold; }
         
         /* Sizes */
@@ -126,12 +123,16 @@
 
         <div class="delivery-box">
             <div class="delivery-box-title"><span>📍</span> Delivery Options</div>
-            <div class="pin-input-group">
-                <input type="text" id="checkPincode" placeholder="Enter 6-Digit Pincode" maxlength="6" pattern="[0-9]{6}" value="{{ user_default_pincode | default('') }}" onkeyup="if(this.value.length === 6) checkDeliveryOnProduct()">
-            </div>
-            <div id="deliveryMsg" class="delivery-msg">
-                Please enter your PIN code to check delivery availability and charges.
-            </div>
+            
+            {% if user_default_pincode %}
+                <div id="deliveryMsg" class="delivery-msg">
+                    ⏳ Checking delivery to PIN: <b>{{ user_default_pincode }}</b>...
+                </div>
+            {% else %}
+                <div class="delivery-msg" style="color: #cc0000; font-weight: 500;">
+                    🚚 Please save your address to view delivery charges.
+                </div>
+            {% endif %}
         </div>
 
         {% if product.sizes %}
@@ -186,51 +187,34 @@
         <a href="/checkout/{{ product._id | string }}" class="btn buy-now">Buy Now</a>
     </div>
 
+    {% if user_default_pincode %}
     <script>
-        function checkDeliveryOnProduct() {
-            const pinInput = document.getElementById('checkPincode').value;
+        window.onload = function() {
+            const userPin = "{{ user_default_pincode }}";
             const msgBox = document.getElementById('deliveryMsg');
-            
-            if(pinInput.length !== 6 || isNaN(pinInput)) {
-                msgBox.innerHTML = "⚠️ Please enter a valid 6-digit PIN code.";
-                msgBox.style.color = "#cc0000";
-                return;
-            }
-            
-            msgBox.innerHTML = "⏳ Checking delivery details...";
-            msgBox.style.color = "#555";
 
             fetch('/calculate_delivery', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
-                    pincode: pinInput,
-                    product_id: "{{ product._id | string }}"
+                    pincode: userPin,
+                    product_id: "{{ product._id | string }}" 
                 })
             })
             .then(res => res.json())
             .then(data => {
                 if(data.charge === 0) {
-                    msgBox.innerHTML = "✅ <span class='free-delivery-text'>Free Delivery</span> available to " + pinInput;
-                    msgBox.style.color = "#212121";
+                    msgBox.innerHTML = "✅ <span class='free-delivery-text'>Free Delivery</span> is available to your default address (PIN: " + userPin + ")";
                 } else {
-                    msgBox.innerHTML = "🚚 Delivery Charge: <b>₹" + data.charge + "</b> to " + pinInput;
-                    msgBox.style.color = "#212121";
+                    msgBox.innerHTML = "🚚 Delivery Charge: <b>₹" + data.charge + "</b> to your default address (PIN: " + userPin + ")";
                 }
             })
             .catch(err => {
-                // If backend route is not ready yet
-                msgBox.innerHTML = "🚚 Delivery is available to " + pinInput + " (Charges calculated at checkout).";
-                msgBox.style.color = "#212121";
+                msgBox.innerHTML = "🚚 Delivery charges will be finalized at checkout.";
             });
         }
-
-        // পেজ লোড হওয়ার সাথে সাথেই অটো-চেক করবে (যদি আগে থেকে পিনকোড সেভ থাকে)
-        window.onload = function() {
-            if(document.getElementById('checkPincode').value.length === 6) {
-                checkDeliveryOnProduct();
-            }
-        }
     </script>
+    {% endif %}
+
 </body>
 </html>
