@@ -26,7 +26,6 @@ TOKEN_URL = f"{DISCORD_API_BASE_URL}/oauth2/token"
 # 🆕 Security Decorators for Route Protection
 # ==========================================
 def get_current_user():
-    """Fetches user details from session and database."""
     user_session = session.get('user')
     if not user_session:
         return None
@@ -46,23 +45,18 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# 👑 Master Key: Owner (Super Admin) সব ড্যাশবোর্ডে যেতে পারবে!
 def role_required(*allowed_roles):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             user = get_current_user()
-            
             if not user:
                 abort(403, description="Access Denied: You must be logged in.")
             
             user_role = user.get("role")
-            
-            # Owner হলে যেকোনো ড্যাশবোর্ডে অ্যাক্সেস পাবে
             if user_role == "owner":
                 return f(*args, **kwargs)
                 
-            # অন্য ইউজারদের নির্দিষ্ট পারমিশন চেক করা
             if user_role not in allowed_roles:
                 abort(403, description="Access Denied: You do not have permission to view this page.")
                 
@@ -192,7 +186,6 @@ def owner_dashboard():
     pending_products = list(db_products.find({"status": "Pending"})) if db_products is not None else []
     latest_orders = list(db_orders.find({}).sort("_id", -1).limit(20)) if db_orders is not None else []
     
-    # 🔴 Pending ইউজারদের লিস্ট বের করা
     pending_sellers = list(db_users.find({"role": "pending_seller"})) if db_users is not None else []
     pending_deliveries = list(db_users.find({"role": "pending_delivery"})) if db_users is not None else []
 
@@ -253,21 +246,6 @@ def apply_delivery():
 @auth_bp.route('/submit-seller-application', methods=['POST'])
 @login_required
 def submit_seller_application():
-    user = session.get('user')
-    col = Database.get_collection("users")
-    
-    # ফর্মের ডেটা রিসিভ করা
-    store_name = request.form.get('store_name')
-    phone = request.form.get('phone_number')
-    address = request.form.get('address')
-    upi_id = request.form.get('upi_id')
-    bank_account = request.form.get('bank_account', '') # Optional
-    ifsc_code = request.form.get('ifsc_code', '') # Optional
-    id_type = request.form.get('id_type')
-    id_number = request.form.get('id_number')
-@auth_bp.route('/submit-seller-application', methods=['POST'])
-@login_required
-def submit_seller_application():
     try:
         user = session.get('user')
         col = Database.get_collection("users")
@@ -316,10 +294,10 @@ def submit_seller_application():
         
         session['user']['role'] = 'pending_seller'
         session.modified = True
-        flash("Submitted successfully!")
+        flash("Your Seller application is submitted and waiting for Admin approval.")
         return redirect('/account')
     except Exception as e:
-        return f"Backend Error: {str(e)}", 500  # 🔴 কোনো ভুল হলে আটকে না থেকে স্ক্রিনে লেখা উঠবে
+        return f"Submission Error: {str(e)}", 500
 
 
 @auth_bp.route('/submit-delivery-application', methods=['POST'])
@@ -373,12 +351,11 @@ def submit_delivery_application():
         
         session['user']['role'] = 'pending_delivery'
         session.modified = True
-        flash("Submitted successfully!")
+        flash("Your Delivery application is submitted and waiting for Admin approval.")
         return redirect('/account')
     except Exception as e:
-        return f"Backend Error: {str(e)}", 500  # 🔴 কোনো ভুল হলে আটকে না থেকে স্ক্রিনে লেখা উঠবে
-        
-        
+        return f"Submission Error: {str(e)}", 500
+
 
 # ==========================================
 # ⚖️ Admin Approval / Rejection Routes
@@ -409,4 +386,3 @@ def reject_user(discord_id):
         flash("Application Rejected and data cleared.")
         
     return redirect('/owner-dashboard')
-
