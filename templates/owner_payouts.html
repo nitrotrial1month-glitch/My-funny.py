@@ -5,47 +5,90 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payouts - inwear</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f6f8; margin: 0; padding: 20px; color: #333; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f6f8; margin: 0; padding: 20px; color: #333; padding-bottom: 50px; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .back-btn { text-decoration: none; color: #cc0000; font-weight: bold; font-size: 14px; }
+        
+        /* Revenue Card */
         .revenue-card { background: linear-gradient(135deg, #00a650 0%, #007b3b 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center; box-shadow: 0 4px 10px rgba(0,166,80,0.2); }
         .revenue-card h3 { margin: 0; font-size: 14px; opacity: 0.9; }
         .revenue-card h1 { margin: 10px 0 0; font-size: 32px; }
-        .payout-card { background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #ff9900; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        
+        .section-title { font-size: 14px; color: #666; text-transform: uppercase; margin-bottom: 10px; margin-top: 25px; border-bottom: 2px solid #ddd; padding-bottom: 5px;}
+        
+        /* Pending Card */
+        .payout-card { background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px; border-left: 4px solid #ff9900; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .payout-info { display: flex; justify-content: space-between; align-items: center; }
         .payout-info h4 { margin: 0; font-size: 16px; color: #212121; }
-        .payout-info p { margin: 4px 0 0; font-size: 12px; color: #666; font-weight: bold; }
-        .pay-btn { background: #212121; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
+        .payout-info .amount { font-size: 18px; font-weight: 900; color: #cc0000; }
+        
+        .upi-box { background: #f9f9f9; padding: 10px; border-radius: 6px; border: 1px dashed #ccc; font-family: monospace; font-size: 14px; font-weight: bold; color: #cc0000; margin-top: 5px; }
+        .pay-btn { background: #212121; color: white; border: none; padding: 10px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 5px; }
+        
+        /* Success Card */
+        .success-card { background: white; padding: 12px 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #00a650; opacity: 0.8; box-shadow: 0 1px 3px rgba(0,0,0,0.05);}
+        .success-info h4 { margin: 0; font-size: 14px; color: #333; }
+        .success-info p { margin: 2px 0 0; font-size: 11px; color: #777; }
+        .success-amount { font-weight: bold; color: #00a650; font-size: 15px;}
     </style>
 </head>
 <body>
     <div class="header">
-        <h2>💸 Payouts</h2>
+        <h2 style="margin: 0;">💸 Payouts</h2>
         <a href="/owner-dashboard" class="back-btn">‹ Back to Panel</a>
     </div>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+            <div style="background: #00a650; color: white; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 13px; text-align: center; font-weight: bold;">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
 
     <div class="revenue-card">
         <h3>Total Platform Revenue (10% Cut)</h3>
         <h1>₹{{ "%.2f"|format(platform_revenue) }}</h1>
     </div>
 
-    <h3 style="font-size: 14px; color: #666; text-transform: uppercase;">Pending Requests</h3>
+    <div class="section-title">🚨 Pending Requests</div>
 
-    {% if payouts %}
-        {% for p in payouts %}
+    {% if pending %}
+        {% for p in pending %}
         <div class="payout-card">
             <div class="payout-info">
-                <h4>{{ p.seller_name }}</h4>
-                <p style="color: #cc0000;">Amount: ₹{{ p.amount }}</p>
-                <p>UPI ID: {{ p.upi_id }}</p>
+                <h4>👤 {{ p.seller_name }}</h4>
+                <span class="amount">₹{{ p.amount }}</span>
             </div>
-            <form action="/owner/approve-payout/{{ p._id }}" method="POST">
-                <button type="submit" class="pay-btn" onclick="return confirm('Confirm payment sent to UPI?')">Mark Paid</button>
+            <div style="font-size: 12px; color: #666;">Requested on: {{ p.date | default('Recently') }}</div>
+            <div>
+                <div style="font-size: 12px; color: #555;">Pay to this UPI ID:</div>
+                <div class="upi-box">{{ p.upi_id }}</div>
+            </div>
+            <form action="/owner/approve-payout/{{ p._id }}" method="POST" style="margin: 0;">
+                <button type="submit" class="pay-btn" onclick="return confirm('Confirm payment sent to {{ p.upi_id }}?')">✅ Mark Paid</button>
             </form>
         </div>
         {% endfor %}
     {% else %}
-        <p style="text-align: center; color: #888; background: white; padding: 20px; border-radius: 10px;">No pending payout requests!</p>
+        <p style="text-align: center; color: #888; background: white; padding: 20px; border-radius: 10px; font-size: 14px;">No pending payout requests!</p>
     {% endif %}
+
+    <div class="section-title">✅ Completed Payouts</div>
+    
+    {% if completed %}
+        {% for c in completed %}
+        <div class="success-card">
+            <div class="success-info">
+                <h4>{{ c.seller_name }}</h4>
+                <p>UPI: {{ c.upi_id }}</p>
+            </div>
+            <div class="success-amount">₹{{ c.amount }}</div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p style="text-align: center; color: #888; font-size: 13px;">No completed payouts yet.</p>
+    {% endif %}
+
 </body>
 </html>
-
