@@ -1,11 +1,16 @@
 import os
 import requests
 import random
-from flask import Blueprint, redirect, session, request, render_template, abort
+from flask import Blueprint, redirect, session, request, render_template, abort, flash
 from functools import wraps
+from werkzeug.utils import secure_filename
 from database import Database
 
-# 🔴 ১. Blueprint তৈরি করা হলো
+# 🔴 ছবি সেভ করার ফোল্ডার তৈরি করা
+UPLOAD_FOLDER = 'static/uploads'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# Blueprint তৈরি করা হলো
 auth_bp = Blueprint('auth', __name__)
 
 # ⚠️ Discord OAuth2 Credentials
@@ -66,14 +71,16 @@ def role_required(*allowed_roles):
     return decorator
 
 
-# 🔴 ২. ডিসকর্ড লগইন রুট
+# ==========================================
+# 🔴 লগইন এবং কলব্যাক রুট
+# ==========================================
+
 @auth_bp.route('/login/discord')
 def login_discord():
     auth_url = f"{AUTHORIZATION_BASE_URL}?client_id={DISCORD_CLIENT_ID}&redirect_uri={DISCORD_REDIRECT_URI}&response_type=code&scope=identify%20email"
     return redirect(auth_url)
 
 
-# 🔴 ৩. ডিসকর্ড কলব্যাক রুট
 @auth_bp.route('/discord/callback')
 def discord_callback():
     code = request.args.get('code')
@@ -133,7 +140,6 @@ def discord_callback():
     return redirect('/')
 
 
-# 🔴 ৪. ইউজার অ্যাকাউন্ট পেজ রুট
 @auth_bp.route('/account')
 def account_page():
     user_data = get_current_user()
@@ -143,7 +149,6 @@ def account_page():
     return render_template('account.html', current_user=user_data)
 
 
-# 🔴 ৫. লগআউট রুট
 @auth_bp.route('/logout')
 def logout():
     session.pop('user', None)
@@ -157,7 +162,6 @@ def logout():
 @auth_bp.route('/dashboards')
 @login_required
 def smart_dashboard_redirect():
-    """Redirects user to their specific dashboard based on role."""
     user = get_current_user()
     role = user.get("role")
     
@@ -187,6 +191,10 @@ def owner_dashboard():
     
     pending_products = list(db_products.find({"status": "Pending"})) if db_products is not None else []
     latest_orders = list(db_orders.find({}).sort("_id", -1).limit(20)) if db_orders is not None else []
+    
+    # 🔴 Pending ইউজারদের লিস্ট বের করা
+    pending_sellers = list(db_users.find({"role": "pending_seller"})) if db_users is not None else []
+    pending_deliveries = list(db_users.find({"role": "pending_delivery"})) if db_users is not None else []
 
     return render_template('owner_dashboard.html', 
                            current_user=user,
@@ -194,7 +202,9 @@ def owner_dashboard():
                            total_orders=total_orders,
                            total_products=total_products,
                            pending_products=pending_products,
-                           orders=latest_orders)
+                           orders=latest_orders,
+                           pending_sellers=pending_sellers,
+                           pending_deliveries=pending_deliveries)
 
 
 # 🏪 সেলার (Seller) ড্যাশবোর্ড
@@ -202,8 +212,6 @@ def owner_dashboard():
 @role_required('seller', 'owner')
 def seller_dashboard():
     user = get_current_user()
-    
-    # 🔴 FIXED KeyError: 'id'
     user_id = user.get('discord_id') or user.get('id')
     
     col = Database.get_collection("products")
@@ -217,14 +225,16 @@ def seller_dashboard():
 @role_required('delivery', 'owner')
 def delivery_dashboard():
     user = get_current_user()
-    
     col = Database.get_collection("orders")
     active_orders = list(col.find({"status": "Confirmed"}).sort("_id", -1)) if col is not None else []
     
     return render_template('delivery_dashboard.html', current_user=user, orders=active_orders)
 
 
-# Forms
+# ==========================================
+# 📝 Form Rendering
+# ==========================================
+
 @auth_bp.route('/apply-seller')
 @login_required
 def apply_seller():
@@ -234,7 +244,8 @@ def apply_seller():
 @login_required
 def apply_delivery():
     return render_template('apply-delivery.html')
-    
+
+
 # ==========================================
 # 🚀 Form Submission Handlers
 # ==========================================
@@ -245,12 +256,43 @@ def submit_seller_application():
     user = session.get('user')
     col = Database.get_collection("users")
     
-    if col is not None:
-        col.update_one({"discord_id": user['id']}, {"$set": {"role": "seller"}})
+    # ফর্মের ডেটা রিসিভ করা
+    store_name = request.form.get('store_name')
+    phone = request.form.get('phone_number')
+    address = request.form.get('address')
+    upi_id = request.form.get('upi_id')
+    id_type = request.form.get('id_type')
+    id_number = request.form.get('id_number')
     
-    session['user']['role'] = 'seller'
+    # ছবি রিসিভ ও সেভ করা
+    kyc_file = request.files.get('id_document')
+    profile_file = request.files.get('user_profile_photo')
+    
+    kyc_filename = secure_filename(kyc_file.filename) if kyc_file else ""
+    profile_filename = secure_filename(profile_file.filename) if profile_file else ""
+    
+    if kyc_file: kyc_file.save(os.path.join(UPLOAD_FOLDER, kyc_filename))
+    if profile_file: profile_file.save(os.path.join(UPLOAD_FOLDER, profile_filename))
+    
+    if col is not None:
+        col.update_one({"discord_id": user['id']}, {"$set": {
+            "role": "pending_seller",
+            "application_data": {
+                "store_name": store_name,
+                "phone": phone,
+                "address": address,
+                "upi_id": upi_id,
+                "id_type": id_type,
+                "id_number": id_number,
+                "kyc_image": kyc_filename,
+                "profile_image": profile_filename
+            }
+        }})
+    
+    session['user']['role'] = 'pending_seller'
     session.modified = True
-    return redirect('/seller-dashboard')
+    flash("Your Seller application is submitted and waiting for Admin approval.")
+    return redirect('/account')
 
 
 @auth_bp.route('/submit-delivery-application', methods=['POST'])
@@ -259,10 +301,78 @@ def submit_delivery_application():
     user = session.get('user')
     col = Database.get_collection("users")
     
+    # ফর্মের ডেটা রিসিভ করা
+    full_name = request.form.get('full_name')
+    phone = request.form.get('phone_number')
+    delivery_area = request.form.get('delivery_area')
+    vehicle_type = request.form.get('vehicle_type')
+    upi_id = request.form.get('upi_id')
+    id_type = request.form.get('id_type')
+    id_number = request.form.get('id_number')
+    
+    # ছবি রিসিভ ও সেভ করা
+    kyc_file = request.files.get('id_document')
+    profile_file = request.files.get('user_profile_photo')
+    dl_file = request.files.get('driving_license')
+    
+    kyc_filename = secure_filename(kyc_file.filename) if kyc_file else ""
+    profile_filename = secure_filename(profile_file.filename) if profile_file else ""
+    dl_filename = secure_filename(dl_file.filename) if dl_file else ""
+    
+    if kyc_file: kyc_file.save(os.path.join(UPLOAD_FOLDER, kyc_filename))
+    if profile_file: profile_file.save(os.path.join(UPLOAD_FOLDER, profile_filename))
+    if dl_file: dl_file.save(os.path.join(UPLOAD_FOLDER, dl_filename))
+    
     if col is not None:
-        col.update_one({"discord_id": user['id']}, {"$set": {"role": "delivery"}})
+        col.update_one({"discord_id": user['id']}, {"$set": {
+            "role": "pending_delivery",
+            "application_data": {
+                "full_name": full_name,
+                "phone": phone,
+                "area": delivery_area,
+                "vehicle": vehicle_type,
+                "upi_id": upi_id,
+                "id_type": id_type,
+                "id_number": id_number,
+                "kyc_image": kyc_filename,
+                "profile_image": profile_filename,
+                "dl_image": dl_filename
+            }
+        }})
     
-    session['user']['role'] = 'delivery'
+    session['user']['role'] = 'pending_delivery'
     session.modified = True
-    return redirect('/delivery-dashboard')
-    
+    flash("Your Delivery application is submitted and waiting for Admin approval.")
+    return redirect('/account')
+
+
+# ==========================================
+# ⚖️ Admin Approval / Rejection Routes
+# ==========================================
+
+@auth_bp.route('/admin/approve/<discord_id>')
+@role_required('owner')
+def approve_user(discord_id):
+    col = Database.get_collection("users")
+    if col is not None:
+        user = col.find_one({"discord_id": discord_id})
+        if user:
+            new_role = "seller" if user.get('role') == "pending_seller" else "delivery"
+            col.update_one({"discord_id": discord_id}, {"$set": {"role": new_role}})
+            flash(f"User approved as {new_role} successfully!")
+            
+    return redirect('/owner-dashboard')
+
+@auth_bp.route('/admin/reject/<discord_id>')
+@role_required('owner')
+def reject_user(discord_id):
+    col = Database.get_collection("users")
+    if col is not None:
+        col.update_one({"discord_id": discord_id}, {
+            "$set": {"role": "user"},
+            "$unset": {"application_data": ""}
+        })
+        flash("Application Rejected and data cleared.")
+        
+    return redirect('/owner-dashboard')
+
