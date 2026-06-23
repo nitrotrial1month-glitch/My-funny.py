@@ -110,7 +110,6 @@
 
         <form action="/submit-seller-application" method="POST" enctype="multipart/form-data">
             
-            <!-- Section 1 -->
             <div class="section-label">1. Store Details</div>
             
             <div class="input-group">
@@ -126,7 +125,6 @@
                 <textarea name="address" rows="2" placeholder="Full address for delivery pickup" required></textarea>
             </div>
 
-            <!-- Section 2 -->
             <div class="section-label">2. Payment Details (For Payouts)</div>
             
             <div class="input-group">
@@ -142,7 +140,6 @@
                 <input type="text" name="ifsc_code" placeholder="Enter IFSC Code">
             </div>
 
-            <!-- Section 3 -->
             <div class="section-label">3. Verification Document (KYC)</div>
             
             <div class="input-group">
@@ -153,6 +150,11 @@
                     <option value="pan">PAN Card</option>
                     <option value="voter">Voter ID</option>
                 </select>
+            </div>
+
+            <div class="input-group">
+                <label class="main-label">ID Document Number *</label>
+                <input type="text" name="id_number" placeholder="Enter your ID number" required>
             </div>
 
             <div class="input-group">
@@ -167,6 +169,17 @@
             </div>
 
             <div class="input-group">
+                <label class="main-label">Your Profile Photo *</label>
+                <label class="file-upload-box" for="profile_photo_upload">
+                    <div class="file-icon">👤</div>
+                    <div class="file-text">Upload a clear selfie or portrait photo of yourself.</div>
+                    <span class="browse-btn">Browse Photo</span>
+                    <input type="file" id="profile_photo_upload" name="user_profile_photo" accept=".jpg, .jpeg, .png" required onchange="updateFileName(this, 'profile_file_name')">
+                </label>
+                <div id="profile_file_name" class="file-name-display"></div>
+            </div>
+
+            <div class="input-group">
                 <label class="main-label">Trade / Seller License (Optional)</label>
                 <label class="file-upload-box" for="license_upload">
                     <div class="file-icon">🏢</div>
@@ -177,7 +190,6 @@
                 <div id="license_file_name" class="file-name-display"></div>
             </div>
 
-            <!-- Section 4 (Terms & Submit) -->
             <div class="checkbox-group">
                 <input type="checkbox" id="agree_terms" name="agree_terms" required>
                 <label for="agree_terms">
