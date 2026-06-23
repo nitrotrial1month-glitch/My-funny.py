@@ -2,57 +2,185 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Delivery Dashboard | Inwear</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Delivery Panel | inwear</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f6f8; margin: 0; padding-bottom: 60px; }
-        .header { background: #1a1a2e; color: white; padding: 20px; text-align: center; font-weight: bold; }
-        .container { padding: 15px; }
-        .order-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 5px solid #28a745; }
-        .btn { display: block; width: 100%; padding: 12px; text-align: center; border-radius: 8px; font-weight: bold; text-decoration: none; margin-top: 10px; cursor: pointer; border: none; font-size: 14px; }
-        .btn-pickup { background-color: #007bff; color: white; }
-        .btn-delivered { background-color: #28a745; color: white; }
-        .status-badge { font-size: 12px; padding: 4px 8px; border-radius: 4px; background: #e9ecef; }
+        :root { 
+            --primary: #1a1a2e; --success: #00a650; --blue: #2874f0; 
+            --danger: #cc0000; --bg: #f4f6f8; --white: #ffffff; 
+        }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; padding-bottom: 80px; color: #212121; }
         
-        /* OTP Input Styling */
-        .otp-section { margin-top: 15px; padding-top: 15px; border-top: 1px dashed #e0e0e0; display: flex; gap: 10px; }
-        .otp-input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; outline: none; text-align: center; letter-spacing: 2px; font-weight: bold; }
+        /* Header */
+        .top-header { background: var(--primary); color: white; padding: 20px 15px 30px 15px; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .user-info h3 { margin: 0; font-size: 18px; }
+        .user-info p { margin: 2px 0 0; font-size: 11px; color: #aaa; }
+        .status-toggle { background: var(--success); padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+
+        /* Wallet & Stats Card */
+        .wallet-card { background: var(--white); margin: -20px 15px 15px 15px; padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); display: flex; justify-content: space-between; }
+        .wallet-item { flex: 1; text-align: center; }
+        .wallet-item:first-child { border-right: 1px solid #eee; }
+        .wallet-item p { margin: 0; font-size: 11px; color: #888; font-weight: bold; text-transform: uppercase; }
+        .wallet-item h2 { margin: 5px 0 0; font-size: 20px; }
+        .earn-text { color: var(--success); }
+        .cash-text { color: var(--danger); }
+
+        /* Scan Button */
+        .scan-section { margin: 0 15px 20px 15px; }
+        .btn-scan { width: 100%; background: var(--primary); color: white; border: none; padding: 15px; border-radius: 12px; font-size: 16px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; box-shadow: 0 4px 10px rgba(26, 26, 46, 0.2); }
+        
+        .section-title { padding: 0 15px; font-size: 14px; font-weight: 900; color: #555; text-transform: uppercase; margin-bottom: 10px; }
+
+        /* Orders Container */
+        .container { padding: 0 15px; }
+        .order-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 4px solid var(--blue); }
+        .order-meta { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .status-badge { font-size: 11px; padding: 4px 8px; border-radius: 20px; font-weight: bold; text-transform: uppercase; }
+        .badge-confirmed { background: #fff3cd; color: #856404; }
+        .badge-out { background: #d1ecf1; color: #0c5460; }
+
+        .btn { display: block; width: 100%; padding: 14px; text-align: center; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; margin-top: 12px; font-size: 14px; }
+        .btn-pickup { background: var(--blue); color: white; }
+        .btn-delivered { background: var(--success); color: white; }
+        .btn-issue { background: #f8d7da; color: #721c24; margin-top: 10px; }
+        .btn-red { background: var(--danger); color: white; margin-top: 10px; }
+        
+        .otp-input { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 8px; font-size: 16px; text-align: center; letter-spacing: 5px; font-weight: bold; margin-bottom: 10px; box-sizing: border-box; }
+        
+        /* Dropdown for Cancel Reason */
+        .issue-box { display: none; margin-top: 15px; padding: 15px; background: #fff5f5; border-radius: 8px; border: 1px dashed #ffcccc; }
+        .issue-box select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; margin-bottom: 10px; font-size: 13px; outline: none; }
+
+        .empty-state { text-align: center; padding: 40px 20px; color: #888; background: white; border-radius: 12px; }
+        .empty-icon { font-size: 40px; display: block; margin-bottom: 10px; }
+
+        /* Bottom Nav */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--white); display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -5px 15px rgba(0,0,0,0.05); z-index: 1000; border-top: 1px solid #eee; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #888; font-size: 12px; font-weight: bold; }
+        .nav-item.active { color: var(--primary); }
+        .nav-icon { font-size: 22px; margin-bottom: 3px; }
     </style>
 </head>
 <body>
-    <div class="header">🚚 Delivery Panel</div>
+
+    <div class="top-header">
+        <div class="user-info">
+            <h3>🛵 Fleet Panel</h3>
+            <p>{{ current_user.application_data.full_name | default('Delivery Partner') }}</p>
+        </div>
+        <div class="status-toggle">🟢 Online</div>
+    </div>
+
+    <div class="wallet-card">
+        <div class="wallet-item">
+            <p>Wallet Earnings</p>
+            <h2 class="earn-text">₹{{ current_user.wallet_balance | default('0.00') }}</h2>
+        </div>
+        <div class="wallet-item">
+            <p>Cash to Deposit</p>
+            <h2 class="cash-text">₹{{ current_user.cash_in_hand | default('0.00') }}</h2>
+        </div>
+    </div>
+
+    <div class="scan-section">
+        <label for="cameraScan" class="btn-scan" style="margin: 0; cursor: pointer;">
+            📷 Scan Parcel QR
+            <input type="file" id="cameraScan" accept="image/*" capture="environment" style="display: none;">
+        </label>
+    </div>
+
+    <div class="section-title">📦 Today's Tasks</div>
+
     <div class="container">
         {% if orders %}
             {% for order in orders %}
             <div class="order-card">
-                <h3>Order #{{ order._id|string|truncate(8, True, '')|upper }}</h3>
-                <p><strong>Customer:</strong> {{ order.name }}</p>
-                <p><strong>Phone:</strong> {{ order.phone }}</p>
-                <p><strong>Address:</strong> {{ order.address }}</p>
-                <p><strong>To Collect (COD):</strong> ₹{{ order.total_price }}</p>
-                <p><strong>Status:</strong> <span class="status-badge">{{ order.status }}</span></p>
+                <div class="order-meta">
+                    <span style="font-weight: 800; font-size: 14px;">#{{ order._id|string|truncate(8, True, '')|upper }}</span>
+                    <span class="status-badge {% if order.status == 'Confirmed' %}badge-confirmed{% else %}badge-out{% endif %}">
+                        {{ order.status }}
+                    </span>
+                </div>
                 
+                <h4 style="margin: 5px 0;">{{ order.name }}</h4>
+                <p style="margin: 2px 0; font-size: 13px; color: #555;">📍 {{ order.address }}</p>
+                <p style="margin: 8px 0; font-size: 16px; font-weight: 900; color: var(--danger);">💰 Collect COD: ₹{{ order.total_price }}</p>
+
                 {% if order.status == 'Confirmed' %}
                     <form action="/delivery/send_otp/{{ order._id }}" method="POST">
-                        <button type="submit" class="btn btn-pickup">Accept & Send OTP to Customer</button>
+                        <button type="submit" class="btn btn-pickup">Accept & Pick Up Parcel</button>
                     </form>
                     
                 {% elif order.status == 'Out for Delivery' %}
-                    <form action="/delivery/verify_otp/{{ order._id }}" method="POST" class="otp-section">
-                        <input type="text" name="otp" class="otp-input" placeholder="Enter 4-Digit PIN" required maxlength="4">
-                        <button type="submit" class="btn btn-delivered" style="flex: 1; margin-top: 0;">Verify & Mark Delivered</button>
+                    <form action="/delivery/verify_otp/{{ order._id }}" method="POST">
+                        <input type="text" name="otp" class="otp-input" placeholder="Enter Customer OTP" required maxlength="4" pattern="\d*">
+                        <button type="submit" class="btn btn-delivered">✅ Verify & Mark Delivered</button>
                     </form>
+
+                    <button type="button" class="btn btn-issue" onclick="toggleIssueBox('{{ order._id }}')">⚠️ Report Issue / Cancel</button>
+
+                    <div id="issue-box-{{ order._id }}" class="issue-box">
+                        <p style="margin: 0 0 10px 0; font-size: 12px; font-weight: bold; color: var(--danger);">Why is this parcel not delivered?</p>
+                        <form action="/delivery/report_failed/{{ order._id }}" method="POST">
+                            <select name="fail_reason" required>
+                                <option value="" disabled selected>Select Reason...</option>
+                                <option value="Customer Refused (Cancelled)">Customer Refused / Cancelled</option>
+                                <option value="Customer Not Available">Customer Not Available</option>
+                                <option value="Fake Order / Wrong Phone">Fake Order / Phone Switched Off</option>
+                                <option value="Address Not Found">Address Not Found</option>
+                            </select>
+                            <button type="submit" class="btn btn-red" style="margin-top: 5px;" onclick="return confirm('Return this parcel to the seller?')">Submit & Return to Seller</button>
+                        </form>
+                    </div>
                 {% endif %}
             </div>
             {% endfor %}
         {% else %}
-            <div style="text-align: center; padding: 40px; color: #888;">
-                <span style="font-size: 40px; display: block; margin-bottom: 10px;">📦</span>
-                <p>No pending orders right now.</p>
+            <div class="empty-state">
+                <span class="empty-icon">🎉</span>
+                <h3 style="margin: 0 0 5px 0; color: var(--primary);">No Pending Tasks</h3>
+                <p style="margin: 0; font-size: 13px;">All deliveries are clear for today. Take a rest!</p>
             </div>
         {% endif %}
-        
-        <a href="/" style="display: block; text-align: center; margin-top: 20px; color: #cc0000; font-weight: bold; text-decoration: none;">← Back to Home</a>
     </div>
+
+    <div class="bottom-nav">
+        <a href="/delivery-dashboard" class="nav-item active">
+            <span class="nav-icon">📦</span>
+            <span>Tasks</span>
+        </a>
+        <a href="/delivery/wallet" class="nav-item">
+            <span class="nav-icon">💰</span>
+            <span>Wallet</span>
+        </a>
+        <a href="/delivery/history" class="nav-item">
+            <span class="nav-icon">📜</span>
+            <span>History</span>
+        </a>
+        <a href="/account" class="nav-item">
+            <span class="nav-icon">👤</span>
+            <span>Profile</span>
+        </a>
+    </div>
+
+    <script>
+        // স্ক্যানার মেসেজ
+        document.getElementById('cameraScan').addEventListener('change', function() {
+            if (this.files && this.files.length > 0) {
+                alert("QR Code scanned! Redirecting to order details...");
+            }
+        });
+
+        // ক্যানসেল বক্স খোলার লজিক
+        function toggleIssueBox(orderId) {
+            var box = document.getElementById('issue-box-' + orderId);
+            if (box.style.display === "none" || box.style.display === "") {
+                box.style.display = "block";
+            } else {
+                box.style.display = "none";
+            }
+        }
+    </script>
 </body>
 </html>
