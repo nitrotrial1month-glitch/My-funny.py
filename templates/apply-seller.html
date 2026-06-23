@@ -49,17 +49,18 @@
         }
 
         .input-group { margin-bottom: 18px; }
-        .input-group label { display: block; font-size: 13px; font-weight: bold; color: var(--text-dark); margin-bottom: 6px; }
-        .input-group input, .input-group textarea {
+        .input-group label.main-label { display: block; font-size: 13px; font-weight: bold; color: var(--text-dark); margin-bottom: 6px; }
+        .input-group input[type="text"], .input-group input[type="tel"], .input-group textarea, .input-group select {
             width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px;
             font-size: 14px; color: var(--text-dark); background-color: #f9f9f9; box-sizing: border-box; outline: none; transition: border 0.3s;
+            font-family: inherit;
         }
-        .input-group input:focus, .input-group textarea:focus { border-color: var(--primary-red); background-color: var(--white); }
+        .input-group input:focus, .input-group textarea:focus, .input-group select:focus { border-color: var(--primary-red); background-color: var(--white); }
 
         /* Document Upload Box */
         .file-upload-box {
             border: 2px dashed #ccc; border-radius: 10px; padding: 25px 20px;
-            text-align: center; background-color: #fafafa; cursor: pointer; transition: 0.3s;
+            text-align: center; background-color: #fafafa; cursor: pointer; transition: 0.3s; display: block;
         }
         .file-upload-box:hover { border-color: var(--primary-red); background-color: #fff5f5; }
         .file-icon { font-size: 30px; margin-bottom: 10px; }
@@ -69,6 +70,14 @@
             background-color: var(--white); border: 1px solid var(--border-color); padding: 6px 15px;
             border-radius: 20px; font-size: 12px; font-weight: bold; color: var(--text-dark); pointer-events: none;
         }
+        .file-name-display { font-size: 12px; color: #00a650; margin-top: 8px; text-align: center; font-weight: bold; display: none; }
+
+        /* Checkbox & Terms */
+        .checkbox-group { display: flex; align-items: flex-start; gap: 10px; margin-top: 25px; padding: 15px; background: #fff9f9; border-radius: 8px; border: 1px solid #ffe6e6; }
+        .checkbox-group input[type="checkbox"] { margin-top: 3px; transform: scale(1.3); accent-color: var(--primary-red); cursor: pointer; }
+        .checkbox-group label { font-size: 13px; color: var(--text-dark); line-height: 1.5; cursor: pointer; }
+        .checkbox-group a { color: var(--primary-red); font-weight: bold; text-decoration: none; }
+        .checkbox-group a:hover { text-decoration: underline; }
 
         .submit-btn {
             width: 100%; background-color: var(--primary-red); color: white; border: none;
@@ -76,7 +85,9 @@
             margin-top: 20px; box-shadow: 0 4px 10px rgba(204, 0, 0, 0.2); transition: transform 0.1s;
         }
         .submit-btn:active { transform: scale(0.98); }
-        .terms-text { font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 15px; line-height: 1.5; }
+        
+        .info-alert { font-size: 12px; color: #d97706; background: #fef3c7; padding: 10px; border-radius: 6px; margin-bottom: 15px; border-left: 3px solid #f59e0b; font-weight: bold;}
+
     </style>
 </head>
 <body>
@@ -92,62 +103,98 @@
     </div>
 
     <div class="form-container">
+        
+        <div class="info-alert">
+            ℹ️ All applications are manually verified by our team. Please provide clear details and original documents.
+        </div>
+
         <form action="/submit-seller-application" method="POST" enctype="multipart/form-data">
             
+            <!-- Section 1 -->
             <div class="section-label">1. Store Details</div>
             
             <div class="input-group">
-                <label>Store / Brand Name</label>
+                <label class="main-label">Store / Brand Name *</label>
                 <input type="text" name="store_name" placeholder="e.g. Urban Style" required>
             </div>
             <div class="input-group">
-                <label>Contact Number (WhatsApp)</label>
+                <label class="main-label">Contact Number (WhatsApp) *</label>
                 <input type="tel" name="phone_number" placeholder="Enter mobile number" required>
             </div>
             <div class="input-group">
-                <label>Pickup / Store Address</label>
+                <label class="main-label">Pickup / Store Address *</label>
                 <textarea name="address" rows="2" placeholder="Full address for delivery pickup" required></textarea>
             </div>
 
+            <!-- Section 2 -->
             <div class="section-label">2. Payment Details (For Payouts)</div>
             
             <div class="input-group">
-                <label>UPI ID (PhonePe / GPay / Paytm)</label>
+                <label class="main-label">UPI ID (Required) *</label>
                 <input type="text" name="upi_id" placeholder="e.g. yourname@ybl" required>
             </div>
             <div class="input-group">
-                <label>Bank Account Number (Optional)</label>
+                <label class="main-label">Bank Account Number (Optional)</label>
                 <input type="text" name="bank_account" placeholder="Enter Bank Account No.">
             </div>
             <div class="input-group">
-                <label>Bank IFSC Code (Optional)</label>
+                <label class="main-label">Bank IFSC Code (Optional)</label>
                 <input type="text" name="ifsc_code" placeholder="Enter IFSC Code">
             </div>
 
-            <div class="section-label">3. Verification Document</div>
+            <!-- Section 3 -->
+            <div class="section-label">3. Verification Document (KYC)</div>
             
             <div class="input-group">
-                <label>Identity Proof</label>
-                <label class="file-upload-box" for="document_upload">
-                    <div class="file-icon">🪪</div>
-                    <div class="file-text">Upload a clear photo of your Aadhaar Card, PAN Card, or Trade License.</div>
-                    <span class="browse-btn">Browse Photo</span>
-                    <input type="file" id="document_upload" name="id_document" accept=".jpg, .jpeg, .png, .pdf" required onchange="updateFileName(this)">
-                </label>
-                <div id="file_name_display" style="font-size: 12px; color: #00a650; margin-top: 8px; text-align: center; font-weight: bold; display: none;"></div>
+                <label class="main-label">Select Identity Proof *</label>
+                <select name="id_type" required>
+                    <option value="" disabled selected>Choose Document Type</option>
+                    <option value="aadhaar">Aadhaar Card</option>
+                    <option value="pan">PAN Card</option>
+                    <option value="voter">Voter ID</option>
+                </select>
             </div>
 
-            <button type="submit" class="submit-btn">Submit & Verify Details</button>
+            <div class="input-group">
+                <label class="main-label">Upload Identity Proof *</label>
+                <label class="file-upload-box" for="kyc_upload">
+                    <div class="file-icon">🪪</div>
+                    <div class="file-text">Upload a CLEAR photo of your selected document.</div>
+                    <span class="browse-btn">Browse Photo</span>
+                    <input type="file" id="kyc_upload" name="id_document" accept=".jpg, .jpeg, .png, .pdf" required onchange="updateFileName(this, 'kyc_file_name')">
+                </label>
+                <div id="kyc_file_name" class="file-name-display"></div>
+            </div>
+
+            <div class="input-group">
+                <label class="main-label">Trade / Seller License (Optional)</label>
+                <label class="file-upload-box" for="license_upload">
+                    <div class="file-icon">🏢</div>
+                    <div class="file-text">If you have a registered business, upload your license here.</div>
+                    <span class="browse-btn">Browse Photo</span>
+                    <input type="file" id="license_upload" name="trade_license" accept=".jpg, .jpeg, .png, .pdf" onchange="updateFileName(this, 'license_file_name')">
+                </label>
+                <div id="license_file_name" class="file-name-display"></div>
+            </div>
+
+            <!-- Section 4 (Terms & Submit) -->
+            <div class="checkbox-group">
+                <input type="checkbox" id="agree_terms" name="agree_terms" required>
+                <label for="agree_terms">
+                    I have read and agree to the <a href="/terms/seller" target="_blank">Seller Terms & Conditions</a> and <a href="/privacy-policy" target="_blank">Privacy Policy</a>. I understand my account will be manually verified.
+                </label>
+            </div>
+
+            <button type="submit" class="submit-btn">Submit for Manual Verification</button>
             
-            <p class="terms-text">By submitting, you agree to inwear's <a href="#" style="color: var(--primary-red);">Seller Terms</a>. Payments will be directly transferred to your provided UPI/Bank.</p>
         </form>
     </div>
 
     <script>
-        function updateFileName(input) {
-            const fileNameDisplay = document.getElementById('file_name_display');
+        function updateFileName(input, displayId) {
+            const fileNameDisplay = document.getElementById(displayId);
             if (input.files && input.files.length > 0) {
-                fileNameDisplay.textContent = 'Selected: ' + input.files[0].name;
+                fileNameDisplay.textContent = '✅ Selected: ' + input.files[0].name;
                 fileNameDisplay.style.display = 'block';
             } else {
                 fileNameDisplay.style.display = 'none';
