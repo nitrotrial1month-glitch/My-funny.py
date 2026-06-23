@@ -7,15 +7,23 @@
     <style>
         :root { 
             --primary: #1a1a2e; --success: #00a650; --blue: #2874f0; 
-            --danger: #cc0000; --bg: #f4f6f8; --white: #ffffff; 
+            --danger: #cc0000; --bg: #f4f6f8; --white: #ffffff; --text: #212121;
         }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; padding-bottom: 80px; color: #212121; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; padding-bottom: 80px; color: var(--text); }
         
-        /* Header */
+        /* Header & Online Toggle */
         .top-header { background: var(--primary); color: white; padding: 20px 15px 30px 15px; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; display: flex; justify-content: space-between; align-items: center; }
         .user-info h3 { margin: 0; font-size: 18px; }
         .user-info p { margin: 2px 0 0; font-size: 11px; color: #aaa; }
-        .status-toggle { background: var(--success); padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        
+        /* Toggle Switch CSS */
+        .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--success); }
+        input:checked + .slider:before { transform: translateX(26px); }
+        .status-text { font-size: 11px; font-weight: bold; text-align: center; margin-top: 4px; color: #fff; }
 
         /* Wallet & Stats Card */
         .wallet-card { background: var(--white); margin: -20px 15px 15px 15px; padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); display: flex; justify-content: space-between; }
@@ -23,37 +31,43 @@
         .wallet-item:first-child { border-right: 1px solid #eee; }
         .wallet-item p { margin: 0; font-size: 11px; color: #888; font-weight: bold; text-transform: uppercase; }
         .wallet-item h2 { margin: 5px 0 0; font-size: 20px; }
-        .earn-text { color: var(--success); }
-        .cash-text { color: var(--danger); }
+        .btn-withdraw { background: var(--primary); color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-top: 5px; cursor: pointer; }
 
         /* Scan Button */
         .scan-section { margin: 0 15px 20px 15px; }
         .btn-scan { width: 100%; background: var(--primary); color: white; border: none; padding: 15px; border-radius: 12px; font-size: 16px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; box-shadow: 0 4px 10px rgba(26, 26, 46, 0.2); }
-        
-        .section-title { padding: 0 15px; font-size: 14px; font-weight: 900; color: #555; text-transform: uppercase; margin-bottom: 10px; }
+
+        /* Section Title */
+        .section-title { padding: 0 15px; font-size: 14px; font-weight: 900; color: #555; text-transform: uppercase; margin-bottom: 10px; margin-top: 20px; display: flex; justify-content: space-between;}
 
         /* Orders Container */
         .container { padding: 0 15px; }
         .order-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 4px solid var(--blue); }
         .order-meta { display: flex; justify-content: space-between; margin-bottom: 10px; }
         .status-badge { font-size: 11px; padding: 4px 8px; border-radius: 20px; font-weight: bold; text-transform: uppercase; }
-        .badge-confirmed { background: #fff3cd; color: #856404; }
+        .badge-ready { background: #e2e3e5; color: #383d41; border-left: 4px solid #6c757d; }
         .badge-out { background: #d1ecf1; color: #0c5460; }
+        .badge-pending { background: #f8d7da; color: #721c24; border-left: 4px solid var(--danger); }
+
+        /* Settlement Box (Math Breakdown) */
+        .settlement-box { background: #fffdf5; border: 1px dashed #ffeba1; padding: 12px; border-radius: 8px; margin-top: 15px; font-size: 12px; }
+        .s-row { display: flex; justify-content: space-between; margin-bottom: 5px; color: #555; }
+        .s-total { border-top: 1px solid #ddd; padding-top: 5px; margin-top: 5px; font-weight: bold; font-size: 14px; color: var(--danger); display: flex; justify-content: space-between; }
 
         .btn { display: block; width: 100%; padding: 14px; text-align: center; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; margin-top: 12px; font-size: 14px; }
         .btn-pickup { background: var(--blue); color: white; }
         .btn-delivered { background: var(--success); color: white; }
+        .btn-handover { background: var(--primary); color: white; margin-top: 10px; }
         .btn-issue { background: #f8d7da; color: #721c24; margin-top: 10px; }
         .btn-red { background: var(--danger); color: white; margin-top: 10px; }
         
         .otp-input { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 8px; font-size: 16px; text-align: center; letter-spacing: 5px; font-weight: bold; margin-bottom: 10px; box-sizing: border-box; }
-        
-        /* Dropdown for Cancel Reason */
+
+        /* Issue Box */
         .issue-box { display: none; margin-top: 15px; padding: 15px; background: #fff5f5; border-radius: 8px; border: 1px dashed #ffcccc; }
         .issue-box select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; margin-bottom: 10px; font-size: 13px; outline: none; }
 
         .empty-state { text-align: center; padding: 40px 20px; color: #888; background: white; border-radius: 12px; }
-        .empty-icon { font-size: 40px; display: block; margin-bottom: 10px; }
 
         /* Bottom Nav */
         .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--white); display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -5px 15px rgba(0,0,0,0.05); z-index: 1000; border-top: 1px solid #eee; }
@@ -75,17 +89,25 @@
                 {% endif %}
             </p>
         </div>
-        <div class="status-toggle">🟢 Online</div>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <label class="switch">
+                <input type="checkbox" checked id="statusToggle">
+                <span class="slider"></span>
+            </label>
+            <div class="status-text" id="statusText">ONLINE</div>
+        </div>
     </div>
 
     <div class="wallet-card">
         <div class="wallet-item">
-            <p>Wallet Earnings</p>
-            <h2 class="earn-text">₹{{ current_user.wallet_balance if current_user and current_user.wallet_balance else '0.00' }}</h2>
+            <p>Wallet (My Earnings)</p>
+            <h2 style="color: var(--success);">₹{{ current_user.wallet_balance if current_user and current_user.wallet_balance else '0.00' }}</h2>
+            <button class="btn-withdraw" onclick="alert('Withdrawal request system coming soon!')">Withdraw</button>
         </div>
         <div class="wallet-item">
             <p>Cash to Deposit</p>
-            <h2 class="cash-text">₹{{ current_user.cash_in_hand if current_user and current_user.cash_in_hand else '0.00' }}</h2>
+            <h2 style="color: var(--danger);">₹{{ current_user.cash_in_hand if current_user and current_user.cash_in_hand else '0.00' }}</h2>
+            <p style="font-size: 9px; margin-top: 5px;">(Give back to Sellers)</p>
         </div>
     </div>
 
@@ -96,31 +118,46 @@
         </label>
     </div>
 
-    <div class="section-title">📦 Today's Tasks</div>
+    <div class="section-title">
+        <span>📦 Active Tasks</span>
+        <span style="color: var(--primary); cursor: pointer;" onclick="location.reload();">↻ Refresh</span>
+    </div>
 
     <div class="container">
         {% if orders %}
             {% for order in orders %}
-            <div class="order-card">
+            <div class="order-card" style="border-left-color: {% if order.status == 'Ready for Pickup' %}#6c757d{% elif order.status == 'Delivered (Pending Handover)' %}#cc0000{% endif %};">
                 <div class="order-meta">
                     <span style="font-weight: 800; font-size: 14px;">#{{ order._id|string|truncate(8, True, '')|upper }}</span>
-                    <span class="status-badge {% if order.status == 'Confirmed' %}badge-confirmed{% else %}badge-out{% endif %}">
+                    <span class="status-badge {% if order.status == 'Ready for Pickup' %}badge-ready{% elif order.status == 'Delivered (Pending Handover)' %}badge-pending{% else %}badge-out{% endif %}">
                         {{ order.status }}
                     </span>
                 </div>
                 
                 <h4 style="margin: 5px 0;">{{ order.name }}</h4>
-                <p style="margin: 2px 0; font-size: 13px; color: #555;">📍 {{ order.address }}</p>
-                <p style="margin: 8px 0; font-size: 16px; font-weight: 900; color: var(--danger);">💰 Collect COD: ₹{{ order.total_price }}</p>
+                <p style="margin: 2px 0; font-size: 13px; color: #555;">📍 <strong>Drop:</strong> {{ order.address }}</p>
+                <p style="margin: 2px 0; font-size: 13px; color: #555;">🏪 <strong>Pickup:</strong> Seller Store</p>
+                
+                <p style="margin: 8px 0; font-size: 16px; font-weight: 900; color: var(--danger);">
+                    {% if order.payment_method == 'online' %}
+                        💳 Paid Online (₹{{ order.total_price }})
+                    {% else %}
+                        💰 Collect COD: ₹{{ order.total_price }}
+                    {% endif %}
+                </p>
 
-                {% if order.status == 'Confirmed' %}
-                    <form action="/delivery/send_otp/{{ order._id }}" method="POST">
-                        <button type="submit" class="btn btn-pickup">Accept & Pick Up Parcel</button>
+                {% if order.status == 'Ready for Pickup' %}
+                    <div class="settlement-box" style="border-color: var(--blue); background: #f0f7ff;">
+                        <p style="margin: 0 0 8px 0; font-weight: bold; color: var(--blue);">📦 Product Handover</p>
+                        <p style="margin: 0; font-size: 12px; color: #555;">Verify the package condition before receiving it from the Seller/Hub.</p>
+                    </div>
+                    <form action="/delivery/product_handover/{{ order._id }}" method="POST">
+                        <button type="submit" class="btn btn-pickup" onclick="return confirm('Did you physically receive the correct product in your hand?')">Confirm Product Handover</button>
                     </form>
                     
                 {% elif order.status == 'Out for Delivery' %}
                     <form action="/delivery/verify_otp/{{ order._id }}" method="POST">
-                        <input type="text" name="otp" class="otp-input" placeholder="Enter Customer OTP" required maxlength="4" pattern="\d*">
+                        <input type="text" name="otp" class="otp-input" placeholder="Customer OTP" required maxlength="4" pattern="\d*">
                         <button type="submit" class="btn btn-delivered">✅ Verify & Mark Delivered</button>
                     </form>
 
@@ -139,44 +176,64 @@
                             <button type="submit" class="btn btn-red" style="margin-top: 5px;" onclick="return confirm('Return this parcel to the seller?')">Submit & Return to Seller</button>
                         </form>
                     </div>
+
+                {% elif order.status == 'Delivered (Pending Handover)' %}
+                    <div class="settlement-box">
+                        <p style="margin: 0 0 8px 0; font-weight: bold; color: var(--primary);">💸 Cash Settlement</p>
+                        <div class="s-row"><span>Order Value (COD):</span> <span>₹{{ order.total_price }}</span></div>
+                        <div class="s-row"><span>Your Delivery Fee:</span> <span style="color: var(--success);">+ ₹40.00</span></div>
+                        <div class="s-row"><span>inwear Fee (10%):</span> <span style="color: var(--danger);">- ₹{{ (order.total_price|float * 0.10)|round(2) }}</span></div>
+                        <div class="s-total">
+                            <span>Give Cash to Seller:</span>
+                            <span>₹{{ (order.total_price|float - 40 - (order.total_price|float * 0.10))|round(2) }}</span>
+                        </div>
+                    </div>
+                    <form action="/delivery/handover/{{ order._id }}" method="POST">
+                        <button type="submit" class="btn btn-handover" onclick="return confirm('Did you give the exact cash to the seller?')">Confirm Cash Handover</button>
+                    </form>
                 {% endif %}
             </div>
             {% endfor %}
         {% else %}
             <div class="empty-state">
-                <span class="empty-icon">🎉</span>
-                <h3 style="margin: 0 0 5px 0; color: var(--primary);">No Pending Tasks</h3>
-                <p style="margin: 0; font-size: 13px;">All deliveries are clear for today. Take a rest!</p>
+                <span style="font-size: 40px;">🎉</span>
+                <h3 style="margin: 10px 0 5px 0; color: var(--primary);">No Pending Tasks</h3>
+                <p style="margin: 0; font-size: 13px;">Wait for sellers to pack new orders. Take a rest!</p>
             </div>
         {% endif %}
     </div>
 
     <div class="bottom-nav">
-        <a href="/delivery-dashboard" class="nav-item active">
-            <span class="nav-icon">📦</span>
-            <span>Tasks</span>
-        </a>
-        <a href="/delivery/wallet" class="nav-item">
-            <span class="nav-icon">💰</span>
-            <span>Wallet</span>
-        </a>
-        <a href="/delivery/history" class="nav-item">
-            <span class="nav-icon">📜</span>
-            <span>History</span>
-        </a>
-        <a href="/account" class="nav-item">
-            <span class="nav-icon">👤</span>
-            <span>Profile</span>
-        </a>
+        <a href="/delivery-dashboard" class="nav-item active"><span class="nav-icon">📦</span><span>Tasks</span></a>
+        <a href="/delivery/wallet" class="nav-item" onclick="alert('Wallet details coming soon!')"><span class="nav-icon">💰</span><span>Wallet</span></a>
+        <a href="/delivery/history" class="nav-item" onclick="alert('History coming soon!')"><span class="nav-icon">📜</span><span>History</span></a>
+        <a href="/account" class="nav-item"><span class="nav-icon">👤</span><span>Profile</span></a>
     </div>
 
     <script>
+        // Online / Offline Toggle UI Logic
+        const toggle = document.getElementById('statusToggle');
+        const statusText = document.getElementById('statusText');
+        
+        toggle.addEventListener('change', function() {
+            if(this.checked) {
+                statusText.innerText = "ONLINE";
+                statusText.style.color = "#fff";
+            } else {
+                statusText.innerText = "OFFLINE";
+                statusText.style.color = "#aaa";
+                alert("You are now Offline. You will not receive new order assignments.");
+            }
+        });
+
+        // QR Scanner Alert
         document.getElementById('cameraScan').addEventListener('change', function() {
             if (this.files && this.files.length > 0) {
                 alert("QR Code scanned! Redirecting to order details...");
             }
         });
 
+        // Report Issue Toggle
         function toggleIssueBox(orderId) {
             var box = document.getElementById('issue-box-' + orderId);
             if (box.style.display === "none" || box.style.display === "") {
