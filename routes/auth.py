@@ -265,105 +265,119 @@ def submit_seller_application():
     ifsc_code = request.form.get('ifsc_code', '') # Optional
     id_type = request.form.get('id_type')
     id_number = request.form.get('id_number')
-    
-    # ছবি রিসিভ করা
-    kyc_file = request.files.get('id_document')
-    profile_file = request.files.get('user_profile_photo')
-    license_file = request.files.get('trade_license') # Optional
-    
-    # 🔴 BUG FIX: ফাইলের নাম বের করা (যদি ইউজার সত্যিই ছবি আপলোড করে থাকে)
-    kyc_filename = secure_filename(kyc_file.filename) if kyc_file and kyc_file.filename else ""
-    profile_filename = secure_filename(profile_file.filename) if profile_file and profile_file.filename else ""
-    license_filename = secure_filename(license_file.filename) if license_file and license_file.filename else ""
-    
-    # 🔴 BUG FIX: ফাঁকা ফাইল সেভ হওয়া আটকানো
-    if kyc_file and kyc_file.filename: 
-        kyc_file.save(os.path.join(UPLOAD_FOLDER, kyc_filename))
-    if profile_file and profile_file.filename: 
-        profile_file.save(os.path.join(UPLOAD_FOLDER, profile_filename))
-    if license_file and license_file.filename: 
-        license_file.save(os.path.join(UPLOAD_FOLDER, license_filename))
-    
-    if col is not None:
-        col.update_one({"discord_id": user['id']}, {"$set": {
-            "role": "pending_seller",
-            "application_data": {
-                "store_name": store_name,
-                "phone": phone,
-                "address": address,
-                "upi_id": upi_id,
-                "bank_account": bank_account,
-                "ifsc_code": ifsc_code,
-                "id_type": id_type,
-                "id_number": id_number,
-                "kyc_image": kyc_filename,
-                "profile_image": profile_filename,
-                "license_image": license_filename # Optional
-            }
-        }})
-    
-    session['user']['role'] = 'pending_seller'
-    session.modified = True
-    flash("Your Seller application is submitted and waiting for Admin approval.")
-    return redirect('/account')
+@auth_bp.route('/submit-seller-application', methods=['POST'])
+@login_required
+def submit_seller_application():
+    try:
+        user = session.get('user')
+        col = Database.get_collection("users")
+        
+        store_name = request.form.get('store_name')
+        phone = request.form.get('phone_number')
+        address = request.form.get('address')
+        upi_id = request.form.get('upi_id')
+        bank_account = request.form.get('bank_account', '')
+        ifsc_code = request.form.get('ifsc_code', '')
+        id_type = request.form.get('id_type')
+        id_number = request.form.get('id_number')
+        
+        kyc_file = request.files.get('id_document')
+        profile_file = request.files.get('user_profile_photo')
+        license_file = request.files.get('trade_license')
+        
+        kyc_filename = secure_filename(kyc_file.filename) if kyc_file and kyc_file.filename else ""
+        profile_filename = secure_filename(profile_file.filename) if profile_file and profile_file.filename else ""
+        license_filename = secure_filename(license_file.filename) if license_file and license_file.filename else ""
+        
+        if kyc_file and kyc_file.filename: 
+            kyc_file.save(os.path.join(UPLOAD_FOLDER, kyc_filename))
+        if profile_file and profile_file.filename: 
+            profile_file.save(os.path.join(UPLOAD_FOLDER, profile_filename))
+        if license_file and license_file.filename: 
+            license_file.save(os.path.join(UPLOAD_FOLDER, license_filename))
+        
+        if col is not None:
+            col.update_one({"discord_id": user['id']}, {"$set": {
+                "role": "pending_seller",
+                "application_data": {
+                    "store_name": store_name,
+                    "phone": phone,
+                    "address": address,
+                    "upi_id": upi_id,
+                    "bank_account": bank_account,
+                    "ifsc_code": ifsc_code,
+                    "id_type": id_type,
+                    "id_number": id_number,
+                    "kyc_image": kyc_filename,
+                    "profile_image": profile_filename,
+                    "license_image": license_filename
+                }
+            }})
+        
+        session['user']['role'] = 'pending_seller'
+        session.modified = True
+        flash("Submitted successfully!")
+        return redirect('/account')
+    except Exception as e:
+        return f"Backend Error: {str(e)}", 500  # 🔴 কোনো ভুল হলে আটকে না থেকে স্ক্রিনে লেখা উঠবে
 
 
 @auth_bp.route('/submit-delivery-application', methods=['POST'])
 @login_required
 def submit_delivery_application():
-    user = session.get('user')
-    col = Database.get_collection("users")
-    
-    # ফর্মের ডেটা রিসিভ করা
-    full_name = request.form.get('full_name')
-    phone = request.form.get('phone_number')
-    delivery_area = request.form.get('delivery_area')
-    vehicle_type = request.form.get('vehicle_type')
-    upi_id = request.form.get('upi_id')
-    bank_account = request.form.get('bank_account', '') # Optional
-    id_type = request.form.get('id_type')
-    id_number = request.form.get('id_number')
-    
-    # ছবি রিসিভ করা
-    kyc_file = request.files.get('id_document')
-    profile_file = request.files.get('user_profile_photo')
-    dl_file = request.files.get('driving_license') # Optional for bicycles
-    
-    # 🔴 BUG FIX: ফাইলের নাম বের করা
-    kyc_filename = secure_filename(kyc_file.filename) if kyc_file and kyc_file.filename else ""
-    profile_filename = secure_filename(profile_file.filename) if profile_file and profile_file.filename else ""
-    dl_filename = secure_filename(dl_file.filename) if dl_file and dl_file.filename else ""
-    
-    # 🔴 BUG FIX: ফাঁকা ফাইল সেভ হওয়া আটকানো
-    if kyc_file and kyc_file.filename: 
-        kyc_file.save(os.path.join(UPLOAD_FOLDER, kyc_filename))
-    if profile_file and profile_file.filename: 
-        profile_file.save(os.path.join(UPLOAD_FOLDER, profile_filename))
-    if dl_file and dl_file.filename: 
-        dl_file.save(os.path.join(UPLOAD_FOLDER, dl_filename))
-    
-    if col is not None:
-        col.update_one({"discord_id": user['id']}, {"$set": {
-            "role": "pending_delivery",
-            "application_data": {
-                "full_name": full_name,
-                "phone": phone,
-                "area": delivery_area,
-                "vehicle": vehicle_type,
-                "upi_id": upi_id,
-                "bank_account": bank_account,
-                "id_type": id_type,
-                "id_number": id_number,
-                "kyc_image": kyc_filename,
-                "profile_image": profile_filename,
-                "dl_image": dl_filename # Optional
-            }
-        }})
-    
-    session['user']['role'] = 'pending_delivery'
-    session.modified = True
-    flash("Your Delivery application is submitted and waiting for Admin approval.")
-    return redirect('/account')
+    try:
+        user = session.get('user')
+        col = Database.get_collection("users")
+        
+        full_name = request.form.get('full_name')
+        phone = request.form.get('phone_number')
+        delivery_area = request.form.get('delivery_area')
+        vehicle_type = request.form.get('vehicle_type')
+        upi_id = request.form.get('upi_id')
+        bank_account = request.form.get('bank_account', '')
+        id_type = request.form.get('id_type')
+        id_number = request.form.get('id_number')
+        
+        kyc_file = request.files.get('id_document')
+        profile_file = request.files.get('user_profile_photo')
+        dl_file = request.files.get('driving_license')
+        
+        kyc_filename = secure_filename(kyc_file.filename) if kyc_file and kyc_file.filename else ""
+        profile_filename = secure_filename(profile_file.filename) if profile_file and profile_file.filename else ""
+        dl_filename = secure_filename(dl_file.filename) if dl_file and dl_file.filename else ""
+        
+        if kyc_file and kyc_file.filename: 
+            kyc_file.save(os.path.join(UPLOAD_FOLDER, kyc_filename))
+        if profile_file and profile_file.filename: 
+            profile_file.save(os.path.join(UPLOAD_FOLDER, profile_filename))
+        if dl_file and dl_file.filename: 
+            dl_file.save(os.path.join(UPLOAD_FOLDER, dl_filename))
+        
+        if col is not None:
+            col.update_one({"discord_id": user['id']}, {"$set": {
+                "role": "pending_delivery",
+                "application_data": {
+                    "full_name": full_name,
+                    "phone": phone,
+                    "area": delivery_area,
+                    "vehicle": vehicle_type,
+                    "upi_id": upi_id,
+                    "bank_account": bank_account,
+                    "id_type": id_type,
+                    "id_number": id_number,
+                    "kyc_image": kyc_filename,
+                    "profile_image": profile_filename,
+                    "dl_image": dl_filename
+                }
+            }})
+        
+        session['user']['role'] = 'pending_delivery'
+        session.modified = True
+        flash("Submitted successfully!")
+        return redirect('/account')
+    except Exception as e:
+        return f"Backend Error: {str(e)}", 500  # 🔴 কোনো ভুল হলে আটকে না থেকে স্ক্রিনে লেখা উঠবে
+        
         
 
 # ==========================================
