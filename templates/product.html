@@ -12,7 +12,7 @@
         .top-bar { padding: 15px; background: white; display: flex; align-items: center; gap: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
         .back-btn { text-decoration: none; color: var(--text-dark); font-size: 20px; font-weight: bold; }
         
-        /* 🔴 NEW: Media Scroller (Images + Video) */
+        /* Media Scroller */
         .media-wrapper { position: relative; background: #fff; }
         .media-scroller { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none; }
         .media-scroller::-webkit-scrollbar { display: none; }
@@ -23,10 +23,9 @@
         .details-container { padding: 20px; background: white; margin-top: 5px; border-radius: 12px 12px 0 0; }
         h2 { margin: 0 0 5px 0; font-size: 18px; color: var(--text-dark); line-height: 1.3; }
         
-        /* 🔴 Tags Section */
+        /* Tags Section */
         .tags-container { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 15px 0; }
         .tag { background: #ffe6e6; color: var(--primary); padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; }
-
         .short-desc { color: #666; font-size: 13px; margin: 0 0 15px 0; line-height: 1.5; }
         
         /* Pricing */
@@ -35,16 +34,25 @@
         .old-price { color: #888; text-decoration: line-through; font-size: 16px; }
         .discount-badge { background: var(--primary); color: white; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
         
+        /* 🔴 UPDATED: Auto Delivery Checker Box */
+        .delivery-box { background: #fdfdfd; margin: 20px 0; border-radius: 8px; border: 1px solid #e0e0e0; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.02);}
+        .delivery-box-title { font-size: 14px; font-weight: bold; color: var(--text-dark); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+        .pin-input-group { display: flex; align-items: center; background: white; border: 1px solid #ccc; border-radius: 6px; overflow: hidden; padding: 2px; }
+        .pin-input-group input { flex: 1; border: none; padding: 12px; outline: none; font-size: 14px; font-weight: bold; letter-spacing: 1px; color: var(--text-dark); text-align: center; }
+        .pin-input-group input:focus { border: 1px solid var(--primary); border-radius: 4px; }
+        .delivery-msg { font-size: 12px; margin-top: 10px; color: #555; display: flex; align-items: center; gap: 6px; line-height: 1.4; font-weight: 500;}
+        .free-delivery-text { color: #00a650; font-weight: bold; }
+        
         /* Sizes */
         .section-label { font-weight: bold; margin-top: 20px; margin-bottom: 10px; display: block; color: #212121; font-size: 14px; border-bottom: 1px solid #eee; padding-bottom: 5px;}
         .size-container { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
         .size-btn { padding: 8px 16px; border: 1px solid #ddd; border-radius: 6px; background: white; cursor: pointer; font-size: 13px; font-weight: 500; }
         .size-btn:hover, .size-btn:focus { border-color: var(--primary); color: var(--primary); background: #fff5f5; }
         
-        /* 🔴 Details Box */
+        /* Details Box */
         .full-details { white-space: pre-wrap; line-height: 1.6; font-size: 13px; color: #444; background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 10px; }
         
-        /* 🔴 Policies (Return/Replace) */
+        /* Policies (Return/Replace) */
         .policy-box { display: flex; gap: 15px; margin-top: 15px; background: #f5fdf7; padding: 12px; border-radius: 8px; border: 1px dashed #00a650; }
         .policy-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #007b3b; font-weight: bold; }
 
@@ -71,26 +79,21 @@
         <span style="font-weight: bold; font-size: 16px;">Product Details</span>
     </div>
 
-    <!-- 🔴 NEW: Media Scroller for Images and Video -->
     <div class="media-wrapper">
         <div class="media-scroller">
-            <!-- All uploaded extra images -->
             {% if product.extra_images %}
                 {% for img in product.extra_images %}
                     <img src="/{{ img }}" class="media-item" alt="Product Image">
                 {% endfor %}
             {% elif product.image %}
-                <!-- Fallback to main image if extra_images list is empty -->
                 <img src="/{{ product.image }}" class="media-item" alt="Product Image" onerror="this.src='https://via.placeholder.com/400';">
             {% endif %}
 
-            <!-- Product Video -->
             {% if product.video %}
                 <video src="/{{ product.video }}" class="media-item" controls preload="metadata" poster="/{{ product.image }}"></video>
             {% endif %}
         </div>
         
-        <!-- Swipe Hint indicator -->
         {% if (product.extra_images and product.extra_images|length > 1) or product.video %}
             <div class="scroll-hint">Swipe to see more ➔</div>
         {% endif %}
@@ -99,7 +102,6 @@
     <div class="details-container">
         <h2>{{ product.name }}</h2>
 
-        <!-- 🔴 NEW: Display Tags -->
         {% if product.tags %}
         <div class="tags-container">
             {% for tag in product.tags %}
@@ -118,10 +120,19 @@
             {% endif %}
         </div>
 
-        <!-- 🔴 UPDATED: Description -->
         {% if product.description %}
             <p class="short-desc">{{ product.description }}</p>
         {% endif %}
+
+        <div class="delivery-box">
+            <div class="delivery-box-title"><span>📍</span> Delivery Options</div>
+            <div class="pin-input-group">
+                <input type="text" id="checkPincode" placeholder="Enter 6-Digit Pincode" maxlength="6" pattern="[0-9]{6}" value="{{ user_default_pincode | default('') }}" onkeyup="if(this.value.length === 6) checkDeliveryOnProduct()">
+            </div>
+            <div id="deliveryMsg" class="delivery-msg">
+                Please enter your PIN code to check delivery availability and charges.
+            </div>
+        </div>
 
         {% if product.sizes %}
         <span class="section-label">Select Size</span>
@@ -132,13 +143,11 @@
         </div>
         {% endif %}
 
-        <!-- 🔴 UPDATED: Product Details -->
         {% if product.full_details %}
         <span class="section-label">Product Details</span>
         <div class="full-details">{{ product.full_details }}</div>
         {% endif %}
 
-        <!-- 🔴 NEW: Policies (Return/Replace) -->
         {% if product.policies %}
             {% if product.policies.return_eligible or product.policies.replace_eligible %}
             <div class="policy-box">
@@ -177,5 +186,51 @@
         <a href="/checkout/{{ product._id | string }}" class="btn buy-now">Buy Now</a>
     </div>
 
+    <script>
+        function checkDeliveryOnProduct() {
+            const pinInput = document.getElementById('checkPincode').value;
+            const msgBox = document.getElementById('deliveryMsg');
+            
+            if(pinInput.length !== 6 || isNaN(pinInput)) {
+                msgBox.innerHTML = "⚠️ Please enter a valid 6-digit PIN code.";
+                msgBox.style.color = "#cc0000";
+                return;
+            }
+            
+            msgBox.innerHTML = "⏳ Checking delivery details...";
+            msgBox.style.color = "#555";
+
+            fetch('/calculate_delivery', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    pincode: pinInput,
+                    product_id: "{{ product._id | string }}"
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.charge === 0) {
+                    msgBox.innerHTML = "✅ <span class='free-delivery-text'>Free Delivery</span> available to " + pinInput;
+                    msgBox.style.color = "#212121";
+                } else {
+                    msgBox.innerHTML = "🚚 Delivery Charge: <b>₹" + data.charge + "</b> to " + pinInput;
+                    msgBox.style.color = "#212121";
+                }
+            })
+            .catch(err => {
+                // If backend route is not ready yet
+                msgBox.innerHTML = "🚚 Delivery is available to " + pinInput + " (Charges calculated at checkout).";
+                msgBox.style.color = "#212121";
+            });
+        }
+
+        // পেজ লোড হওয়ার সাথে সাথেই অটো-চেক করবে (যদি আগে থেকে পিনকোড সেভ থাকে)
+        window.onload = function() {
+            if(document.getElementById('checkPincode').value.length === 6) {
+                checkDeliveryOnProduct();
+            }
+        }
+    </script>
 </body>
 </html>
