@@ -6,7 +6,7 @@
     <title>Saved Addresses | inwear</title>
     <style>
         :root { --primary: #2874f0; --bg: #f1f3f6; --text: #212121; }
-        body { font-family: Roboto, sans-serif; background: var(--bg); margin: 0; padding: 0; color: var(--text); }
+        body { font-family: Roboto, sans-serif; background: var(--bg); margin: 0; padding: 0; color: var(--text); padding-bottom: 30px;}
         
         .header { background: white; padding: 15px 20px; display: flex; align-items: center; box-shadow: 0 1px 4px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
         .back-btn { text-decoration: none; font-size: 20px; color: var(--text); margin-right: 15px; font-weight: bold; }
@@ -17,18 +17,18 @@
         .card-title { font-size: 15px; font-weight: bold; margin-top: 0; margin-bottom: 15px; color: #878787; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 10px; }
         
         .address-box { border: 1px solid #e0e0e0; border-radius: 6px; padding: 15px; margin-bottom: 10px; position: relative; }
+        .address-box.default { border-color: var(--primary); background: #f4f8ff; }
         .badge { position: absolute; top: 15px; right: 15px; background: #f0f0f0; padding: 3px 8px; font-size: 10px; font-weight: bold; border-radius: 4px; color: #878787; }
+        .badge.default { background: var(--primary); color: white; }
+        
         .add-name { font-weight: bold; font-size: 15px; margin-bottom: 5px; }
         .add-phone { font-size: 13px; font-weight: bold; color: #555; margin-bottom: 8px; }
-        .add-text { font-size: 13px; color: #555; line-height: 1.4; }
+        .add-text { font-size: 13px; color: #555; line-height: 1.4; margin-bottom: 10px;}
 
         /* Form Styles */
         .form-control { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 12px; box-sizing: border-box; font-family: inherit; }
         .btn-submit { background: #ffc200; color: #212121; border: none; padding: 12px; width: 100%; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 15px; }
-        
-        /* Detect Location Button */
-        .btn-location { background: #f4f8ff; color: var(--primary); border: 1px solid var(--primary); padding: 10px; width: 100%; border-radius: 4px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 12px; transition: 0.2s; }
-        .btn-location:active { background: var(--primary); color: white; }
+        .btn-location { background: #f4f8ff; color: var(--primary); border: 1px dashed var(--primary); padding: 10px; width: 100%; border-radius: 4px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 12px; }
     </style>
 </head>
 <body>
@@ -39,86 +39,86 @@
     </div>
 
     <div class="container">
-        
+        <!-- Add New Address -->
         <div class="card">
             <div class="card-title">+ Add New Address</div>
             
             <button type="button" class="btn-location" onclick="detectLocation()">
-                <span>📍</span> Use my current GPS location
+                <span>📍</span> Auto-Detect Location
             </button>
             <p id="loc-status" style="font-size: 12px; color: #cc0000; text-align: center; margin-top: 0; display: none;"></p>
 
             <form action="/saved_addresses" method="POST">
                 <input type="text" name="name" class="form-control" placeholder="Full Name" required>
                 <input type="tel" name="phone" class="form-control" placeholder="10-digit Mobile Number" required pattern="[0-9]{10}">
-                <textarea name="address" id="addressField" class="form-control" rows="3" placeholder="House No, Road, City, Pincode" required></textarea>
+                
+                <!-- 🔴 NEW: Pincode explicitly requested for Delivery Calculation -->
+                <input type="text" name="pincode" id="pincodeField" class="form-control" placeholder="6-digit Pincode (e.g. 713128)" required pattern="[0-9]{6}" style="border-color: #2874f0; background: #fafcff;">
+                
+                <textarea name="address" id="addressField" class="form-control" rows="3" placeholder="House No, Building, Area, City" required></textarea>
+                
+                <label style="font-size: 13px; display: flex; align-items: center; gap: 8px; margin-bottom: 15px; font-weight: bold;">
+                    <input type="checkbox" name="is_default" checked> Make this my default address
+                </label>
+                
                 <button type="submit" class="btn-submit">Save Address</button>
             </form>
         </div>
 
+        <!-- Saved Addresses List -->
         <div class="card">
             <div class="card-title">Your Addresses</div>
             {% if addresses %}
                 {% for add in addresses %}
-                <div class="address-box">
-                    <div class="badge">HOME</div>
+                <div class="address-box {% if add.is_default %}default{% endif %}">
+                    {% if add.is_default %}
+                        <div class="badge default">✔ DEFAULT</div>
+                    {% else %}
+                        <div class="badge">HOME</div>
+                    {% endif %}
+                    
                     <div class="add-name">{{ add.name }}</div>
-                    <div class="add-phone">{{ add.phone }}</div>
-                    <div class="add-text">{{ add.address }}</div>
+                    <div class="add-phone">Ph: {{ add.phone }}</div>
+                    <div class="add-text">{{ add.address }}<br><strong>PIN: {{ add.pincode }}</strong></div>
+                    
+                    {% if not add.is_default %}
+                    <form action="/set_default_address/{{ loop.index0 }}" method="POST" style="margin: 0;">
+                        <button type="submit" style="background: none; border: none; color: var(--primary); font-weight: bold; padding: 0; cursor: pointer; font-size: 13px;">Set as Default</button>
+                    </form>
+                    {% endif %}
                 </div>
                 {% endfor %}
             {% else %}
                 <div style="text-align: center; color: #878787; font-size: 14px; padding: 20px 0;">No addresses saved yet.</div>
             {% endif %}
         </div>
-
     </div>
 
     <script>
+        // Geolocation Script (Same as before, simplified)
         function detectLocation() {
             const statusBox = document.getElementById('loc-status');
             const addressField = document.getElementById('addressField');
+            const pincodeField = document.getElementById('pincodeField');
             
-            if (!navigator.geolocation) {
-                statusBox.innerText = "Geolocation is not supported by your browser";
-                statusBox.style.display = "block";
-                return;
-            }
-
-            statusBox.innerText = "Locating... Please wait.";
-            statusBox.style.color = "#2874f0";
-            statusBox.style.display = "block";
+            if (!navigator.geolocation) { statusBox.innerText = "GPS not supported"; statusBox.style.display = "block"; return; }
+            statusBox.innerText = "Locating... Please wait."; statusBox.style.color = "#2874f0"; statusBox.style.display = "block";
 
             navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
-
-                    // Free OpenStreetMap API to convert GPS to text address
-                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
-                        .then(response => response.json())
+                (pos) => {
+                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`)
+                        .then(res => res.json())
                         .then(data => {
                             if(data && data.display_name) {
                                 addressField.value = data.display_name;
-                                statusBox.innerText = "Location detected successfully!";
-                                statusBox.style.color = "#388e3c";
-                            } else {
-                                statusBox.innerText = "Could not fetch address details.";
-                                statusBox.style.color = "#cc0000";
+                                if(data.address && data.address.postcode) { pincodeField.value = data.address.postcode; }
+                                statusBox.innerText = "Location detected!"; statusBox.style.color = "#388e3c";
                             }
-                        })
-                        .catch(err => {
-                            statusBox.innerText = "Error fetching address. Please type manually.";
-                            statusBox.style.color = "#cc0000";
                         });
                 },
-                (error) => {
-                    statusBox.innerText = "Location access denied! Please enable GPS/Location.";
-                    statusBox.style.color = "#cc0000";
-                }
+                (err) => { statusBox.innerText = "Location access denied!"; statusBox.style.color = "#cc0000"; }
             );
         }
     </script>
 </body>
 </html>
-
