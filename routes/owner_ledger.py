@@ -1,8 +1,8 @@
 from flask import Blueprint, request, render_template, redirect, flash
 from database import Database
 
-# auth.py থেকে role_required ইমপোর্ট করা হলো যাতে সিকিউরিটি ঠিক থাকে
-from auth import role_required 
+# 🔴 BUG FIX: 'routes' ফোল্ডারের ভেতর থেকে auth.py কে কল করা হলো
+from routes.auth import role_required 
 
 # এই ফাইলের জন্য নতুন Blueprint তৈরি করা হলো
 owner_ledger_bp = Blueprint('owner_ledger', __name__)
@@ -42,7 +42,7 @@ def seller_ledger():
     # সেলারের মোট ইনকাম, ইনওয়্যারের ১০% ফি এবং সেলারের পাওনা হিসাব করা
     total_sales = 0
     for o in seller_orders:
-        if o.get('status') != 'Cancelled':
+        if o.get('status') != 'Cancelled' and o.get('status') != 'Returned':
             total_sales += float(o.get('total_price', 0))
             
     total_commission = total_sales * 0.10
@@ -55,4 +55,4 @@ def seller_ledger():
                            total_sales=total_sales,
                            total_commission=total_commission,
                            total_payable=total_payable)
-  
+    
