@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller Ledger - inwear</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f8; margin: 0; padding: 20px; color: #212121; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .back-btn { background: #1a1a2e; color: white; padding: 8px 15px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 13px; }
+        
+        .seller-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .seller-card h2 { margin: 0 0 5px 0; color: #cc0000; }
+        .seller-card p { margin: 2px 0; font-size: 13px; color: #666; }
+
+        .finance-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 20px; }
+        .fin-box { background: white; padding: 15px; border-radius: 12px; text-align: center; border: 1px solid #eee; }
+        .fin-box.total { border-color: #2874f0; background: #f0f7ff; }
+        .fin-box.comm { border-color: #cc0000; background: #fff5f5; }
+        .fin-box.pay { border-color: #00a650; background: #f0fff5; }
+        .fin-val { font-size: 24px; font-weight: 900; margin-top: 5px; }
+
+        .order-list { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .order-item { border-bottom: 1px solid #eee; padding: 10px 0; display: flex; justify-content: space-between; align-items: center; }
+        .order-item:last-child { border-bottom: none; }
+        .o-id { font-weight: bold; font-size: 13px; }
+        .o-price { font-weight: bold; color: #00a650; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h3 style="margin: 0;">📊 Seller Report</h3>
+        <a href="/dashboards" class="back-btn">← Back</a>
+    </div>
+
+    <div class="seller-card">
+        <h2>{{ seller.application_data.store_name | default(seller.username) }}</h2>
+        <p><strong>Email:</strong> {{ seller.email }}</p>
+        <p><strong>Discord ID:</strong> {{ seller.discord_id }}</p>
+        <p><strong>UPI ID:</strong> {{ seller.application_data.upi_id | default('Not Provided') }}</p>
+    </div>
+
+    <div class="finance-grid">
+        <div class="fin-box total">
+            <div style="font-size: 12px; color: #666; font-weight: bold;">TOTAL SALES (GROSS)</div>
+            <div class="fin-val" style="color: #2874f0;">₹{{ total_sales | round(2) }}</div>
+        </div>
+        <div class="fin-box comm">
+            <div style="font-size: 12px; color: #666; font-weight: bold;">INWEAR FEE (10%)</div>
+            <div class="fin-val" style="color: #cc0000;">- ₹{{ total_commission | round(2) }}</div>
+        </div>
+        <div class="fin-box pay">
+            <div style="font-size: 12px; color: #666; font-weight: bold;">PAYABLE TO SELLER</div>
+            <div class="fin-val" style="color: #00a650;">₹{{ total_payable | round(2) }}</div>
+        </div>
+    </div>
+
+    <div class="order-list">
+        <h4 style="margin: 0 0 10px 0; border-bottom: 2px solid #eee; padding-bottom: 5px;">Order History</h4>
+        {% if orders %}
+            {% for o in orders %}
+            <div class="order-item">
+                <div>
+                    <div class="o-id">Order #{{ o._id | string | truncate(8, True, '') }}</div>
+                    <div style="font-size: 11px; color: #888;">Status: {{ o.status | default('Completed') }}</div>
+                </div>
+                <div class="o-price">₹{{ o.get('total_price', 0) }}</div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p style="font-size: 13px; color: #888; text-align: center;">No orders found for this seller.</p>
+        {% endif %}
+    </div>
+
+</body>
+</html>
+
