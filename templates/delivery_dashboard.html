@@ -67,7 +67,13 @@
     <div class="top-header">
         <div class="user-info">
             <h3>🛵 Fleet Panel</h3>
-            <p>{{ current_user.application_data.full_name | default('Delivery Partner') }}</p>
+            <p>
+                {% if current_user and current_user.application_data %}
+                    {{ current_user.application_data.full_name }}
+                {% else %}
+                    Delivery Partner
+                {% endif %}
+            </p>
         </div>
         <div class="status-toggle">🟢 Online</div>
     </div>
@@ -75,11 +81,11 @@
     <div class="wallet-card">
         <div class="wallet-item">
             <p>Wallet Earnings</p>
-            <h2 class="earn-text">₹{{ current_user.wallet_balance | default('0.00') }}</h2>
+            <h2 class="earn-text">₹{{ current_user.wallet_balance if current_user and current_user.wallet_balance else '0.00' }}</h2>
         </div>
         <div class="wallet-item">
             <p>Cash to Deposit</p>
-            <h2 class="cash-text">₹{{ current_user.cash_in_hand | default('0.00') }}</h2>
+            <h2 class="cash-text">₹{{ current_user.cash_in_hand if current_user and current_user.cash_in_hand else '0.00' }}</h2>
         </div>
     </div>
 
@@ -165,14 +171,12 @@
     </div>
 
     <script>
-        // স্ক্যানার মেসেজ
         document.getElementById('cameraScan').addEventListener('change', function() {
             if (this.files && this.files.length > 0) {
                 alert("QR Code scanned! Redirecting to order details...");
             }
         });
 
-        // ক্যানসেল বক্স খোলার লজিক
         function toggleIssueBox(orderId) {
             var box = document.getElementById('issue-box-' + orderId);
             if (box.style.display === "none" || box.style.display === "") {
