@@ -247,7 +247,7 @@ def apply_delivery():
 
 
 # ==========================================
-# 🚀 Form Submission Handlers
+# 🚀 Form Submission Handlers (BUG FIXED)
 # ==========================================
 
 @auth_bp.route('/submit-seller-application', methods=['POST'])
@@ -261,18 +261,28 @@ def submit_seller_application():
     phone = request.form.get('phone_number')
     address = request.form.get('address')
     upi_id = request.form.get('upi_id')
+    bank_account = request.form.get('bank_account', '') # Optional
+    ifsc_code = request.form.get('ifsc_code', '') # Optional
     id_type = request.form.get('id_type')
     id_number = request.form.get('id_number')
     
-    # ছবি রিসিভ ও সেভ করা
+    # ছবি রিসিভ করা
     kyc_file = request.files.get('id_document')
     profile_file = request.files.get('user_profile_photo')
+    license_file = request.files.get('trade_license') # Optional
     
-    kyc_filename = secure_filename(kyc_file.filename) if kyc_file else ""
-    profile_filename = secure_filename(profile_file.filename) if profile_file else ""
+    # 🔴 BUG FIX: ফাইলের নাম বের করা (যদি ইউজার সত্যিই ছবি আপলোড করে থাকে)
+    kyc_filename = secure_filename(kyc_file.filename) if kyc_file and kyc_file.filename else ""
+    profile_filename = secure_filename(profile_file.filename) if profile_file and profile_file.filename else ""
+    license_filename = secure_filename(license_file.filename) if license_file and license_file.filename else ""
     
-    if kyc_file: kyc_file.save(os.path.join(UPLOAD_FOLDER, kyc_filename))
-    if profile_file: profile_file.save(os.path.join(UPLOAD_FOLDER, profile_filename))
+    # 🔴 BUG FIX: ফাঁকা ফাইল সেভ হওয়া আটকানো
+    if kyc_file and kyc_file.filename: 
+        kyc_file.save(os.path.join(UPLOAD_FOLDER, kyc_filename))
+    if profile_file and profile_file.filename: 
+        profile_file.save(os.path.join(UPLOAD_FOLDER, profile_filename))
+    if license_file and license_file.filename: 
+        license_file.save(os.path.join(UPLOAD_FOLDER, license_filename))
     
     if col is not None:
         col.update_one({"discord_id": user['id']}, {"$set": {
@@ -282,10 +292,13 @@ def submit_seller_application():
                 "phone": phone,
                 "address": address,
                 "upi_id": upi_id,
+                "bank_account": bank_account,
+                "ifsc_code": ifsc_code,
                 "id_type": id_type,
                 "id_number": id_number,
                 "kyc_image": kyc_filename,
-                "profile_image": profile_filename
+                "profile_image": profile_filename,
+                "license_image": license_filename # Optional
             }
         }})
     
@@ -307,21 +320,27 @@ def submit_delivery_application():
     delivery_area = request.form.get('delivery_area')
     vehicle_type = request.form.get('vehicle_type')
     upi_id = request.form.get('upi_id')
+    bank_account = request.form.get('bank_account', '') # Optional
     id_type = request.form.get('id_type')
     id_number = request.form.get('id_number')
     
-    # ছবি রিসিভ ও সেভ করা
+    # ছবি রিসিভ করা
     kyc_file = request.files.get('id_document')
     profile_file = request.files.get('user_profile_photo')
-    dl_file = request.files.get('driving_license')
+    dl_file = request.files.get('driving_license') # Optional for bicycles
     
-    kyc_filename = secure_filename(kyc_file.filename) if kyc_file else ""
-    profile_filename = secure_filename(profile_file.filename) if profile_file else ""
-    dl_filename = secure_filename(dl_file.filename) if dl_file else ""
+    # 🔴 BUG FIX: ফাইলের নাম বের করা
+    kyc_filename = secure_filename(kyc_file.filename) if kyc_file and kyc_file.filename else ""
+    profile_filename = secure_filename(profile_file.filename) if profile_file and profile_file.filename else ""
+    dl_filename = secure_filename(dl_file.filename) if dl_file and dl_file.filename else ""
     
-    if kyc_file: kyc_file.save(os.path.join(UPLOAD_FOLDER, kyc_filename))
-    if profile_file: profile_file.save(os.path.join(UPLOAD_FOLDER, profile_filename))
-    if dl_file: dl_file.save(os.path.join(UPLOAD_FOLDER, dl_filename))
+    # 🔴 BUG FIX: ফাঁকা ফাইল সেভ হওয়া আটকানো
+    if kyc_file and kyc_file.filename: 
+        kyc_file.save(os.path.join(UPLOAD_FOLDER, kyc_filename))
+    if profile_file and profile_file.filename: 
+        profile_file.save(os.path.join(UPLOAD_FOLDER, profile_filename))
+    if dl_file and dl_file.filename: 
+        dl_file.save(os.path.join(UPLOAD_FOLDER, dl_filename))
     
     if col is not None:
         col.update_one({"discord_id": user['id']}, {"$set": {
@@ -332,11 +351,12 @@ def submit_delivery_application():
                 "area": delivery_area,
                 "vehicle": vehicle_type,
                 "upi_id": upi_id,
+                "bank_account": bank_account,
                 "id_type": id_type,
                 "id_number": id_number,
                 "kyc_image": kyc_filename,
                 "profile_image": profile_filename,
-                "dl_image": dl_filename
+                "dl_image": dl_filename # Optional
             }
         }})
     
@@ -344,7 +364,7 @@ def submit_delivery_application():
     session.modified = True
     flash("Your Delivery application is submitted and waiting for Admin approval.")
     return redirect('/account')
-
+        
 
 # ==========================================
 # ⚖️ Admin Approval / Rejection Routes
