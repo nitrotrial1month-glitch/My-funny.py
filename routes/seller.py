@@ -3,7 +3,7 @@ from database import Database
 from datetime import datetime
 
 # (আপনার ফাইলে যদি ব্লুপ্রিন্ট আগে থেকেই থাকে, তবে নিচের লাইনটা লাগবে না)
-# seller_bp = Blueprint('seller', __name__)
+seller_bp = Blueprint('seller', __name__)
 
 # ১. সেলারের ওয়ালেট পেজ দেখানো
 @seller_bp.route('/seller/wallet')
