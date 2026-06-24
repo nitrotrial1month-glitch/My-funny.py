@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Wear By Me</title>
     <style>
-        :root { --primary-red: #cc0000; --bg-color: #f1f2f4; --text-dark: #212121; --text-muted: #878787; --white: #ffffff; --verified-green: #00a650; --assured-blue: #2874f0; }
+        :root { --primary-red: #cc0000; --bg-color: #f1f2f4; --text-dark: #212121; --text-muted: #878787; --white: #ffffff; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--text-dark); margin: 0; padding: 0; padding-bottom: 70px; }
 
         .top-header { position: sticky; top: 0; left: 0; width: 100%; background-color: var(--white); z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.08); }
@@ -33,7 +33,7 @@
         .wishlist-btn { position: absolute; top: 8px; right: 8px; background: rgba(255, 255, 255, 0.9); border-radius: 50%; width: 28px; height: 28px; display: flex; justify-content: center; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 16px; color: #ccc; z-index: 10; }
         
         /* 🔴 NEW: Wear By Me Custom Insure Badge CSS */
-        .inwear-assured-badge { 
+        .wbm-insure-badge { 
             position: absolute; 
             top: 8px; 
             left: 8px; 
@@ -51,7 +51,7 @@
             z-index: 10; 
             letter-spacing: 0.5px;
         }
-        .assured-icon-svg {
+        .insure-icon-svg {
             width: 14px;
             height: 14px;
             margin-top: -1px;
@@ -130,10 +130,11 @@
                 {% for product in products %}
                 <a href="/product/{{ product._id }}" class="product-card">
                     <div class="product-img-container">
+                        
+                        <!-- 🔴 UPDATE: Wear By Me Insure Badge -->
                         {% if product.inwear_insure == 'Verified' %}
-                        <div class="inwear-assured-badge">
-                            <!-- 🔴 Custom Brand Logo SVG (Red Circle with White 'W') -->
-                            <svg class="assured-icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <div class="wbm-insure-badge">
+                            <svg class="insure-icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <circle cx="12" cy="12" r="12" fill="#cc0000"/>
                                 <path d="M6 8.5 L9 16.5 L12 11.5 L15 16.5 L18 8.5" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
                             </svg>
