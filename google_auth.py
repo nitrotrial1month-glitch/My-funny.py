@@ -54,41 +54,49 @@ def google_callback():
         username = user_info.get('name', 'User')
         avatar = user_info.get('picture', '')
 
-        # ডাটাবেস আপডেট লজিক
         col = Database.get_collection("users")
         db_user = None
         
         if col is not None:
-            db_user = col.find_one({"email": email})
+            if email:
+                db_user = col.find_one({"email": email})
             if not db_user:
+                db_user = col.find_one({"google_id": google_id})
+
+            if not db_user:
+                inwear_id = f"INW-{random.randint(100000, 999999)}"
                 initial_role = "owner" if email == "kstomh05@gmail.com" else "user"
                 db_user = {
-                    "discord_id": google_id, 
+                    "google_id": google_id, 
                     "username": username,
                     "email": email,
-                    "inwear_id": f"INW-{random.randint(100000, 999999)}",
+                    "inwear_id": inwear_id,
                     "role": initial_role,
                     "avatar": avatar,
                     "is_google": True
                 }
                 col.insert_one(db_user)
             else:
+                if 'inwear_id' not in db_user:
+                    inwear_id = f"INW-{random.randint(100000, 999999)}"
+                    col.update_one({"_id": db_user["_id"]}, {"$set": {"inwear_id": inwear_id, "google_id": google_id}})
+                    db_user['inwear_id'] = inwear_id
+                    
                 if email == "kstomh05@gmail.com" and db_user.get("role") != "owner":
-                    col.update_one({"email": email}, {"$set": {"role": "owner"}})
+                    col.update_one({"_id": db_user["_id"]}, {"$set": {"role": "owner"}})
                     db_user["role"] = "owner"
 
-        # সেশন সেভ করা
+        # 🔴 UPDATE: সেশনে এখন থেকে সবসময় `inwear_id` সেভ হবে
         session['user'] = {
-            'id': google_id,
+            'id': db_user.get('inwear_id'),
             'username': username,
             'email': email,
             'avatar': avatar,
             'is_google': True,
-            'role': db_user.get("role") if db_user else "user"
+            'role': db_user.get("role")
         }
         return redirect('/')
         
     except Exception as e:
-        # 500 Error এর বদলে ঠিক কী সমস্যা তা দেখাবে
         return f"<h2>System Error During Login:</h2><p style='color:red;'>{str(e)}</p><br><a href='/'>Go Back</a>"
         
