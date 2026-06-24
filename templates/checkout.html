@@ -73,18 +73,23 @@
 
         <!-- 📦 ORDER SUMMARY -->
         <div class="card">
-            <h2 class="card-title">Order Summary</h2>
-            {% for item in items %}
-            <div style="display:flex; gap:10px; margin-bottom:10px; padding-bottom:10px; border-bottom: 1px solid #f0f0f0;">
-                <img src="/{{ item.image }}" style="width:50px; height:50px; object-fit:cover; border-radius: 6px;">
-                <div>
-                    <div style="font-size:14px; font-weight: 500;">{{ item.name|truncate(35, True) }}</div>
-                    <div style="font-size:14px; font-weight: bold; margin-top: 4px;">₹{{ item.price }}</div>
-                </div>
-            </div>
-            {% endfor %}
-
-            <!-- 🔴 BILLING DETAILS (Live Update) -->
+            <!-- checkout.html এর 'Order Summary' লুপটি এভাবে আপডেট করুন -->
+<h2 class="card-title">Order Summary</h2>
+{% for item in items %}
+<div style="display:flex; gap:10px; margin-bottom:10px; padding-bottom:10px; border-bottom: 1px solid #f0f0f0;">
+    <img src="/{{ item.image }}" style="width:50px; height:50px; object-fit:cover; border-radius: 6px;">
+    <div>
+        <div style="font-size:14px; font-weight: 500;">{{ item.name|truncate(35, True) }}</div>
+        <!-- 🔴 NEW: এখানেও আইডি যোগ করা হলো -->
+        {% if item.wbm_pid %}
+            <div style="font-size: 11px; color: #888;">ID: {{ item.wbm_pid }}</div>
+        {% endif %}
+        <div style="font-size:14px; font-weight: bold; margin-top: 4px;">₹{{ item.price }}</div>
+    </div>
+</div>
+{% endfor %}
+            
+       <!-- 🔴 BILLING DETAILS (Live Update) -->
             <div style="background: #f9f9f9; padding: 12px; border-radius: 6px; margin-top: 15px;">
                 <div class="bill-row">
                     <span>Items Total</span>
