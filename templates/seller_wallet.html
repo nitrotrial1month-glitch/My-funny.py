@@ -2,75 +2,82 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Wallet | inwear Seller</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Seller Wallet | inwear</title>
     <style>
-        :root { --primary: #2874f0; --bg: #f1f3f6; --text: #212121; --success: #388e3c; --warning: #ff9f00; }
-        body { font-family: Roboto, Arial, sans-serif; background: var(--bg); margin: 0; padding: 0; color: var(--text); }
+        :root { 
+            --primary: #cc0000; --dark: #1a1a2e; --success: #00a650; 
+            --blue: #2874f0; --bg: #f4f6f8; --white: #ffffff; 
+        }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; padding-bottom: 80px; color: #212121; }
         
-        .header { background: white; padding: 15px 20px; display: flex; align-items: center; box-shadow: 0 1px 4px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
-        .back-btn { text-decoration: none; font-size: 20px; color: var(--text); margin-right: 15px; font-weight: bold; }
+        .header { background: var(--dark); color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .back-btn { color: white; text-decoration: none; font-weight: bold; font-size: 14px; }
         
-        .container { max-width: 600px; margin: 0 auto; padding: 15px; }
-        .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .card-title { font-size: 16px; font-weight: bold; margin-top: 0; margin-bottom: 15px; color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-        
-        /* Wallet Balance */
-        .balance-box { background: linear-gradient(135deg, #2874f0, #0056c8); color: white; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 15px; }
-        .balance-amount { font-size: 32px; font-weight: bold; margin: 10px 0; }
-        .balance-label { font-size: 13px; opacity: 0.9; }
-        
+        /* Balance Card */
+        .balance-card { background: var(--primary); color: white; margin: 20px 15px; padding: 25px 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(204, 0, 0, 0.3); text-align: center; }
+        .balance-card p { margin: 0; font-size: 13px; opacity: 0.9; text-transform: uppercase; letter-spacing: 1px; }
+        .balance-card h1 { margin: 5px 0 0 0; font-size: 35px; }
+
+        .container { padding: 0 15px; }
+        .section-title { font-size: 14px; font-weight: 900; color: #555; text-transform: uppercase; margin-bottom: 10px; margin-top: 20px; border-bottom: 2px solid #eee; padding-bottom: 5px; }
+
+        /* Forms & Inputs */
+        .card-box { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        .input-field { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; margin-bottom: 10px; box-sizing: border-box; outline: none; }
+        .btn { display: block; width: 100%; padding: 12px; text-align: center; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; font-size: 14px; color: white; }
+        .btn-blue { background: var(--blue); }
+        .btn-green { background: var(--success); }
+
         /* UPI List */
-        .upi-box { border: 1px solid #e0e0e0; border-radius: 6px; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .upi-box.default { border-color: var(--success); background: #f5fdf7; }
-        .upi-id { font-weight: bold; font-size: 14px; }
-        .badge { background: var(--success); color: white; padding: 3px 8px; font-size: 10px; font-weight: bold; border-radius: 4px; }
-        
-        /* Forms */
-        .form-control { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 12px; box-sizing: border-box; }
-        .btn { background: var(--primary); color: white; border: none; padding: 12px; width: 100%; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 15px; margin-top: 5px; }
-        .btn-outline { background: white; color: var(--primary); border: 1px solid var(--primary); }
-        
-        /* History */
-        .history-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee; font-size: 14px; }
-        .status-pending { color: var(--warning); font-weight: bold; font-size: 12px; }
-        .status-success { color: var(--success); font-weight: bold; font-size: 12px; }
+        .upi-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border: 1px solid #eee; border-radius: 8px; margin-bottom: 8px; }
+        .upi-badge { background: #e8f4fd; color: var(--blue); font-size: 10px; padding: 3px 6px; border-radius: 4px; font-weight: bold; margin-left: 5px; }
+        .btn-set { background: #eee; color: #333; border: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; }
+
+        /* History Table */
+        .history-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding: 10px 0; }
+        .history-item:last-child { border-bottom: none; }
+        .h-amount { font-weight: bold; font-size: 15px; }
+        .h-status { font-size: 11px; font-weight: bold; padding: 3px 8px; border-radius: 4px; }
+        .s-pending { background: #fff3cd; color: #856404; }
+        .s-paid { background: #d4edda; color: #155724; }
+
+        /* Flash Message */
+        .flash { background: #d4edda; color: #155724; padding: 10px; border-radius: 8px; margin: 15px; font-size: 13px; text-align: center; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <a href="javascript:history.back()" class="back-btn">←</a>
-        <h3 style="margin: 0;">My Wallet & Payout</h3>
+        <a href="/seller-dashboard" class="back-btn">← Back</a>
+        <h3 style="margin: 0; font-size: 16px;">Payouts & Wallet</h3>
+        <div style="width: 50px;"></div> <!-- Spacer -->
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="flash">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="balance-card">
+        <p>Available Balance</p>
+        <h1>₹{{ seller.wallet_balance if seller and seller.wallet_balance else '0.00' }}</h1>
     </div>
 
     <div class="container">
         
-        <!-- Flash Messages -->
-        {% with messages = get_flashed_messages() %}
-          {% if messages %}
-            {% for message in messages %}
-              <div style="background: #388e3c; color: white; padding: 10px; border-radius: 4px; margin-bottom: 15px; text-align: center; font-size: 14px;">{{ message }}</div>
-            {% endfor %}
-          {% endif %}
-        {% endwith %}
-
-        <!-- Balance Section -->
-        <div class="balance-box">
-            <div class="balance-label">Available Balance for Withdrawal</div>
-            <div class="balance-amount">₹{{ seller.wallet_balance | default(0.0) }}</div>
-            <div style="font-size: 12px; opacity: 0.8;">Pending Settlement: ₹{{ seller.pending_balance | default(0.0) }}</div>
-        </div>
-
-        <!-- Withdrawal Form -->
-        <div class="card">
-            <div class="card-title">💸 Request Payout</div>
+        <!-- 💸 WITHDRAWAL REQUEST SECTION -->
+        <div class="section-title">💸 Withdraw Funds</div>
+        <div class="card-box">
             <form action="/seller/withdraw" method="POST">
-                <label style="font-size: 13px; color: #555; font-weight: bold;">Enter Amount (₹)</label>
-                <input type="number" name="amount" class="form-control" placeholder="E.g. 500" max="{{ seller.wallet_balance | default(0.0) }}" min="100" required>
+                <label style="font-size: 12px; color: #666; font-weight: bold;">Amount to Withdraw (Min ₹100)</label>
+                <input type="number" name="amount" class="input-field" placeholder="e.g. 500" required min="100" max="{{ seller.wallet_balance | default(0) }}">
                 
-                <label style="font-size: 13px; color: #555; font-weight: bold;">Select Payout Method</label>
-                <select name="upi_id" class="form-control" required>
+                <label style="font-size: 12px; color: #666; font-weight: bold;">Select UPI ID</label>
+                <select name="upi_id" class="input-field" required>
                     {% if seller.upi_list %}
                         {% for upi in seller.upi_list %}
                             <option value="{{ upi.upi_id }}" {% if upi.is_default %}selected{% endif %}>
@@ -78,64 +85,69 @@
                             </option>
                         {% endfor %}
                     {% else %}
-                        <option value="">No UPI ID found. Please add below.</option>
+                        <option value="" disabled selected>No UPI Added. Add one below!</option>
                     {% endif %}
                 </select>
                 
-                <button type="submit" class="btn" {% if not seller.upi_list or seller.wallet_balance|default(0) < 100 %}disabled style="background:#ccc;"{% endif %}>Send Request</button>
-                <p style="font-size: 11px; color: #888; text-align: center; margin-top: 10px;">Minimum withdrawal amount is ₹100</p>
+                <button type="submit" class="btn btn-green">Submit Request</button>
             </form>
         </div>
 
-        <!-- Manage UPI IDs -->
-        <div class="card">
-            <div class="card-title">🏦 Manage UPI IDs</div>
-            
+        <!-- 🏦 MANAGE UPI IDs -->
+        <div class="section-title">🏦 Manage Payment Methods</div>
+        <div class="card-box">
+            <!-- Add New UPI -->
+            <form action="/seller/add_upi" method="POST" style="display: flex; gap: 5px; margin-bottom: 15px;">
+                <input type="text" name="new_upi" class="input-field" style="margin: 0;" placeholder="Enter new UPI ID (e.g. name@okhdfc)" required>
+                <button type="submit" class="btn btn-blue" style="width: auto; padding: 0 15px;">Add</button>
+            </form>
+
+            <!-- UPI List -->
             {% if seller.upi_list %}
                 {% for upi in seller.upi_list %}
-                <div class="upi-box {% if upi.is_default %}default{% endif %}">
-                    <div>
-                        <div class="upi-id">{{ upi.upi_id }}</div>
+                <div class="upi-item">
+                    <div style="font-size: 13px; font-weight: bold; color: #333;">
+                        {{ upi.upi_id }}
+                        {% if upi.is_default %}<span class="upi-badge">Default</span>{% endif %}
                     </div>
-                    {% if upi.is_default %}
-                        <span class="badge">DEFAULT</span>
-                    {% else %}
-                        <form action="/seller/set_default_upi/{{ loop.index0 }}" method="POST" style="margin:0;">
-                            <button type="submit" style="background:none; border:none; color:var(--primary); font-weight:bold; cursor:pointer;">Set Default</button>
-                        </form>
+                    {% if not upi.is_default %}
+                    <form action="/seller/set_default_upi/{{ loop.index0 }}" method="POST" style="margin: 0;">
+                        <button type="submit" class="btn-set">Set Default</button>
+                    </form>
                     {% endif %}
                 </div>
                 {% endfor %}
+            {% else %}
+                <p style="font-size: 12px; color: #888; text-align: center; margin: 0;">No UPI IDs added yet.</p>
             {% endif %}
-
-            <form action="/seller/add_upi" method="POST" style="margin-top: 15px;">
-                <input type="text" name="new_upi" class="form-control" placeholder="Enter new UPI ID (e.g. name@okaxis)" required>
-                <button type="submit" class="btn btn-outline">+ Add UPI ID</button>
-            </form>
         </div>
 
-        <!-- Payout History -->
-        <div class="card">
-            <div class="card-title">📜 Payout History</div>
+        <!-- 📜 WITHDRAWAL HISTORY -->
+        <div class="section-title">📜 Withdrawal History</div>
+        <div class="card-box">
             {% if withdrawals %}
                 {% for w in withdrawals %}
                 <div class="history-item">
                     <div>
-                        <div style="font-weight: bold;">₹{{ w.amount }}</div>
-                        <div style="font-size: 12px; color: #888;">To: {{ w.upi_id }}</div>
+                        <div style="font-size: 11px; color: #888;">{{ w.date }}</div>
+                        <div style="font-size: 12px; color: #555;">To: {{ w.upi_id }}</div>
                     </div>
                     <div style="text-align: right;">
-                        <div class="{% if w.status == 'Pending' %}status-pending{% else %}status-success{% endif %}">{{ w.status }}</div>
-                        <div style="font-size: 11px; color: #888;">{{ w.date }}</div>
+                        <div class="h-amount" style="color: {% if w.status == 'Paid' %}var(--success){% else %}#cc0000{% endif %};">
+                            ₹{{ w.amount }}
+                        </div>
+                        <div class="h-status {% if w.status == 'Paid' %}s-paid{% else %}s-pending{% endif %}">
+                            {{ w.status }}
+                        </div>
                     </div>
                 </div>
                 {% endfor %}
             {% else %}
-                <div style="text-align: center; color: #888; font-size: 13px; padding: 10px;">No payout requests yet.</div>
+                <p style="font-size: 12px; color: #888; text-align: center; margin: 0;">No withdrawal history found.</p>
             {% endif %}
         </div>
 
     </div>
+
 </body>
 </html>
-
