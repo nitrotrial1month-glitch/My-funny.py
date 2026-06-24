@@ -14,7 +14,6 @@
         }
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; padding-bottom: 80px; color: #212121; }
         
-        /* Header */
         .header { background: var(--dark); color: white; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .header h3 { margin: 0; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; }
         .btn-add-top { background: var(--primary); color: white; border: none; padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: bold; text-decoration: none; }
@@ -22,7 +21,6 @@
         .container { padding: 15px; }
         .section-info { font-size: 12px; color: #666; margin-bottom: 15px; font-weight: bold; text-transform: uppercase; }
 
-        /* Product List Card */
         .product-item { display: flex; align-items: center; justify-content: space-between; background: white; padding: 12px; border-radius: 12px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border: 1px solid #eee; }
         .product-img { width: 65px; height: 65px; border-radius: 8px; object-fit: cover; background: #fafafa; }
         .product-details { flex: 1; margin-left: 12px; }
@@ -34,7 +32,6 @@
         .status-live { background: #e6f7ed; color: var(--success); }
         .status-pending { background: #fff5e6; color: var(--warning); }
 
-        /* Action Buttons */
         .action-area { display: flex; flex-direction: column; gap: 6px; }
         .btn-action { padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; text-decoration: none; text-align: center; cursor: pointer; border: 1px solid transparent; width: 100%; box-sizing: border-box;}
         .btn-edit { background: #e8f4fd; color: var(--blue); border-color: #b8daff; }
@@ -42,13 +39,11 @@
 
         .empty-state { text-align: center; padding: 40px 20px; color: #888; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
 
-        /* Bottom Nav */
         .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--white); display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -5px 15px rgba(0,0,0,0.05); z-index: 1000; border-top: 1px solid #eee; }
         .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #888; font-size: 12px; font-weight: bold; }
         .nav-item.active { color: var(--primary); }
         .nav-icon { font-size: 22px; margin-bottom: 3px; }
         
-        /* 🔴 SweetAlert Custom Font */
         div:where(.swal2-container) { font-family: 'Segoe UI', sans-serif; }
     </style>
 </head>
@@ -65,7 +60,7 @@
         {% if products %}
             {% for p in products %}
             <div class="product-item">
-                <img src="/{{ p.image if p.image else '' }}" onerror="this.src='https://via.placeholder.com/65';" class="product-img" alt="Product Thumbnail">
+                <img src="{% if p.image and 'http' in p.image %}{{ p.image }}{% else %}/{{ p.image }}{% endif %}" onerror="this.src='https://via.placeholder.com/65';" class="product-img" alt="Product Thumbnail">
                 
                 <div class="product-details">
                     <h4>{{ p.name }}</h4>
@@ -123,7 +118,6 @@
                 shape: 'border-radius: 12px;'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // যদি ইউজার Yes এ ক্লিক করে, তবে ফর্মটি সাবমিট হবে
                     document.getElementById('delete-form-' + productId).submit();
                 }
             })
