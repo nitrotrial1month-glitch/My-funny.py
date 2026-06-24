@@ -141,7 +141,9 @@
                         <span>₹{{ (order.total_price|float - 40 - (order.total_price|float * 0.10))|round(2) }}</span>
                     </div>
                 </div>
-
+              
+                <a href="/seller/print-bill/{{ order._id }}" target="_blank" style="display: block; text-align: center; margin-bottom: 10px; color: var(--blue); font-size: 12px; font-weight: bold; text-decoration: none;">🖨️ Print Invoice / Bill</a>
+                
                 {% if order.status == 'Confirmed' %}
                     <form action="/seller/mark_ready/{{ order._id }}" method="POST">
                         <button type="submit" class="btn-action btn-ready" onclick="return confirm('Ensure the product is packed correctly. Mark as ready?')">📦 Pack & Mark Ready</button>
