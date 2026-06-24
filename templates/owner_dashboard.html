@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Owner Panel - inwear</title>
+    <title>Owner Panel - Wear By Me</title>
     <style>
         :root {
             --primary-red: #cc0000;
@@ -72,7 +72,6 @@
         <img id="modalImage" src="">
     </div>
 
-    <!-- Flash Messages -->
     <div style="position: fixed; top: 15px; left: 50%; transform: translateX(-50%); width: 90%; z-index: 9999;">
         {% with messages = get_flashed_messages() %}
             {% if messages %}
@@ -87,7 +86,7 @@
 
     <div class="top-header">
         <div class="header-top">
-            <div class="admin-title">👑 INWEAR <span class="owner-badge">OWNER</span></div>
+            <div class="admin-title">👑 WEAR BY ME <span class="owner-badge">OWNER</span></div>
             <div style="font-size: 22px;">⚙️</div>
         </div>
         <div class="admin-info">Logged in as: <strong>{{ current_user.email | default('Super Admin') }}</strong></div>
@@ -136,11 +135,11 @@
             
             <div class="doc-images">
                 <div>
-                    <img src="/static/uploads/{{ s.application_data.profile_image }}" onclick="openModal(this.src)" alt="Selfie" onerror="this.src='https://via.placeholder.com/80?text=No+Photo'">
+                    <img src="{% if 'http' in s.application_data.profile_image %}{{ s.application_data.profile_image }}{% else %}/static/uploads/{{ s.application_data.profile_image }}{% endif %}" onclick="openModal(this.src)" alt="Selfie" onerror="this.src='https://via.placeholder.com/80?text=No+Photo'">
                     <div class="doc-label">Selfie</div>
                 </div>
                 <div>
-                    <img src="/static/uploads/{{ s.application_data.kyc_image }}" onclick="openModal(this.src)" alt="KYC Doc" onerror="this.src='https://via.placeholder.com/80?text=No+Doc'">
+                    <img src="{% if 'http' in s.application_data.kyc_image %}{{ s.application_data.kyc_image }}{% else %}/static/uploads/{{ s.application_data.kyc_image }}{% endif %}" onclick="openModal(this.src)" alt="KYC Doc" onerror="this.src='https://via.placeholder.com/80?text=No+Doc'">
                     <div class="doc-label">ID Doc</div>
                 </div>
             </div>
@@ -170,16 +169,16 @@
             
             <div class="doc-images">
                 <div>
-                    <img src="/static/uploads/{{ d.application_data.profile_image }}" onclick="openModal(this.src)" alt="Selfie" onerror="this.src='https://via.placeholder.com/80?text=No+Photo'">
+                    <img src="{% if 'http' in d.application_data.profile_image %}{{ d.application_data.profile_image }}{% else %}/static/uploads/{{ d.application_data.profile_image }}{% endif %}" onclick="openModal(this.src)" alt="Selfie" onerror="this.src='https://via.placeholder.com/80?text=No+Photo'">
                     <div class="doc-label">Selfie</div>
                 </div>
                 <div>
-                    <img src="/static/uploads/{{ d.application_data.kyc_image }}" onclick="openModal(this.src)" alt="KYC Doc" onerror="this.src='https://via.placeholder.com/80?text=No+Doc'">
+                    <img src="{% if 'http' in d.application_data.kyc_image %}{{ d.application_data.kyc_image }}{% else %}/static/uploads/{{ d.application_data.kyc_image }}{% endif %}" onclick="openModal(this.src)" alt="KYC Doc" onerror="this.src='https://via.placeholder.com/80?text=No+Doc'">
                     <div class="doc-label">ID Doc</div>
                 </div>
                 {% if d.application_data.dl_image %}
                 <div>
-                    <img src="/static/uploads/{{ d.application_data.dl_image }}" onclick="openModal(this.src)" alt="Driving License">
+                    <img src="{% if 'http' in d.application_data.dl_image %}{{ d.application_data.dl_image }}{% else %}/static/uploads/{{ d.application_data.dl_image }}{% endif %}" onclick="openModal(this.src)" alt="Driving License">
                     <div class="doc-label">License</div>
                 </div>
                 {% endif %}
@@ -199,17 +198,17 @@
             {% for p in pending_products %}
             <div style="border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 10px;">
                 <div style="display: flex; gap: 10px; align-items: center;">
-                    <img src="/{{ p.image if p.image else '' }}" onclick="openModal(this.src)" onerror="this.onerror=null; this.src='https://via.placeholder.com/50';" style="width: 50px; height: 50px; border-radius: 6px; object-fit: cover; cursor: zoom-in;">
+                    <img src="{% if p.image and 'http' in p.image %}{{ p.image }}{% else %}/{{ p.image if p.image else '' }}{% endif %}" onclick="openModal(this.src)" onerror="this.onerror=null; this.src='https://via.placeholder.com/50';" style="width: 50px; height: 50px; border-radius: 6px; object-fit: cover; cursor: zoom-in;">
                     <div style="flex: 1;">
                         <h4 style="margin: 0; font-size: 14px;">{{ p.name }}</h4>
                         <p style="margin: 2px 0 0; font-size: 12px; color: #666;">Price: ₹{{ p.price }}</p>
                     </div>
                 </div>
                 <div style="display: flex; gap: 10px; margin-top: 10px;">
-                    <form action="/owner/verify-product/{{ p._id }}" method="POST" style="flex: 1;">
+                    <form action="/owner/verify-product/{{ p._id | string }}" method="POST" style="flex: 1;">
                         <button type="submit" class="btn btn-green" style="width: 100%;">✅ Verify</button>
                     </form>
-                    <form action="/owner/delete-product/{{ p._id }}" method="POST" style="flex: 1;">
+                    <form action="/owner/delete-product/{{ p._id | string }}" method="POST" style="flex: 1;">
                         <button type="submit" class="btn btn-red" style="width: 100%;" onclick="return confirm('Delete this product permanently?')">🗑️ Delete</button>
                     </form>
                 </div>
@@ -220,21 +219,20 @@
         {% endif %}
     </div>
 
-    <!-- 🔴 NEW SECTION: INWEAR INSURE REQUESTS -->
-    <div class="section-title" style="color: var(--assured-blue);">🏅 Inwear Insure Requests</div>
+    <div class="section-title" style="color: var(--assured-blue);">🏅 Insure Badge Requests</div>
     <div class="card-container" style="border: 1px solid var(--assured-blue); background: #f0f7ff;">
         {% if insure_requests %}
             {% for p in insure_requests %}
             <div style="border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-bottom: 10px;">
                 <div style="display: flex; gap: 10px; align-items: center;">
-                    <img src="/{{ p.image if p.image else '' }}" onclick="openModal(this.src)" onerror="this.onerror=null; this.src='https://via.placeholder.com/50';" style="width: 50px; height: 50px; border-radius: 6px; object-fit: cover; cursor: zoom-in;">
+                    <img src="{% if p.image and 'http' in p.image %}{{ p.image }}{% else %}/{{ p.image if p.image else '' }}{% endif %}" onclick="openModal(this.src)" onerror="this.onerror=null; this.src='https://via.placeholder.com/50';" style="width: 50px; height: 50px; border-radius: 6px; object-fit: cover; cursor: zoom-in;">
                     <div style="flex: 1;">
                         <h4 style="margin: 0; font-size: 14px;">{{ p.name }}</h4>
                         <p style="margin: 2px 0 0; font-size: 12px; color: #555;">Store: <strong>{{ p.store_name | default('Unknown') }}</strong></p>
                     </div>
                 </div>
                 <div style="display: flex; gap: 10px; margin-top: 10px;">
-                    <form action="/owner/verify-insure/{{ p._id }}" method="POST" style="flex: 1;">
+                    <form action="/owner/verify-insure/{{ p._id | string }}" method="POST" style="flex: 1;">
                         <button type="submit" class="btn btn-blue" style="width: 100%; box-shadow: 0 3px 10px rgba(40,116,240,0.3);">🏅 Approve Badge</button>
                     </form>
                 </div>
@@ -244,7 +242,6 @@
             <p style="text-align: center; color: #888; font-size: 13px; margin: 0;">No pending badge requests right now.</p>
         {% endif %}
     </div>
-    <!-- END NEW SECTION -->
 
     <div class="section-title" style="color: #cc0000;">🚨 Danger Zone</div>
     <div class="card-container" style="background: #fff5f5; border: 1px solid #ffdcdb; margin-bottom: 20px;">
@@ -252,7 +249,7 @@
             <label style="font-size: 12px; font-weight: bold; color: #cc0000; display: block; margin-bottom: 5px;">DELETE ANY PRODUCT</label>
             <div style="display: flex; gap: 5px;">
                 <input type="text" name="product_query" placeholder="Enter Product Name or ID..." required style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; outline: none;">
-                <button type="submit" class="btn btn-red" onclick="return confirm('WARNING: Are you sure?')">DELETE</button>
+                <button type="submit" class="btn btn-red" onclick="return confirm('WARNING: Are you sure you want to permanently delete this product?')">DELETE</button>
             </div>
         </form>
         <hr style="border: 0; border-top: 1px dashed #ffcccc; margin: 15px 0;">
