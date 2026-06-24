@@ -30,7 +30,7 @@ def get_current_user():
     col = Database.get_collection("users")
     if col is not None:
         # 🔴 UPDATE: এখন থেকে সবসময় inwear_id দিয়ে ইউজারকে খুঁজবে
-        db_user = col.find_one({"inwear_id": user_session.get('id')})
+        db_user = col.find_one({"wearbyme_id": user_session.get('id')})
         if db_user:
             return db_user
     return user_session
