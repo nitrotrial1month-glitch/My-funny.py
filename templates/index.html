@@ -5,20 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>inwear - Premium T-Shirts</title>
     <style>
-        /* Theme Variables */
-        :root {
-            --primary-red: #cc0000;
-            --bg-color: #f1f2f4;
-            --text-dark: #212121;
-            --text-muted: #878787;
-            --white: #ffffff;
-            --verified-green: #00a650;
-            --assured-blue: #2874f0;
-        }
-
+        :root { --primary-red: #cc0000; --bg-color: #f1f2f4; --text-dark: #212121; --text-muted: #878787; --white: #ffffff; --verified-green: #00a650; --assured-blue: #2874f0; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--text-dark); margin: 0; padding: 0; padding-bottom: 70px; }
 
-        /* Top Header */
         .top-header { position: sticky; top: 0; left: 0; width: 100%; background-color: var(--white); z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.08); }
         .header-top-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; }
         .brand-name { font-size: 26px; font-weight: 800; color: var(--primary-red); letter-spacing: 1px; text-transform: lowercase; text-decoration: none; }
@@ -27,16 +16,13 @@
         .search-container { padding: 0 15px 10px 15px; }
         .search-box { display: flex; align-items: center; background-color: #f0f5ff; border-radius: 8px; padding: 8px 12px; border: 1px solid #e0e0e0; }
         .search-box input { flex: 1; border: none; background: transparent; outline: none; font-size: 15px; padding-left: 8px; }
-        .search-box .voice-icon { font-size: 18px; color: #555; cursor: pointer; }
-
-        /* Category Scroll (Spaced evenly) */
+        
         .category-scroll { display: flex; overflow-x: auto; padding: 12px 15px; background: #fff; border-top: 1px solid #f0f0f0; scrollbar-width: none; justify-content: space-between; }
         .category-scroll::-webkit-scrollbar { display: none; }
         .cat-item { display: flex; flex-direction: column; align-items: center; min-width: 60px; text-decoration: none; cursor: pointer; flex: 1; }
         .cat-icon { font-size: 24px; background: #f8f8f8; padding: 12px; border-radius: 14px; margin-bottom: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
         .cat-text { font-size: 12px; font-weight: bold; color: var(--primary-red); }
 
-        /* Product Grid */
         .main-content { padding: 15px 10px 10px 10px; }
         .product-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
         .product-card { background-color: var(--white); border-radius: 6px; overflow: hidden; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; flex-direction: column; text-decoration: none; color: inherit; transition: transform 0.2s; }
@@ -50,34 +36,33 @@
         .assured-icon { background-color: white; color: var(--assured-blue); border-radius: 50%; width: 12px; height: 12px; display: flex; justify-content: center; align-items: center; font-size: 9px; font-weight: bold; font-style: normal; }
         
         .product-info { padding: 10px; }
-        .product-title { font-size: 13px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
+        .product-title { font-size: 13px; font-weight: bold; color: var(--text-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
+        
+        /* 🔴 NEW: ডেসক্রিপশনের জন্য CSS */
+        .product-desc-short { font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 6px; }
+        
         .price-container { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
-        .product-price { font-size: 16px; font-weight: bold; color: var(--text-dark); }
-        .secure-info { font-size: 10px; color: var(--text-muted); margin-top: 5px; display: flex; align-items: center; gap: 4px; }
-        .secure-info span { color: var(--verified-green); font-size: 12px; }
+        .product-price { font-size: 15px; font-weight: bold; color: var(--primary-red); }
+        .old-price { font-size: 12px; color: #aaa; text-decoration: line-through; }
 
-        /* Bottom Navigation */
         .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--white); display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: var(--text-muted); font-size: 12px; font-weight: bold; cursor: pointer; position: relative; transition: color 0.2s; }
-        .nav-item:active, .nav-item.active { color: var(--primary-red); }
+        .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: var(--text-muted); font-size: 12px; font-weight: bold; cursor: pointer; }
+        .nav-item.active { color: var(--primary-red); }
         .nav-icon { font-size: 22px; margin-bottom: 3px; }
         .cart-badge { position: absolute; top: -5px; right: 5px; background: #ff9900; color: white; font-size: 10px; padding: 2px 5px; border-radius: 10px; font-weight: bold; }
 
-        /* Premium Bottom Sheet */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(2px); z-index: 1001; display: none; opacity: 0; transition: opacity 0.3s ease; }
-        .bottom-sheet { position: fixed; bottom: -100%; left: 0; width: 100%; background: var(--white); z-index: 1002; border-radius: 24px 24px 0 0; padding: 15px 20px 30px 20px; box-shadow: 0 -5px 20px rgba(0,0,0,0.15); transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-sizing: border-box; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: 1001; display: none; opacity: 0; transition: opacity 0.3s ease; }
+        .bottom-sheet { position: fixed; bottom: -100%; left: 0; width: 100%; background: var(--white); z-index: 1002; border-radius: 24px 24px 0 0; padding: 15px 20px 30px 20px; transition: bottom 0.3s; box-sizing: border-box; }
         .drag-handle { width: 40px; height: 5px; background-color: #e0e0e0; border-radius: 10px; margin: 0 auto 20px auto; }
         .sheet-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .sheet-header h3 { margin: 0; font-size: 18px; color: var(--text-dark); font-weight: 800; }
-        .close-btn { background: #f1f2f4; border-radius: 50%; width: 30px; height: 30px; display: flex; justify-content: center; align-items: center; font-size: 14px; color: var(--text-dark); cursor: pointer; font-weight: bold; }
+        .close-btn { background: #f1f2f4; border-radius: 50%; width: 30px; height: 30px; display: flex; justify-content: center; align-items: center; font-size: 14px; cursor: pointer; font-weight: bold; }
         .sheet-content { display: flex; flex-direction: column; gap: 12px; }
-        .sheet-link-btn { display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; border-radius: 16px; text-decoration: none; font-weight: bold; font-size: 15px; transition: transform 0.1s, background 0.2s; border: 1px solid #f0f0f0; }
-        .sheet-link-btn:active { transform: scale(0.98); } 
+        .sheet-link-btn { display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; border-radius: 16px; text-decoration: none; font-weight: bold; font-size: 15px; border: 1px solid #f0f0f0; }
         .btn-left { display: flex; align-items: center; gap: 15px; }
-        .admin-btn { background: linear-gradient(135deg, #fff5f5 0%, #ffebee 100%); color: var(--primary-red); border-color: #ffdcdb; }
-        .seller-btn { background: linear-gradient(135deg, #f5f9ff 0%, #e3f2fd 100%); color: #1976d2; border-color: #cce4ff; }
-        .delivery-btn { background: linear-gradient(135deg, #f5fff6 0%, #e8f5e9 100%); color: #2e7d32; border-color: #ccecd0; }
-        .arrow-right { font-size: 18px; opacity: 0.5; }
+        .admin-btn { background: #fff5f5; color: var(--primary-red); }
+        .seller-btn { background: #f5f9ff; color: #1976d2; }
+        .delivery-btn { background: #f5fff6; color: #2e7d32; }
     </style>
 </head>
 <body>
@@ -91,7 +76,6 @@
             <div class="search-box">
                 <span style="color:#888; margin-right:5px;">🔍</span>
                 <input type="text" placeholder="Search for t-shirts, anime...">
-                <span class="voice-icon">🎤</span>
             </div>
         </div>
         <div class="category-scroll">
@@ -108,106 +92,70 @@
                 {% for product in products %}
                 <a href="/product/{{ product._id }}" class="product-card">
                     <div class="product-img-container">
+                        {% if product.inwear_insure == 'Verified' %}
                         <div class="inwear-assured-badge"><span class="assured-icon">✓</span>inwear Assured</div>
+                        {% endif %}
+
                         <div class="wishlist-btn" onclick="event.preventDefault(); alert('Added to wishlist!');">♡</div>
-                        <img src="/{{ product.image if product.image else '' }}" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x400/f4f6f8/cc0000?text=No+Image';" alt="{{ product.name }}" class="product-img">
+                        <img src="/{{ product.image if product.image else '' }}" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x400/f4f6f8/cc0000?text=No+Image';" class="product-img">
                     </div>
                     <div class="product-info">
                         <div class="product-title">{{ product.name }}</div>
-                        <div class="price-container"><span class="product-price">₹{{ product.price }}</span></div>
-                        <div class="secure-info"><span>✔</span> Quality Checked</div>
+                        
+                        <div class="product-desc-short">
+                            {{ product.details if product.details else product.description }}
+                        </div>
+
+                        <div class="price-container">
+                            <span class="product-price">₹{{ product.price }}</span>
+                            {% if product.mrp and product.mrp > product.price %}
+                                <span class="old-price">₹{{ product.mrp }}</span>
+                            {% endif %}
+                        </div>
                     </div>
                 </a>
                 {% endfor %}
             {% else %}
                 <div style="grid-column: 1 / -1; text-align: center; padding: 40px 20px; color: #878787;">
                     <h3>No Products Found!</h3>
-                    <p>We are adding new products soon.</p>
                 </div>
             {% endif %}
         </div>
     </div>
 
     <div class="bottom-nav">
-        <a href="/" class="nav-item active">
-            <span class="nav-icon">🏠</span>
-            <span>Home</span>
-        </a>
-        
+        <a href="/" class="nav-item active"><span class="nav-icon">🏠</span><span>Home</span></a>
         {% if session.get('user') and session['user'].get('role') in ['owner', 'seller', 'delivery'] %}
-        <a href="#" class="nav-item" onclick="openPanel(event)">
-            <span class="nav-icon">📊</span>
-            <span>Panel</span>
-        </a>
+        <a href="#" class="nav-item" onclick="openPanel(event)"><span class="nav-icon">📊</span><span>Panel</span></a>
         {% endif %}
-        
-        <a href="/account" class="nav-item">
-            <span class="nav-icon">👤</span>
-            <span>Account</span>
-        </a>
-        <a href="/cart" class="nav-item">
-            <span class="nav-icon">🛒</span>
-            <span class="cart-badge">0</span>
-            <span>Cart</span>
-        </a>
+        <a href="/account" class="nav-item"><span class="nav-icon">👤</span><span>Account</span></a>
+        <a href="/cart" class="nav-item"><span class="nav-icon">🛒</span><span class="cart-badge">0</span><span>Cart</span></a>
     </div>
 
     {% if session.get('user') and session['user'].get('role') in ['owner', 'seller', 'delivery'] %}
     <div class="modal-overlay" id="panelOverlay" onclick="closePanel()"></div>
-    
     <div class="bottom-sheet" id="panelSheet">
         <div class="drag-handle"></div> 
         <div class="sheet-header">
             <h3>Workspace Panel</h3>
             <div class="close-btn" onclick="closePanel()">✕</div>
         </div>
-        
         <div class="sheet-content">
             {% set role = session['user'].get('role') %}
-            
             {% if role == 'owner' %}
-                <a href="/owner-dashboard" class="sheet-link-btn admin-btn">
-                    <div class="btn-left"><span style="font-size: 22px;">👑</span><span>Admin Workspace</span></div>
-                    <span class="arrow-right">›</span>
-                </a>
-                <a href="/seller-dashboard" class="sheet-link-btn seller-btn">
-                    <div class="btn-left"><span style="font-size: 22px;">🏪</span><span>Seller Dashboard</span></div>
-                    <span class="arrow-right">›</span>
-                </a>
-                <a href="/delivery-dashboard" class="sheet-link-btn delivery-btn">
-                    <div class="btn-left"><span style="font-size: 22px;">🛵</span><span>Delivery Hub</span></div>
-                    <span class="arrow-right">›</span>
-                </a>
-                
+                <a href="/dashboards" class="sheet-link-btn admin-btn"><div class="btn-left"><span style="font-size: 22px;">👑</span><span>Admin Workspace</span></div></a>
+                <a href="/seller-dashboard" class="sheet-link-btn seller-btn"><div class="btn-left"><span style="font-size: 22px;">🏪</span><span>Seller Dashboard</span></div></a>
+                <a href="/delivery-dashboard" class="sheet-link-btn delivery-btn"><div class="btn-left"><span style="font-size: 22px;">🛵</span><span>Delivery Hub</span></div></a>
             {% elif role == 'seller' %}
-                <a href="/seller-dashboard" class="sheet-link-btn seller-btn">
-                    <div class="btn-left"><span style="font-size: 22px;">🏪</span><span>Seller Dashboard</span></div>
-                    <span class="arrow-right">›</span>
-                </a>
-                
+                <a href="/seller-dashboard" class="sheet-link-btn seller-btn"><div class="btn-left"><span style="font-size: 22px;">🏪</span><span>Seller Dashboard</span></div></a>
             {% elif role == 'delivery' %}
-                <a href="/delivery-dashboard" class="sheet-link-btn delivery-btn">
-                    <div class="btn-left"><span style="font-size: 22px;">🛵</span><span>Delivery Dashboard</span></div>
-                    <span class="arrow-right">›</span>
-                </a>
+                <a href="/delivery-dashboard" class="sheet-link-btn delivery-btn"><div class="btn-left"><span style="font-size: 22px;">🛵</span><span>Delivery Dashboard</span></div></a>
             {% endif %}
         </div>
     </div>
-
     <script>
-        function openPanel(event) {
-            event.preventDefault(); 
-            const overlay = document.getElementById('panelOverlay');
-            const sheet = document.getElementById('panelSheet');
-            overlay.style.display = 'block';
-            setTimeout(() => { overlay.style.opacity = '1'; sheet.style.bottom = '0'; }, 10);
-        }
-        function closePanel() {
-            const overlay = document.getElementById('panelOverlay');
-            const sheet = document.getElementById('panelSheet');
-            overlay.style.opacity = '0'; sheet.style.bottom = '-100%';
-            setTimeout(() => { overlay.style.display = 'none'; }, 300);
-        }
+        function openPanel(event) { event.preventDefault(); const overlay = document.getElementById('panelOverlay'); const sheet = document.getElementById('panelSheet'); overlay.style.display = 'block'; setTimeout(() => { overlay.style.opacity = '1'; sheet.style.bottom = '0'; }, 10); }
+        function closePanel() { const overlay = document.getElementById('panelOverlay'); const sheet = document.getElementById('panelSheet'); overlay.style.opacity = '0'; sheet.style.bottom = '-100%'; setTimeout(() => { overlay.style.display = 'none'; }, 300); }
     </script>
     {% endif %}
 
