@@ -168,11 +168,9 @@ def add_product():
         col_products = Database.get_collection("products")
         col_users = Database.get_collection("users")
         
-        # সেলারের প্রোফাইল থেকে স্টোরের নাম বের করা
         seller_profile = col_users.find_one({"discord_id": str(user['id'])})
         store_name = seller_profile.get('application_data', {}).get('store_name', 'My Store') if seller_profile else 'My Store'
 
-        # টেক্সট ফিল্ডগুলো রিসিভ করা
         name = request.form.get('product_name')
         price = float(request.form.get('product_price', 0))
         mrp = float(request.form.get('product_mrp', price))
@@ -183,13 +181,12 @@ def add_product():
         description = request.form.get('product_description')
         tags = [t.strip() for t in request.form.get('product_tags', '').split(',')]
         return_policy = request.form.get('return_policy')
-        insure_status = request.form.get('apply_insure', 'No') # Flipkart Assured style badge
+        insure_status = request.form.get('apply_insure', 'No')
 
-        # 📸 ৩টি ছবি আপলোড লজিক
         image_urls = []
         if 'product_images' in request.files:
             files = request.files.getlist('product_images')
-            for file in files[:3]: # সর্বোচ্চ ৩টি ছবি
+            for file in files[:3]:
                 if file and allowed_file(file.filename):
                     filename = secure_filename(file.filename)
                     if not os.path.exists(UPLOAD_FOLDER):
@@ -198,7 +195,6 @@ def add_product():
                     file.save(filepath)
                     image_urls.append(f"static/uploads/{filename}")
 
-        # 🎥 ভিডিও আপলোড লজিক
         video_url = ""
         if 'product_video' in request.files:
             file = request.files['product_video']
@@ -210,7 +206,6 @@ def add_product():
                 file.save(filepath)
                 video_url = f"static/uploads/{filename}"
 
-        # ডেটাবেস ডকুমেন্ট তৈরি
         new_product = {
             "seller_id": str(user['id']),
             "store_name": store_name,
@@ -225,7 +220,7 @@ def add_product():
             "tags": tags,
             "return_policy": return_policy,
             "images": image_urls,          
-            "image": image_urls[0] if image_urls else "", # Main thumbnail
+            "image": image_urls[0] if image_urls else "",
             "video": video_url,
             "status": "Approved",          
             "inwear_insure": insure_status,
@@ -242,9 +237,54 @@ def add_product():
         return redirect('/seller-dashboard')
         
     return render_template('add_product.html')
-    
+
 # ==========================================
-# 👕 ১০. সেলারের ডেডিকেটেড প্রোডাক্টস পেজ (Manage Products)
+# 🗑️ ৮. সেলার নিজের প্রোডাক্ট ডিলিট করা
+# ==========================================
+@seller_bp.route('/seller/delete-product/<product_id>', methods=['POST'])
+@seller_required
+def delete_seller_product(product_id):
+    user = session.get('user')
+    col_products = Database.get_collection("products")
+    if col_products is not None:
+        result = col_products.delete_one({"_id": ObjectId(product_id), "seller_id": str(user['id'])})
+        if result.deleted_count > 0:
+            flash("🗑️ Product deleted successfully!")
+        else:
+            flash("❌ Product not found or permission denied.")
+    return redirect('/seller/products')
+
+# ==========================================
+# ✏️ ৯. সেলার নিজের প্রোডাক্ট এডিট করা
+# ==========================================
+@seller_bp.route('/seller/edit-product/<product_id>', methods=['GET', 'POST'])
+@seller_required
+def edit_seller_product(product_id):
+    user = session.get('user')
+    col_products = Database.get_collection("products")
+    
+    product = col_products.find_one({"_id": ObjectId(product_id), "seller_id": str(user['id'])})
+    if not product:
+        flash("❌ Product not found.")
+        return redirect('/seller/products')
+        
+    if request.method == 'POST':
+        updated_data = {
+            "name": request.form.get('product_name'),
+            "price": float(request.form.get('product_price', 0)),
+            "mrp": float(request.form.get('product_mrp', 0)),
+            "stock": int(request.form.get('product_stock', 1)),
+            "details": request.form.get('product_details'),
+            "description": request.form.get('product_description')
+        }
+        col_products.update_one({"_id": ObjectId(product_id)}, {"$set": updated_data})
+        flash("✅ Product updated successfully!")
+        return redirect('/seller/products')
+        
+    return render_template('edit_product.html', product=product)
+
+# ==========================================
+# 👕 ১০. সেলারের ডেডিকেটেড প্রোডাক্টস পেজ
 # ==========================================
 @seller_bp.route('/seller/products')
 @seller_required
@@ -256,15 +296,16 @@ def seller_products_page():
     col_users = Database.get_collection("users")
     
     current_user = col_users.find_one({"discord_id": discord_id})
-    
-    # সেলারের আপলোড করা সব প্রোডাক্ট (নতুন থেকে পুরনো ক্রমে)
     my_products = list(col_products.find({"seller_id": discord_id}).sort("_id", -1))
     
     return render_template('seller_products.html', 
                            products=my_products, 
                            current_user=current_user)
-    
-    @seller_bp.route('/seller/print-bill/<order_id>')
+
+# ==========================================
+# 🖨️ ১১. ইনভয়েস / বিল প্রিন্ট করা
+# ==========================================
+@seller_bp.route('/seller/print-bill/<order_id>')
 @seller_required
 def print_bill(order_id):
     col_orders = Database.get_collection("orders")
@@ -272,4 +313,4 @@ def print_bill(order_id):
     if not order_data:
         return "Order not found", 404
     return render_template('invoice.html', order=order_data)
-             
+
