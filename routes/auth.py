@@ -6,14 +6,11 @@ from functools import wraps
 from werkzeug.utils import secure_filename
 from database import Database
 
-# 🔴 ছবি সেভ করার ফোল্ডার তৈরি করা
 UPLOAD_FOLDER = 'static/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Blueprint তৈরি করা হলো
 auth_bp = Blueprint('auth', __name__)
 
-# ⚠️ Discord OAuth2 Credentials
 DISCORD_CLIENT_ID = "1431675966807343388"
 DISCORD_CLIENT_SECRET = "AtCC606CiJo5BZwRdqHM-Qj6GQGAELo9"
 DISCORD_REDIRECT_URI = "https://my-funny-py.onrender.com/discord/callback"
@@ -23,7 +20,7 @@ AUTHORIZATION_BASE_URL = f"{DISCORD_API_BASE_URL}/oauth2/authorize"
 TOKEN_URL = f"{DISCORD_API_BASE_URL}/oauth2/token"
 
 # ==========================================
-# 🆕 Security Decorators for Route Protection
+# 🆕 Security Decorators
 # ==========================================
 def get_current_user():
     user_session = session.get('user')
@@ -32,7 +29,8 @@ def get_current_user():
     
     col = Database.get_collection("users")
     if col is not None:
-        db_user = col.find_one({"discord_id": user_session.get('id')})
+        # 🔴 UPDATE: এখন থেকে সবসময় inwear_id দিয়ে ইউজারকে খুঁজবে
+        db_user = col.find_one({"inwear_id": user_session.get('id')})
         if db_user:
             return db_user
     return user_session
@@ -74,7 +72,6 @@ def login_discord():
     auth_url = f"{AUTHORIZATION_BASE_URL}?client_id={DISCORD_CLIENT_ID}&redirect_uri={DISCORD_REDIRECT_URI}&response_type=code&scope=identify%20email"
     return redirect(auth_url)
 
-
 @auth_bp.route('/discord/callback')
 def discord_callback():
     code = request.args.get('code')
@@ -105,7 +102,10 @@ def discord_callback():
     db_user = None
     
     if col is not None:
-        db_user = col.find_one({"discord_id": discord_id})
+        if email:
+            db_user = col.find_one({"email": email})
+        if not db_user:
+            db_user = col.find_one({"discord_id": discord_id})
         
         if not db_user:
             random_id = f"INW-{random.randint(100000, 999999)}"
@@ -122,13 +122,21 @@ def discord_callback():
             col.insert_one(new_user)
             db_user = new_user
         else:
+            if 'inwear_id' not in db_user:
+                inwear_id = f"INW-{random.randint(100000, 999999)}"
+                col.update_one({"_id": db_user["_id"]}, {"$set": {"inwear_id": inwear_id, "discord_id": discord_id}})
+                db_user['inwear_id'] = inwear_id
+                
             if email == "kstomh05@gmail.com" and db_user.get("role") != "owner":
-                col.update_one({"discord_id": discord_id}, {"$set": {"role": "owner"}})
+                col.update_one({"_id": db_user["_id"]}, {"$set": {"role": "owner"}})
                 db_user["role"] = "owner"
 
+    # 🔴 UPDATE: সেশনে এখন থেকে সবসময় `inwear_id` সেভ হবে
     session['user'] = {
-        'id': discord_id,
-        'role': db_user.get("role") if db_user else "user"
+        'id': db_user.get('inwear_id'),
+        'username': user_info.get('username'),
+        'email': email,
+        'role': db_user.get("role")
     }
 
     return redirect('/')
@@ -139,7 +147,6 @@ def account_page():
     user_data = get_current_user()
     if not user_data: 
         return render_template('login.html') 
-        
     return render_template('account.html', current_user=user_data)
 
 
@@ -169,7 +176,6 @@ def smart_dashboard_redirect():
         return redirect('/account')
 
 
-# 👑 ওনার (Owner) ড্যাশবোর্ড
 @auth_bp.route('/owner-dashboard')
 @role_required('owner')
 def owner_dashboard():
@@ -184,10 +190,7 @@ def owner_dashboard():
     total_products = db_products.count_documents({}) if db_products is not None else 0
     
     pending_products = list(db_products.find({"status": "Pending"})) if db_products is not None else []
-    
-    # 🔴 NEW: inwear Insure ব্যাজ অ্যাপ্রুভালের জন্য রিকোয়েস্টগুলো খোঁজা
     insure_requests = list(db_products.find({"inwear_insure": "Pending Approval"})) if db_products is not None else []
-    
     latest_orders = list(db_orders.find({}).sort("_id", -1).limit(20)) if db_orders is not None else []
     
     pending_sellers = list(db_users.find({"role": "pending_seller"})) if db_users is not None else []
@@ -199,18 +202,17 @@ def owner_dashboard():
                            total_orders=total_orders,
                            total_products=total_products,
                            pending_products=pending_products,
-                           insure_requests=insure_requests, # 🔴 HTML-এ রিকোয়েস্ট পাঠানো হলো
+                           insure_requests=insure_requests, 
                            orders=latest_orders,
                            pending_sellers=pending_sellers,
                            pending_deliveries=pending_deliveries)
 
 
-# 🏪 সেলার (Seller) ড্যাশবোর্ড
 @auth_bp.route('/seller-dashboard')
 @role_required('seller', 'owner')
 def seller_dashboard():
     user = get_current_user()
-    user_id = user.get('discord_id') or user.get('id')
+    user_id = user.get('inwear_id')
     
     col = Database.get_collection("products")
     seller_products = list(col.find({"seller_id": str(user_id)})) if col is not None else []
@@ -218,7 +220,6 @@ def seller_dashboard():
     return render_template('seller_dashboard.html', current_user=user, products=seller_products)
 
 
-# 🛵 ডেলিভারি (Delivery) ড্যাশবোর্ড
 @auth_bp.route('/delivery-dashboard')
 @role_required('delivery', 'owner')
 def delivery_dashboard():
@@ -245,7 +246,7 @@ def apply_delivery():
 
 
 # ==========================================
-# 🚀 Form Submission Handlers (BUG FIXED)
+# 🚀 Form Submission Handlers
 # ==========================================
 
 @auth_bp.route('/submit-seller-application', methods=['POST'])
@@ -280,7 +281,7 @@ def submit_seller_application():
             license_file.save(os.path.join(UPLOAD_FOLDER, license_filename))
         
         if col is not None:
-            col.update_one({"discord_id": user['id']}, {"$set": {
+            col.update_one({"inwear_id": user['id']}, {"$set": {
                 "role": "pending_seller",
                 "application_data": {
                     "store_name": store_name,
@@ -337,7 +338,7 @@ def submit_delivery_application():
             dl_file.save(os.path.join(UPLOAD_FOLDER, dl_filename))
         
         if col is not None:
-            col.update_one({"discord_id": user['id']}, {"$set": {
+            col.update_one({"inwear_id": user['id']}, {"$set": {
                 "role": "pending_delivery",
                 "application_data": {
                     "full_name": full_name,
@@ -391,4 +392,4 @@ def reject_user(discord_id):
         flash("Application Rejected and data cleared.")
         
     return redirect('/owner-dashboard')
-    
+        
