@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>My Products | inwear</title>
+    <!-- 🔴 UPDATE: Title changed to Wear By Me -->
+    <title>My Products | Wear By Me</title>
     
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
@@ -24,7 +25,11 @@
         .product-item { display: flex; align-items: center; justify-content: space-between; background: white; padding: 12px; border-radius: 12px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border: 1px solid #eee; }
         .product-img { width: 65px; height: 65px; border-radius: 8px; object-fit: cover; background: #fafafa; }
         .product-details { flex: 1; margin-left: 12px; }
-        .product-details h4 { margin: 0 0 4px 0; font-size: 14px; color: var(--dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
+        .product-details h4 { margin: 0 0 2px 0; font-size: 14px; color: var(--dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
+        
+        /* 🔴 NEW: Custom Product ID Style */
+        .product-pid { font-size: 10px; color: #888; margin: 0 0 4px 0; font-weight: bold; letter-spacing: 0.5px;}
+        
         .product-price-row { font-size: 13px; font-weight: bold; color: var(--primary); margin-bottom: 4px; }
         .stock-count { font-size: 11px; color: #777; font-weight: normal; margin-left: 5px; }
         
@@ -64,25 +69,30 @@
                 
                 <div class="product-details">
                     <h4>{{ p.name }}</h4>
+                    <!-- 🔴 UPDATE: Display Custom Wear By Me Product ID (WBM-P-XXX) -->
+                    {% if p.wbm_pid %}
+                        <p class="product-pid">ID: {{ p.wbm_pid }}</p>
+                    {% endif %}
+                    
                     <div class="product-price-row">
                         ₹{{ p.price }}
                         <span class="stock-count">(Stock: {{ p.stock | default(0) }})</span>
                     </div>
-                    <div>
+                    <div style="margin-top: 2px;">
                         <span class="status-badge {% if p.status == 'Live' or p.status == 'Approved' %}status-live{% else %}status-pending{% endif %}">
                             {{ p.status | default('Pending') }}
                         </span>
                         {% if p.inwear_insure == 'Verified' %}
-                            <span class="status-badge" style="background: #e8f4fd; color: var(--blue); margin-left: 3px;">✨ Insured</span>
+                            <span class="status-badge" style="background: #fff5f5; color: var(--primary); margin-left: 3px; border: 1px solid #ffcccc;">🏅 Insured</span>
                         {% endif %}
                     </div>
                 </div>
                 
                 <div class="action-area">
-                    <a href="/seller/edit-product/{{ p._id }}" class="btn-action btn-edit">✏️ Edit</a>
+                    <a href="/seller/edit-product/{{ p._id | string }}" class="btn-action btn-edit">✏️ Edit</a>
                     
-                    <form action="/seller/delete-product/{{ p._id }}" method="POST" id="delete-form-{{ p._id }}" style="margin: 0;">
-                        <button type="button" class="btn-action btn-delete" onclick="confirmDelete('{{ p._id }}')">🗑️ Delete</button>
+                    <form action="/seller/delete-product/{{ p._id | string }}" method="POST" id="delete-form-{{ p._id | string }}" style="margin: 0;">
+                        <button type="button" class="btn-action btn-delete" onclick="confirmDelete('{{ p._id | string }}')">🗑️ Delete</button>
                     </form>
                 </div>
             </div>
