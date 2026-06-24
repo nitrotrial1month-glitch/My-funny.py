@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice - #{{ order._id | default('12345678') }}</title>
+    <style>
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; font-size: 13px; line-height: 1.5; background: #f9f9f9; padding: 20px; }
+        
+        .invoice-box { max-width: 800px; margin: auto; padding: 30px; border: 1px solid #eee; box-shadow: 0 0 10px rgba(0, 0, 0, 0.15); background: white; position: relative; }
+        
+        /* 🔴 NEW: Header updated for QR Code */
+        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; align-items: flex-start; }
+        .brand-section { flex: 1; }
+        .brand { font-size: 32px; font-weight: 900; color: #cc0000; letter-spacing: 1px; text-transform: lowercase; margin: 0; }
+        
+        .invoice-title { flex: 1; text-align: center; }
+        .invoice-title h2 { margin: 0; font-size: 22px; color: #333; text-transform: uppercase; }
+        .invoice-title p { margin: 2px 0 0; font-size: 12px; color: #666; }
+
+        /* 🔴 NEW: QR Code Styles */
+        .qr-section { flex: 1; display: flex; flex-direction: column; align-items: flex-end; }
+        .qr-code { width: 70px; height: 70px; border: 1px solid #ddd; padding: 2px; border-radius: 4px; }
+        .qr-text { font-size: 9px; font-weight: bold; color: #555; margin-top: 4px; text-transform: uppercase; }
+
+        .address-container { display: flex; justify-content: space-between; margin-bottom: 30px; gap: 20px; }
+        .box { flex: 1; }
+        .box-title { font-weight: bold; background: #f4f4f4; padding: 8px 12px; border: 1px solid #ddd; margin-bottom: 0; font-size: 12px; text-transform: uppercase; color: #555; border-radius: 4px 4px 0 0; }
+        .info-text { padding: 12px; border: 1px solid #ddd; border-top: none; min-height: 80px; border-radius: 0 0 4px 4px; font-size: 13px; }
+        .info-text strong { color: #000; }
+
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        table th, table td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        table th { background: #f4f4f4; font-weight: bold; font-size: 12px; text-transform: uppercase; color: #555; }
+        table td.right, table th.right { text-align: right; }
+        table td.center, table th.center { text-align: center; }
+
+        .totals-wrapper { display: flex; justify-content: space-between; margin-top: 20px; }
+        .payment-info { width: 40%; padding: 15px; background: #fcfcfc; border: 1px dashed #ccc; border-radius: 4px; }
+        .payment-info h4 { margin: 0 0 5px 0; font-size: 13px; text-transform: uppercase; }
+        .payment-info h2 { margin: 5px 0 0; font-size: 20px; color: #cc0000; }
+
+        .totals { width: 45%; }
+        .totals table th, .totals table td { border: none; padding: 6px 10px; background: transparent; text-transform: none; font-size: 13px;}
+        .totals table tr.bold td { font-weight: bold; font-size: 16px; border-top: 2px solid #333; color: #000;}
+
+        .footer { text-align: center; margin-top: 40px; font-size: 11px; color: #777; border-top: 1px solid #eee; padding-top: 15px; }
+
+        .print-btn { display: block; width: 200px; margin: 20px auto; padding: 12px; background: #2874f0; color: white; text-align: center; text-decoration: none; font-weight: bold; border-radius: 6px; cursor: pointer; border: none; font-size: 15px; }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .invoice-box { box-shadow: none; border: none; padding: 0; max-width: 100%; }
+            .print-btn { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <button class="print-btn" onclick="window.print()">🖨️ Print Invoice</button>
+
+    <div class="invoice-box">
+        
+        <div class="header">
+            <div class="brand-section">
+                <h1 class="brand">inwear</h1>
+                <p style="margin: 0; font-size: 11px; color: #666;">Premium Fashion Delivery</p>
+            </div>
+            <div class="invoice-title">
+                <h2>Tax Invoice</h2>
+                <p>Order ID: <strong>#{{ order._id | string | truncate(10, True, '') | upper if order else 'INW-987654' }}</strong></p>
+            </div>
+            
+            <div class="qr-section">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ order._id | string }}" alt="QR Code" class="qr-code">
+                <span class="qr-text">Scan for Pickup</span>
+            </div>
+        </div>
+
+        <div class="address-container">
+            <div class="box">
+                <div class="box-title">📦 Sold By (Seller)</div>
+                <div class="info-text">
+                    <strong>{{ order.store_name | default('Awesome Threads') }}</strong><br>
+                    Phone: {{ order.seller_phone | default('+91 9876543210') }}<br>
+                    <br>
+                    <i>Authorized inwear Seller</i>
+                </div>
+            </div>
+
+            <div class="box">
+                <div class="box-title">📍 Bill To / Ship To (Customer)</div>
+                <div class="info-text">
+                    <strong>{{ order.name | default('Shubho Mridha') }}</strong><br>
+                    {{ order.address | default('Gushkara, West Bengal, India - 713128') }}<br>
+                    Phone: <strong>{{ order.phone | default('+91 8765432109') }}</strong>
+                </div>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th class="center" width="10%">Sl No.</th>
+                    <th width="50%">Product Description</th>
+                    <th class="center" width="15%">Qty</th>
+                    <th class="right" width="25%">Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="center">1</td>
+                    <td>
+                        <strong>{{ order.product_name | default('Black Oversized Anime T-Shirt') }}</strong><br>
+                        <span style="font-size: 11px; color: #666;">Size: {{ order.size | default('L') }}</span>
+                    </td>
+                    <td class="center">1</td>
+                    <td class="right">₹{{ order.total_price | float - 40 if order else '499.00' }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="totals-wrapper">
+            <div class="payment-info">
+                <h4>Payment Method</h4>
+                <p style="margin: 5px 0;"><strong>Cash on Delivery (COD)</strong></p>
+                <p style="margin: 0; font-size: 11px; color: #555;">Please collect the exact amount below from the customer.</p>
+                <h2>₹{{ order.total_price | default('539.00') }}</h2>
+            </div>
+
+            <div class="totals">
+                <table>
+                    <tr>
+                        <td>Subtotal:</td>
+                        <td class="right">₹{{ order.total_price | float - 40 if order else '499.00' }}</td>
+                    </tr>
+                    <tr>
+                        <td>Delivery Charge:</td>
+                        <td class="right">₹40.00</td>
+                    </tr>
+                    <tr class="bold">
+                        <td>Grand Total:</td>
+                        <td class="right">₹{{ order.total_price | default('539.00') }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p style="font-weight: bold; color: #000; margin-bottom: 5px;">Thank you for shopping with inwear!</p>
+            <p style="margin: 0;">This is a computer-generated invoice and does not require a physical signature.</p>
+            <p style="margin: 0;">For returns and support, visit our app or website.</p>
+        </div>
+
+    </div>
+
+</body>
+              </html>
+              
