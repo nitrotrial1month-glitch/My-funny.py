@@ -243,3 +243,24 @@ def add_product():
         
     return render_template('add_product.html')
     
+# ==========================================
+# 👕 ১০. সেলারের ডেডিকেটেড প্রোডাক্টস পেজ (Manage Products)
+# ==========================================
+@seller_bp.route('/seller/products')
+@seller_required
+def seller_products_page():
+    user = session.get('user')
+    discord_id = str(user.get('id'))
+    
+    col_products = Database.get_collection("products")
+    col_users = Database.get_collection("users")
+    
+    current_user = col_users.find_one({"discord_id": discord_id})
+    
+    # সেলারের আপলোড করা সব প্রোডাক্ট (নতুন থেকে পুরনো ক্রমে)
+    my_products = list(col_products.find({"seller_id": discord_id}).sort("_id", -1))
+    
+    return render_template('seller_products.html', 
+                           products=my_products, 
+                           current_user=current_user)
+    
