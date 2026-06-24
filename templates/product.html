@@ -20,7 +20,7 @@
         .details-container { padding: 20px; background: white; margin-top: 5px; border-radius: 12px 12px 0 0; }
         h2 { margin: 0 0 5px 0; font-size: 18px; color: var(--text-dark); line-height: 1.3; display: flex; align-items: center; flex-wrap: wrap; gap: 8px;}
         
-        /* 🔴 NEW: Wear By Me Custom Insure Badge CSS */
+        /* Wear By Me Custom Insure Badge CSS */
         .wbm-insure-badge { 
             background-color: rgba(255, 255, 255, 0.95); 
             color: var(--primary); 
@@ -49,6 +49,9 @@
         .price-section { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
         .current-price { color: var(--text-dark); font-size: 24px; font-weight: bold; }
         .old-price { color: #888; text-decoration: line-through; font-size: 16px; }
+        
+        /* 🔴 NEW: Discount Percentage Badge CSS */
+        .discount-pct { color: #00a650; font-size: 15px; font-weight: 900; letter-spacing: 0.5px; }
         
         .delivery-box { background: #fdfdfd; margin: 20px 0; border-radius: 8px; border: 1px dashed #ccc; padding: 15px; }
         .delivery-box-title { font-size: 14px; font-weight: bold; color: var(--text-dark); margin-bottom: 5px; display: flex; align-items: center; gap: 6px; }
@@ -100,7 +103,7 @@
         <h2>
             {{ product.name }}
             
-            <!-- 🔴 UPDATE: Wear By Me Insure Badge -->
+            <!-- Wear By Me Insure Badge -->
             {% if product.inwear_insure == 'Verified' %}
                 <span class="wbm-insure-badge">
                     <svg class="insure-icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -122,8 +125,11 @@
         
         <div class="price-section">
             <span class="current-price">₹{{ product.price }}</span>
-            {% if product.mrp and product.mrp > product.price %}
+            {% if product.mrp and product.mrp|float > product.price|float %}
                 <span class="old-price">₹{{ product.mrp }}</span>
+                <!-- 🔴 NEW: Automatic Discount Percentage Calculation -->
+                {% set discount = ((product.mrp|float - product.price|float) / product.mrp|float * 100) | round | int %}
+                <span class="discount-pct">{{ discount }}% off</span>
             {% endif %}
         </div>
 
