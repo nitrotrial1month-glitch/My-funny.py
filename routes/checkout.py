@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, redirect, session, request, jsonif
 from bson import ObjectId
 from database import Database
 import uuid # ইউনিক অ্যাড্রেস আইডি বানানোর জন্য
+from datetime import datetime, timedelta # তারিখ হিসাবের জন্য
 
 # ১. Blueprint তৈরি করা হলো
 checkout_bp = Blueprint('checkout', __name__)
@@ -10,10 +11,6 @@ checkout_bp = Blueprint('checkout', __name__)
 # 🚚 SMART DELIVERY CALCULATION LOGIC
 # ==========================================================
 def get_delivery_charge(pincode, seller_id=None):
-    """
-    দূরত্ব অনুযায়ী ডেলিভারি চার্জ হিসাব করার ফাংশন। 
-    (পরবর্তীতে এখানে API বসানো যাবে, আপাতত ডেমো লজিক দেওয়া হলো)
-    """
     if not pincode or len(str(pincode)) != 6:
         return 50 # ভুল পিনকোড হলে ডিফল্ট ৫০ টাকা
     
@@ -32,8 +29,6 @@ def get_delivery_charge(pincode, seller_id=None):
 def calculate_delivery():
     data = request.get_json()
     pincode = data.get('pincode', '')
-    
-    # ডেলিভারি চার্জ হিসাব করে ফ্রন্টএন্ডে পাঠিয়ে দেওয়া হচ্ছে
     charge = get_delivery_charge(pincode)
     return jsonify({"charge": charge})
 
@@ -55,7 +50,6 @@ def checkout_cart():
     user_data = db_users.find_one({"discord_id": str(user['id'])}) if db_users is not None else {}
     saved_addresses = user_data.get('addresses', [])
     
-    # ডিফল্ট পিনকোড বের করা
     default_pincode = ""
     for add in saved_addresses:
         if add.get('is_default'):
@@ -75,6 +69,11 @@ def checkout_direct(product_id):
     col = Database.get_collection("products")
     product = col.find_one({"_id": ObjectId(product_id)}) if col is not None else None
     if not product: return "Product not found!", 404
+    
+    # 🔴 URL থেকে সাইজটি নেওয়া হচ্ছে
+    selected_size = request.args.get('size', '')
+    if selected_size:
+        product['selected_size'] = selected_size
     
     db_users = Database.get_collection("users")
     user_data = db_users.find_one({"discord_id": str(user['id'])}) if db_users is not None else {}
@@ -100,15 +99,14 @@ def process_checkout():
     is_direct = request.form.get('is_direct') == 'True'
     address_selection = request.form.get('address_selection')
     
+    # 🔴 ফর্ম থেকে সাইজটি নেওয়া হচ্ছে (যদি থাকে)
+    size = request.form.get('size', 'Regular')
+    
     db_users = Database.get_collection("users")
     user_data = db_users.find_one({"discord_id": str(user['id'])}) if db_users is not None else {}
     saved_addresses = user_data.get('addresses', [])
     
-    # 🔴 অ্যাড্রেস নির্ধারণ করা
-    final_name = ""
-    final_phone = ""
-    final_address = ""
-    final_pincode = ""
+    final_name, final_phone, final_address, final_pincode = "", "", "", ""
     
     if address_selection == 'new':
         final_name = request.form.get('name')
@@ -116,7 +114,6 @@ def process_checkout():
         final_address = request.form.get('address')
         final_pincode = request.form.get('new_pincode')
         
-        # নতুন অ্যাড্রেসটি ডিফল্ট হিসেবে ডেটাবেসে সেভ করা
         for add in saved_addresses:
             add['is_default'] = False
             
@@ -132,7 +129,6 @@ def process_checkout():
         if db_users is not None:
             db_users.update_one({"discord_id": str(user['id'])}, {"$set": {"addresses": saved_addresses}})
     else:
-        # সেভ করা অ্যাড্রেস থেকে ডেটা নেওয়া
         try:
             sel_idx = int(address_selection)
             selected_add = saved_addresses[sel_idx]
@@ -143,30 +139,67 @@ def process_checkout():
         except:
             return "Invalid Address Selection", 400
 
-    # 🔴 ডেলিভারি চার্জ হিসাব করা
     delivery_charge = get_delivery_charge(final_pincode)
+    
+    col_orders = Database.get_collection("orders")
     
     if is_direct:
         product_id = request.form.get('product_id')
         col = Database.get_collection("products")
         product = col.find_one({"_id": ObjectId(product_id)})
-        items = [product]
-        items_total = float(product['price'])
-        clear_cart = False
+        
+        # 🔴 ম্যানুয়ালি অর্ডার সেভ করা (সেলার আইডি সহ)
+        initial_status = "Confirmed" if payment_method == "COD" else "Pending Payment"
+        final_total = float(product['price']) + delivery_charge
+        
+        new_order = {
+            "user_id": str(user['id']),
+            "seller_id": str(product.get('seller_id', 'Unknown')),
+            "store_name": product.get('store_name', 'My Store'),
+            "product_name": product.get('name', 'Item'),
+            "size": size,
+            "name": final_name,
+            "address": f"{final_address}, PIN: {final_pincode}",
+            "phone": final_phone,
+            "total_price": final_total,
+            "payment_method": payment_method,
+            "status": initial_status,
+            "date": datetime.now().strftime("%Y-%m-%d %I:%M %p"),
+            "items": [product]
+        }
+        
+        result = col_orders.insert_one(new_order)
+        order_id = str(result.inserted_id)
+        
     else:
+        # Cart থেকে অর্ডার (এই লজিকটিও আপডেট করা হলো)
         items = Database.get_user_cart(user['id'])
         items_total = sum(float(item['price']) for item in items)
-        clear_cart = True
+        final_total = items_total + delivery_charge
+        initial_status = "Confirmed" if payment_method == "COD" else "Pending Payment"
         
-    # আসল টোটাল = প্রোডাক্টের দাম + ডেলিভারি চার্জ
-    final_total = items_total + delivery_charge
-    
-    # পুরো ঠিকানা একসাথে বানানো
-    full_delivery_address = f"{final_address}, PIN: {final_pincode}"
-    
-    initial_status = "Confirmed" if payment_method == "COD" else "Pending Payment"
-    order_id, expected_date = Database.place_order(user['id'], items, final_total, final_name, full_delivery_address, final_phone, payment_method, clear_cart, status=initial_status)
-    
+        # প্রথম প্রোডাক্টের সেলার আইডি নিচ্ছি (মাল্টি-সেলার কার্টের জন্য পরে আলাদা লজিক লাগবে)
+        first_seller_id = items[0].get('seller_id', 'Unknown') if items else 'Unknown'
+        first_product_name = items[0].get('name', 'Multiple Items') if items else 'Items'
+        
+        new_order = {
+            "user_id": str(user['id']),
+            "seller_id": first_seller_id,
+            "product_name": f"{first_product_name} & more",
+            "size": size,
+            "name": final_name,
+            "address": f"{final_address}, PIN: {final_pincode}",
+            "phone": final_phone,
+            "total_price": final_total,
+            "payment_method": payment_method,
+            "status": initial_status,
+            "date": datetime.now().strftime("%Y-%m-%d %I:%M %p"),
+            "items": items
+        }
+        result = col_orders.insert_one(new_order)
+        order_id = str(result.inserted_id)
+        Database.clear_user_cart(user['id']) # কার্ট ক্লিয়ার
+        
     if payment_method == "Online":
         return redirect(f'/pay/{order_id}')
     else:
@@ -195,7 +228,6 @@ def saved_addresses():
         is_default = request.form.get('is_default') == 'on'
         
         if name and phone and address and pincode:
-            # যদি নতুনটি ডিফল্ট হয়, তবে পুরোনো সব ডিফল্ট সরিয়ে দেওয়া
             if is_default:
                 for add in addresses:
                     add['is_default'] = False
@@ -206,7 +238,7 @@ def saved_addresses():
                 "phone": phone,
                 "address": address,
                 "pincode": pincode,
-                "is_default": is_default or len(addresses) == 0 # যদি প্রথম অ্যাড্রেস হয় তবে অটোমেটিক ডিফল্ট
+                "is_default": is_default or len(addresses) == 0
             }
             addresses.append(new_add)
             if db_users is not None:
@@ -259,4 +291,4 @@ def order_success(order_id):
     order = Database.get_order_by_id(order_id)
     if not order: return "Order not found", 404
     return render_template('order_success.html', order=order)
-        
+            
