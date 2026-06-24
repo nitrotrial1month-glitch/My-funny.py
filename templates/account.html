@@ -148,14 +148,13 @@
                     👤
                 {% endif %}
             </div>
-                    <div class="profile-info">
-            <h2>{{ current_user.get('username', 'Inwear Member') }}</h2>
-            <p>{{ current_user.get('email', 'Premium Member | inwear Store') }}</p>
-            <!-- 🔴 ইউনিক আইডি প্রদর্শনের জন্য নতুন লাইন -->
-            <p style="margin-top: 4px; font-size: 11px; color: var(--primary-red); font-weight: 800; letter-spacing: 0.5px;">
-                ID: {{ current_user.get('inwear_id', 'Pending...') }}
-            </p>
-          </div>
+        <div class="profile-info">
+          <h2>{{ current_user.get('username', 'Wear By Me Member') }}</h2>
+          <p>{{ current_user.get('email', 'Premium Member | Wear By Me') }}</p>
+          <p style="margin-top: 4px; font-size: 11px; color: var(--primary-red); font-weight: 800; letter-spacing: 0.5px;">
+          ID: {{ current_user.get('wearbyme_id', 'Pending...') }}
+           </p>
+         </div>  
         </div>
 
         <div class="action-grid">
