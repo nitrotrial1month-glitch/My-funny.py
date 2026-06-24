@@ -2,93 +2,153 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payouts - inwear</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Manage Payouts | Owner</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f6f8; margin: 0; padding: 20px; color: #333; padding-bottom: 50px; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .back-btn { text-decoration: none; color: #cc0000; font-weight: bold; font-size: 14px; }
+        :root { 
+            --primary: #cc0000; --dark: #1a1a2e; --success: #00a650; 
+            --blue: #2874f0; --warning: #ff9900; --bg: #f4f6f8; --white: #ffffff; 
+        }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; padding-bottom: 80px; color: #212121; }
+
+        /* Header */
+        .top-header { background: var(--dark); color: white; padding: 20px 15px 30px 15px; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; text-align: center; position: relative; }
+        .back-btn { position: absolute; left: 15px; top: 20px; color: white; text-decoration: none; font-weight: bold; font-size: 14px; }
+        .top-header h2 { margin: 0; font-size: 20px; }
+        .top-header p { margin: 5px 0 0 0; font-size: 12px; color: #aaa; }
+
+        /* Flash Messages */
+        .flash-messages { position: fixed; top: 15px; left: 50%; transform: translateX(-50%); width: 90%; z-index: 9999; }
+        .flash-msg { background: var(--success); color: white; padding: 12px 15px; border-radius: 8px; font-size: 13px; font-weight: bold; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); margin-bottom: 10px; animation: slideDown 0.4s ease-out; }
+        @keyframes slideDown { from { top: -50px; opacity: 0; } to { top: 0; opacity: 1; } }
+
+        .container { padding: 15px; }
+        .section-title { font-size: 14px; font-weight: 900; color: #555; text-transform: uppercase; margin-bottom: 10px; border-bottom: 2px solid #eee; padding-bottom: 5px; }
+
+        /* Request Cards */
+        .req-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 4px solid var(--warning); }
+        .req-meta { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 12px; color: #888; }
+        .req-amount { font-size: 24px; font-weight: 900; color: var(--dark); margin: 5px 0; }
+        .upi-box { background: #f0f7ff; border: 1px dashed var(--blue); padding: 10px; border-radius: 8px; font-size: 14px; font-weight: bold; color: var(--blue); margin-bottom: 12px; word-break: break-all; }
         
-        /* Revenue Card */
-        .revenue-card { background: linear-gradient(135deg, #00a650 0%, #007b3b 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center; box-shadow: 0 4px 10px rgba(0,166,80,0.2); }
-        .revenue-card h3 { margin: 0; font-size: 14px; opacity: 0.9; }
-        .revenue-card h1 { margin: 10px 0 0; font-size: 32px; }
-        
-        .section-title { font-size: 14px; color: #666; text-transform: uppercase; margin-bottom: 10px; margin-top: 25px; border-bottom: 2px solid #ddd; padding-bottom: 5px;}
-        
-        /* Pending Card */
-        .payout-card { background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px; border-left: 4px solid #ff9900; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .payout-info { display: flex; justify-content: space-between; align-items: center; }
-        .payout-info h4 { margin: 0; font-size: 16px; color: #212121; }
-        .payout-info .amount { font-size: 18px; font-weight: 900; color: #cc0000; }
-        
-        .upi-box { background: #f9f9f9; padding: 10px; border-radius: 6px; border: 1px dashed #ccc; font-family: monospace; font-size: 14px; font-weight: bold; color: #cc0000; margin-top: 5px; }
-        .pay-btn { background: #212121; color: white; border: none; padding: 10px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 5px; }
-        
-        /* Success Card */
-        .success-card { background: white; padding: 12px 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #00a650; opacity: 0.8; box-shadow: 0 1px 3px rgba(0,0,0,0.05);}
-        .success-info h4 { margin: 0; font-size: 14px; color: #333; }
-        .success-info p { margin: 2px 0 0; font-size: 11px; color: #777; }
-        .success-amount { font-weight: bold; color: #00a650; font-size: 15px;}
+        .btn-group { display: flex; gap: 10px; }
+        .btn { flex: 1; padding: 12px; text-align: center; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; font-size: 13px; color: white; }
+        .btn-pay { background: var(--success); }
+        .btn-reject { background: #f8d7da; color: #721c24; }
+
+        /* History Table */
+        .history-item { background: white; border-radius: 8px; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #eee; }
+        .h-info { font-size: 12px; color: #666; }
+        .h-amount { font-weight: bold; font-size: 15px; }
+        .status-paid { color: var(--success); font-weight: bold; font-size: 11px; }
+        .status-rejected { color: var(--primary); font-weight: bold; font-size: 11px; }
+
+        .empty-state { text-align: center; padding: 30px 20px; color: #888; background: white; border-radius: 12px; }
+
+        /* Bottom Nav */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--white); display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -5px 15px rgba(0,0,0,0.05); z-index: 1000; border-top: 1px solid #eee; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #888; font-size: 12px; font-weight: bold; }
+        .nav-item.active { color: var(--primary); }
+        .nav-icon { font-size: 22px; margin-bottom: 3px; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h2 style="margin: 0;">💸 Payouts</h2>
-        <a href="/owner-dashboard" class="back-btn">‹ Back to Panel</a>
+
+    <!-- Flash Messages -->
+    <div class="flash-messages">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="flash-msg">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
     </div>
 
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            {% for message in messages %}
-            <div style="background: #00a650; color: white; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 13px; text-align: center; font-weight: bold;">{{ message }}</div>
+    <div class="top-header">
+        <a href="/owner-dashboard" class="back-btn">← Back</a>
+        <h2>💸 Payout Requests</h2>
+        <p>Transfer funds and approve requests</p>
+    </div>
+
+    <div class="container">
+        
+        <div class="section-title">⏳ Pending Actions</div>
+        
+        {% if pending %}
+            {% for req in pending %}
+            <div class="req-card">
+                <div class="req-meta">
+                    <span>🏪 {{ req.seller_name }}</span>
+                    <span>{{ req.date }}</span>
+                </div>
+                
+                <h3 style="margin: 0; font-size: 12px; color: #555;">Requested Amount:</h3>
+                <div class="req-amount">₹{{ req.amount }}</div>
+                
+                <div class="upi-box">
+                    <span>Pay to UPI:</span> <br>
+                    {{ req.upi_id }}
+                </div>
+                
+                <div class="btn-group">
+                    <form action="/owner/payouts/approve/{{ req._id }}" method="POST" style="flex: 1;">
+                        <button type="submit" class="btn btn-pay" onclick="return confirm('Did you successfully transfer the money to this UPI ID?')">✅ Mark as Paid</button>
+                    </form>
+                    <form action="/owner/payouts/reject/{{ req._id }}" method="POST" style="flex: 1;">
+                        <button type="submit" class="btn btn-reject" onclick="return confirm('Reject this request? The amount will be refunded to the seller.')">❌ Reject</button>
+                    </form>
+                </div>
+            </div>
             {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <span style="font-size: 30px;">🏦</span>
+                <p style="margin: 5px 0 0 0; font-weight: bold; color: var(--dark);">No Pending Requests</p>
+                <p style="margin: 0; font-size: 12px;">All sellers are paid up!</p>
+            </div>
         {% endif %}
-    {% endwith %}
 
-    <div class="revenue-card">
-        <h3>Total Platform Revenue (10% Cut)</h3>
-        <h1>₹{{ "%.2f"|format(platform_revenue) }}</h1>
+        <div class="section-title" style="margin-top: 30px;">📜 Payout History</div>
+        
+        {% if history %}
+            {% for h in history %}
+            <div class="history-item">
+                <div class="h-info">
+                    <strong>{{ h.seller_name }}</strong><br>
+                    <span style="font-size: 10px;">{{ h.date }}</span><br>
+                    <span style="font-size: 11px;">UPI: {{ h.upi_id }}</span>
+                </div>
+                <div style="text-align: right;">
+                    <div class="h-amount">₹{{ h.amount }}</div>
+                    <div class="{% if h.status == 'Paid' %}status-paid{% else %}status-rejected{% endif %}">
+                        {{ h.status }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p style="font-size: 12px; color: #888; text-align: center;">No history available.</p>
+        {% endif %}
+
     </div>
 
-    <div class="section-title">🚨 Pending Requests</div>
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <a href="/owner-dashboard" class="nav-item"><span class="nav-icon">📊</span><span>Panel</span></a>
+        <a href="/" class="nav-item"><span class="nav-icon">🏠</span><span>Home</span></a>
+        <a href="/owner/fleet" class="nav-item"><span class="nav-icon">🛵</span><span>Fleet</span></a>
+        <a href="/owner/payouts" class="nav-item active"><span class="nav-icon">💸</span><span>Payouts</span></a>
+    </div>
 
-    {% if pending %}
-        {% for p in pending %}
-        <div class="payout-card">
-            <div class="payout-info">
-                <h4>👤 {{ p.seller_name }}</h4>
-                <span class="amount">₹{{ p.amount }}</span>
-            </div>
-            <div style="font-size: 12px; color: #666;">Requested on: {{ p.date | default('Recently') }}</div>
-            <div>
-                <div style="font-size: 12px; color: #555;">Pay to this UPI ID:</div>
-                <div class="upi-box">{{ p.upi_id }}</div>
-            </div>
-            <form action="/owner/approve-payout/{{ p._id }}" method="POST" style="margin: 0;">
-                <button type="submit" class="pay-btn" onclick="return confirm('Confirm payment sent to {{ p.upi_id }}?')">✅ Mark Paid</button>
-            </form>
-        </div>
-        {% endfor %}
-    {% else %}
-        <p style="text-align: center; color: #888; background: white; padding: 20px; border-radius: 10px; font-size: 14px;">No pending payout requests!</p>
-    {% endif %}
-
-    <div class="section-title">✅ Completed Payouts</div>
-    
-    {% if completed %}
-        {% for c in completed %}
-        <div class="success-card">
-            <div class="success-info">
-                <h4>{{ c.seller_name }}</h4>
-                <p>UPI: {{ c.upi_id }}</p>
-            </div>
-            <div class="success-amount">₹{{ c.amount }}</div>
-        </div>
-        {% endfor %}
-    {% else %}
-        <p style="text-align: center; color: #888; font-size: 13px;">No completed payouts yet.</p>
-    {% endif %}
-
+    <script>
+        // Auto-hide flash messages
+        setTimeout(function() {
+            let messages = document.querySelectorAll('.flash-msg');
+            messages.forEach(function(msg) {
+                msg.style.display = 'none';
+            });
+        }, 3000);
+    </script>
 </body>
 </html>
