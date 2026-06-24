@@ -87,4 +87,21 @@ def request_withdrawal():
     else:
         flash("Invalid amount or insufficient balance.")
     return redirect(url_for('seller.seller_wallet'))
+    # ==========================================
+# ৫. অর্ডার প্যাক করে ডেলিভারির জন্য রেডি করা
+# ==========================================
+@seller_bp.route('/seller/mark_ready/<order_id>', methods=['POST'])
+@seller_required
+def mark_order_ready(order_id):
+    col_orders = Database.get_collection("orders")
+    
+    if col_orders is not None:
+        # অর্ডারের স্ট্যাটাস 'Confirmed' থেকে 'Ready for Pickup' করা হলো
+        col_orders.update_one(
+            {"_id": ObjectId(order_id)},
+            {"$set": {"status": "Ready for Pickup"}}
+        )
+        flash("📦 Order packed and marked ready! Delivery boy will pick it up soon.")
+        
+    return redirect('/seller-dashboard')
     
