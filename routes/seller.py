@@ -1,18 +1,29 @@
 import os
+import uuid
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 from flask import Blueprint, render_template, request, redirect, session, flash, url_for, abort
 from database import Database
 from datetime import datetime
 from bson import ObjectId
 from functools import wraps
 from werkzeug.utils import secure_filename
-from routes.auth import role_required
 
 seller_bp = Blueprint('seller', __name__)
 
 # ==========================================
-# 📂 Image & Video Upload Configuration
+# Cloudinary Configuration
 # ==========================================
-UPLOAD_FOLDER = 'static/uploads'
+cloudinary.config(
+    cloud_name="dsr2twtwd",
+    api_key="783482566841957",
+    api_secret="pb_LkF6p4FQBD2fwv4Yp8j-qIUI"
+)
+
+# ==========================================
+# File Upload Configuration & Logic
+# ==========================================
 ALLOWED_EXTENSIONS_IMG = {'png', 'jpg', 'jpeg', 'webp'}
 ALLOWED_EXTENSIONS_VID = {'mp4', 'mkv', 'mov'}
 
@@ -22,8 +33,17 @@ def allowed_file(filename, is_video=False):
         return ext in ALLOWED_EXTENSIONS_VID
     return ext in ALLOWED_EXTENSIONS_IMG
 
+def upload_to_cloudinary(file_obj, folder_name="inwear_products"):
+    """Uploads file to Cloudinary and returns the secure live URL."""
+    response = cloudinary.uploader.upload(
+        file_obj,
+        folder=folder_name,
+        resource_type="auto" # Automatically detects if it's an image or video
+    )
+    return response.get('secure_url')
+
 # ==========================================
-# 🔐 সেলার অথেন্টিকেশন সিকিউরিটি
+# Seller Authentication Security
 # ==========================================
 def seller_required(f):
     @wraps(f)
@@ -35,7 +55,7 @@ def seller_required(f):
     return decorated_function
 
 # ==========================================
-# 📊 ১. Seller Dashboard (কাস্টমারের ডিটেইলস ও সেলস)
+# 1. Seller Dashboard
 # ==========================================
 @seller_bp.route('/seller-dashboard')
 @seller_required
@@ -48,11 +68,8 @@ def seller_dashboard():
     col_users = Database.get_collection("users")
     
     current_user = col_users.find_one({"discord_id": discord_id})
-    
-    # সেলারের আপলোড করা সব প্রোডাক্ট
     my_products = list(col_products.find({"seller_id": discord_id}).sort("_id", -1))
     
-    # কাস্টমারদের করা নতুন অর্ডার (যেগুলো এখনও ডেলিভারি হয়নি)
     active_orders = list(col_orders.find({
         "seller_id": discord_id,
         "status": {"$in": ["Confirmed", "Ready for Pickup", "Assigned", "Out for Delivery"]}
@@ -64,7 +81,7 @@ def seller_dashboard():
                            current_user=current_user)
 
 # ==========================================
-# 💰 ২. সেলারের ওয়ালেট পেজ
+# 2. Seller Wallet Page
 # ==========================================
 @seller_bp.route('/seller/wallet')
 @seller_required
@@ -79,7 +96,7 @@ def seller_wallet():
     return render_template('seller_wallet.html', seller=seller_data, withdrawals=history)
 
 # ==========================================
-# 🏦 ৩. নতুন UPI ID অ্যাড করা
+# 3. Add New UPI ID
 # ==========================================
 @seller_bp.route('/seller/add_upi', methods=['POST'])
 @seller_required
@@ -97,7 +114,7 @@ def add_upi():
     return redirect(url_for('seller.seller_wallet'))
 
 # ==========================================
-# ⭐ ৪. ডিফল্ট UPI সেট করা
+# 4. Set Default UPI
 # ==========================================
 @seller_bp.route('/seller/set_default_upi/<int:index>', methods=['POST'])
 @seller_required
@@ -113,7 +130,7 @@ def set_default_upi(index):
     return redirect(url_for('seller.seller_wallet'))
 
 # ==========================================
-# 💸 ৫. উইথড্র রিকোয়েস্ট পাঠানো
+# 5. Send Withdrawal Request
 # ==========================================
 @seller_bp.route('/seller/withdraw', methods=['POST'])
 @seller_required
@@ -141,24 +158,19 @@ def request_withdrawal():
     return redirect(url_for('seller.seller_wallet'))
 
 # ==========================================
-# 📦 ৬. অর্ডার প্যাক করে ডেলিভারির জন্য রেডি করা
+# 6. Mark Order Ready for Delivery
 # ==========================================
 @seller_bp.route('/seller/mark_ready/<order_id>', methods=['POST'])
 @seller_required
 def mark_order_ready(order_id):
     col_orders = Database.get_collection("orders")
-    
     if col_orders is not None:
-        col_orders.update_one(
-            {"_id": ObjectId(order_id)},
-            {"$set": {"status": "Ready for Pickup"}}
-        )
+        col_orders.update_one({"_id": ObjectId(order_id)}, {"$set": {"status": "Ready for Pickup"}})
         flash("📦 Order packed and marked ready! Local delivery boys have been notified.")
-        
     return redirect('/seller-dashboard')
 
 # ==========================================
-# 👕 ৭. ADD NEW PRODUCT (Premium Upload Logic)
+# 7. ADD NEW PRODUCT (Cloudinary Upload Logic)
 # ==========================================
 @seller_bp.route('/add-product', methods=['GET', 'POST'])
 @seller_required
@@ -183,28 +195,21 @@ def add_product():
         return_policy = request.form.get('return_policy')
         insure_status = request.form.get('apply_insure', 'No')
 
+        # Upload Images to Cloudinary
         image_urls = []
         if 'product_images' in request.files:
             files = request.files.getlist('product_images')
             for file in files[:3]:
                 if file and allowed_file(file.filename):
-                    filename = secure_filename(file.filename)
-                    if not os.path.exists(UPLOAD_FOLDER):
-                        os.makedirs(UPLOAD_FOLDER)
-                    filepath = os.path.join(UPLOAD_FOLDER, filename)
-                    file.save(filepath)
-                    image_urls.append(f"static/uploads/{filename}")
+                    live_url = upload_to_cloudinary(file, folder_name="inwear_product_images")
+                    image_urls.append(live_url)
 
+        # Upload Video to Cloudinary
         video_url = ""
         if 'product_video' in request.files:
             file = request.files['product_video']
             if file and allowed_file(file.filename, is_video=True):
-                filename = secure_filename(file.filename)
-                if not os.path.exists(UPLOAD_FOLDER):
-                    os.makedirs(UPLOAD_FOLDER)
-                filepath = os.path.join(UPLOAD_FOLDER, filename)
-                file.save(filepath)
-                video_url = f"static/uploads/{filename}"
+                video_url = upload_to_cloudinary(file, folder_name="inwear_product_videos")
 
         new_product = {
             "seller_id": str(user['id']),
@@ -220,7 +225,7 @@ def add_product():
             "tags": tags,
             "return_policy": return_policy,
             "images": image_urls,          
-            "image": image_urls[0] if image_urls else "",
+            "image": image_urls[0] if image_urls else "", 
             "video": video_url,
             "status": "Approved",          
             "inwear_insure": insure_status,
@@ -230,7 +235,7 @@ def add_product():
         col_products.insert_one(new_product)
         
         if insure_status == "Pending Approval":
-            flash("✅ Product published! Verification request sent to Owner Dashboard.", "success")
+            flash("✅ Product published! Verification request sent.", "success")
         else:
             flash("✅ Product successfully published!", "success")
             
@@ -239,7 +244,7 @@ def add_product():
     return render_template('add_product.html')
 
 # ==========================================
-# 🗑️ ৮. সেলার নিজের প্রোডাক্ট ডিলিট করা
+# 8. Delete Seller Product
 # ==========================================
 @seller_bp.route('/seller/delete-product/<product_id>', methods=['POST'])
 @seller_required
@@ -255,7 +260,7 @@ def delete_seller_product(product_id):
     return redirect('/seller/products')
 
 # ==========================================
-# ✏️ ৯. সেলার নিজের প্রোডাক্ট এডিট করা
+# 9. Edit Seller Product
 # ==========================================
 @seller_bp.route('/seller/edit-product/<product_id>', methods=['GET', 'POST'])
 @seller_required
@@ -284,7 +289,7 @@ def edit_seller_product(product_id):
     return render_template('edit_product.html', product=product)
 
 # ==========================================
-# 👕 ১০. সেলারের ডেডিকেটেড প্রোডাক্টস পেজ
+# 10. Dedicated Seller Products Page
 # ==========================================
 @seller_bp.route('/seller/products')
 @seller_required
@@ -298,12 +303,10 @@ def seller_products_page():
     current_user = col_users.find_one({"discord_id": discord_id})
     my_products = list(col_products.find({"seller_id": discord_id}).sort("_id", -1))
     
-    return render_template('seller_products.html', 
-                           products=my_products, 
-                           current_user=current_user)
+    return render_template('seller_products.html', products=my_products, current_user=current_user)
 
 # ==========================================
-# 🖨️ ১১. ইনভয়েস / বিল প্রিন্ট করা
+# 11. Print Invoice / Bill
 # ==========================================
 @seller_bp.route('/seller/print-bill/<order_id>')
 @seller_required
@@ -313,4 +316,4 @@ def print_bill(order_id):
     if not order_data:
         return "Order not found", 404
     return render_template('invoice.html', order=order_data)
-
+        
