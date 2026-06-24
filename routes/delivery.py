@@ -16,7 +16,7 @@ def delivery_required(f):
     return decorated_function
 
 # ==========================================
-# 🚚 ১. Delivery Dashboard (Open Pool & My Tasks)
+# 🚚 ১. Delivery Dashboard (Area-Based Open Pool)
 # ==========================================
 @delivery_bp.route('/delivery-dashboard')
 @delivery_required
@@ -29,15 +29,30 @@ def delivery_dashboard():
     
     current_user = col_users.find_one({"discord_id": discord_id})
     
-    # 🟢 OPEN POOL: সেলার রেডি করেছে, কিন্তু কোনো রাইডার এখনও নেয়নি
-    available_orders = list(col_orders.find({
+    # 📍 ডেলিভারি বয়ের নিজের এলাকা (Area বা Pincode) বের করা
+    delivery_boy_area = ""
+    if current_user and current_user.get("application_data"):
+        delivery_boy_area = current_user["application_data"].get("area", "")
+
+    # 🟢 OPEN POOL LOGIC (FIXED)
+    # ১. কাস্টমারের "Confirmed" অর্ডার দেখাবে না, শুধু সেলারের "Ready for Pickup" দেখাবে।
+    # ২. এখনও কোনো রাইডার অ্যাসাইন হয়নি এমন অর্ডার খুঁজবে।
+    open_pool_query = {
         "status": "Ready for Pickup",
         "$or": [
             {"delivery_partner_id": {"$exists": False}},
             {"delivery_partner_id": ""},
             {"delivery_partner_id": None}
         ]
-    }).sort("_id", -1))
+    }
+    
+    # ৩. লোকেশন ফিল্টার (১-৬ কিমি লজিক): 
+    # ডেলিভারি বয়ের এলাকার নাম দিয়ে সেলারের অ্যাড্রেস বা এরিয়া ম্যাচ করা হচ্ছে
+    if delivery_boy_area:
+        open_pool_query["$or"].append({"seller_address": {"$regex": delivery_boy_area, "$options": "i"}})
+        open_pool_query["$or"].append({"pickup_address": {"$regex": delivery_boy_area, "$options": "i"}})
+
+    available_orders = list(col_orders.find(open_pool_query).sort("_id", -1))
     
     # 📦 MY TASKS: যে অর্ডারগুলো এই ডেলিভারি বয় নিজে Grab করেছে
     my_orders = list(col_orders.find({
@@ -49,6 +64,7 @@ def delivery_dashboard():
                            available_orders=available_orders, 
                            my_orders=my_orders, 
                            current_user=current_user)
+    
 
 # ==========================================
 # 🤝 ২. Self-Assign (Grab Product)
