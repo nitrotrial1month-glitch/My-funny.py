@@ -1,4 +1,4 @@
-from flask import Blueprint, redirect, request
+from flask import Blueprint, redirect, request, flash, session
 from database import Database
 from routes.auth import get_current_user, role_required
 from bson.objectid import ObjectId
@@ -17,6 +17,7 @@ def verify_product(product_id):
     db_products = Database.get_collection("products")
     if db_products is not None:
         db_products.update_one({"_id": ObjectId(product_id)}, {"$set": {"status": "Live"}})
+        flash("✅ Product successfully verified and is now Live.")
     return redirect('/owner-dashboard')
 
 # ২. প্রোডাক্ট আনভেরিফাই করা (Pending এ পাঠানো)
@@ -35,6 +36,18 @@ def delete_product(product_id):
     db_products = Database.get_collection("products")
     if db_products is not None:
         db_products.delete_one({"_id": ObjectId(product_id)})
+        flash("🗑️ Product deleted successfully.")
+    return redirect('/owner-dashboard')
+
+# 🔴 NEW: ৪. ইনসিওর (Insure) ব্যাজ অ্যাপ্রুভ করা
+@owner_controls_bp.route('/owner/verify-insure/<product_id>', methods=['POST'])
+@role_required('owner')
+def verify_insure_badge(product_id):
+    db_products = Database.get_collection("products")
+    if db_products is not None:
+        # স্ট্যাটাস 'Verified' করে দিলে HTML-এ ব্যাজ শো করবে
+        db_products.update_one({"_id": ObjectId(product_id)}, {"$set": {"inwear_insure": "Verified"}})
+        flash("🏅 Insure Badge successfully added to the product.")
     return redirect('/owner-dashboard')
 
 
@@ -42,7 +55,7 @@ def delete_product(product_id):
 # 🚫 SELLER CONTROLS
 # ==========================================
 
-# ৪. সেলারকে ব্লক/ব্যান করা (রোল কেড়ে নেওয়া)
+# ৫. সেলারকে ব্লক/ব্যান করা (রোল কেড়ে নেওয়া)
 @owner_controls_bp.route('/owner/block-seller', methods=['POST'])
 @role_required('owner')
 def block_seller():
@@ -57,8 +70,14 @@ def block_seller():
             db_users.update_one({"email": seller_email}, {"$set": {"role": "user", "is_banned": True}})
             
             # সেলার ব্যান হওয়ার সাথে সাথে তার সব প্রোডাক্ট অটো-ডিলিট করে দেওয়া
-            if db_products is not None:
-                db_products.delete_many({"seller_id": str(user.get('discord_id'))})
+            # 'discord_id' এর বদলে 'inwear_id' বা যে আইডি দিয়ে সেলার সেভ হয় সেটি ইউজ করা ভালো
+            seller_identifier = user.get('inwear_id') or user.get('discord_id')
+            if db_products is not None and seller_identifier:
+                db_products.delete_many({"seller_id": str(seller_identifier)})
+            
+            flash(f"🚫 Seller {seller_email} has been blocked and their products removed.")
+        else:
+            flash(f"❌ Seller with email {seller_email} not found.", "error")
                 
     return redirect('/owner-dashboard')
   
@@ -72,12 +91,23 @@ def delete_product_global():
     db_products = Database.get_collection("products")
     
     if db_products is not None and query:
-        # যদি ইনপুটটি ২৪ ক্যারেক্টারের হয় (মানে এটি একটি MongoDB Object ID)
-        if len(query) == 24 and all(c in '0123456789abcdefABCDEF' for c in query):
-            db_products.delete_one({"_id": ObjectId(query)})
-        else:
-            # যদি ইনপুটটি নাম হয়, তবে নামের সাথে মিলিয়ে ডিলিট করবে (Case Insensitive)
-            db_products.delete_many({"name": {"$regex": f"^{query}$", "$options": "i"}})
+        try:
+            # যদি ইনপুটটি ২৪ ক্যারেক্টারের হয় (মানে এটি একটি MongoDB Object ID)
+            if len(query) == 24 and all(c in '0123456789abcdefABCDEF' for c in query):
+                result = db_products.delete_one({"_id": ObjectId(query)})
+                if result.deleted_count > 0:
+                    flash(f"🗑️ Product with ID {query} deleted.")
+                else:
+                    flash("❌ Product ID not found.", "error")
+            else:
+                # যদি ইনপুটটি নাম হয়, তবে নামের সাথে মিলিয়ে ডিলিট করবে (Case Insensitive)
+                result = db_products.delete_many({"name": {"$regex": f"^{query}$", "$options": "i"}})
+                if result.deleted_count > 0:
+                    flash(f"🗑️ {result.deleted_count} product(s) named '{query}' deleted.")
+                else:
+                    flash(f"❌ No products found with name '{query}'.", "error")
+        except Exception as e:
+            flash(f"❌ Error deleting product: {str(e)}", "error")
             
     return redirect('/owner-dashboard')
-    
+            
