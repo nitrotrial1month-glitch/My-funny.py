@@ -38,7 +38,6 @@
         .product-info { padding: 10px; }
         .product-title { font-size: 13px; font-weight: bold; color: var(--text-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
         
-        /* 🔴 NEW: ডেসক্রিপশনের জন্য CSS */
         .product-desc-short { font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 6px; }
         
         .price-container { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
@@ -51,18 +50,35 @@
         .nav-icon { font-size: 22px; margin-bottom: 3px; }
         .cart-badge { position: absolute; top: -5px; right: 5px; background: #ff9900; color: white; font-size: 10px; padding: 2px 5px; border-radius: 10px; font-weight: bold; }
 
+        /* 🔴 NEW: Premium Workspace Panel Styles */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: 1001; display: none; opacity: 0; transition: opacity 0.3s ease; }
         .bottom-sheet { position: fixed; bottom: -100%; left: 0; width: 100%; background: var(--white); z-index: 1002; border-radius: 24px 24px 0 0; padding: 15px 20px 30px 20px; transition: bottom 0.3s; box-sizing: border-box; }
         .drag-handle { width: 40px; height: 5px; background-color: #e0e0e0; border-radius: 10px; margin: 0 auto 20px auto; }
-        .sheet-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .sheet-header h3 { margin: 0; font-size: 18px; color: var(--text-dark); font-weight: 800; }
-        .close-btn { background: #f1f2f4; border-radius: 50%; width: 30px; height: 30px; display: flex; justify-content: center; align-items: center; font-size: 14px; cursor: pointer; font-weight: bold; }
-        .sheet-content { display: flex; flex-direction: column; gap: 12px; }
-        .sheet-link-btn { display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; border-radius: 16px; text-decoration: none; font-weight: bold; font-size: 15px; border: 1px solid #f0f0f0; }
+        .sheet-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .sheet-header h3 { margin: 0; font-size: 18px; color: var(--text-dark); font-weight: 900; letter-spacing: 0.5px;}
+        .close-btn { background: #f1f2f4; border-radius: 50%; width: 30px; height: 30px; display: flex; justify-content: center; align-items: center; font-size: 14px; cursor: pointer; font-weight: bold; color: #555;}
+        
+        .sheet-content { display: flex; flex-direction: column; gap: 0; }
+        .sheet-link-btn { display: flex; align-items: center; justify-content: space-between; padding: 16px; border-radius: 16px; text-decoration: none; margin-bottom: 12px; transition: transform 0.2s; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #f0f0f0; background: white;}
+        .sheet-link-btn:active { transform: scale(0.98); }
         .btn-left { display: flex; align-items: center; gap: 15px; }
-        .admin-btn { background: #fff5f5; color: var(--primary-red); }
-        .seller-btn { background: #f5f9ff; color: #1976d2; }
-        .delivery-btn { background: #f5fff6; color: #2e7d32; }
+        .btn-icon-wrapper { width: 48px; height: 48px; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 24px; }
+        .btn-text-wrapper { display: flex; flex-direction: column; }
+        .btn-title { font-weight: 800; font-size: 15px; color: var(--text-dark); margin-bottom: 2px;}
+        .btn-subtitle { font-size: 12px; color: var(--text-muted); font-weight: normal; }
+        .btn-right-arrow { font-size: 18px; color: #ccc; font-weight: bold;}
+
+        /* Admin Button Theme */
+        .admin-btn { border-left: 4px solid var(--primary-red); }
+        .admin-btn .btn-icon-wrapper { background: #fff5f5; color: var(--primary-red); }
+        
+        /* Seller Button Theme */
+        .seller-btn { border-left: 4px solid #1976d2; }
+        .seller-btn .btn-icon-wrapper { background: #f5f9ff; color: #1976d2; }
+        
+        /* Delivery Button Theme */
+        .delivery-btn { border-left: 4px solid #00a650; }
+        .delivery-btn .btn-icon-wrapper { background: #e6f7ed; color: #00a650; }
     </style>
 </head>
 <body>
@@ -97,7 +113,9 @@
                         {% endif %}
 
                         <div class="wishlist-btn" onclick="event.preventDefault(); alert('Added to wishlist!');">♡</div>
-                        <img src="/{{ product.image if product.image else '' }}" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x400/f4f6f8/cc0000?text=No+Image';" class="product-img">
+                        
+                        <!-- 🔴 UPDATE: Cloudinary Image Links Fixed Here -->
+                        <img src="{% if product.image and 'http' in product.image %}{{ product.image }}{% else %}/{{ product.image if product.image else '' }}{% endif %}" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x400/f4f6f8/cc0000?text=No+Image';" class="product-img">
                     </div>
                     <div class="product-info">
                         <div class="product-title">{{ product.name }}</div>
@@ -142,14 +160,60 @@
         </div>
         <div class="sheet-content">
             {% set role = session['user'].get('role') %}
+            
             {% if role == 'owner' %}
-                <a href="/dashboards" class="sheet-link-btn admin-btn"><div class="btn-left"><span style="font-size: 22px;">👑</span><span>Admin Workspace</span></div></a>
-                <a href="/seller-dashboard" class="sheet-link-btn seller-btn"><div class="btn-left"><span style="font-size: 22px;">🏪</span><span>Seller Dashboard</span></div></a>
-                <a href="/delivery-dashboard" class="sheet-link-btn delivery-btn"><div class="btn-left"><span style="font-size: 22px;">🛵</span><span>Delivery Hub</span></div></a>
+                <a href="/dashboards" class="sheet-link-btn admin-btn">
+                    <div class="btn-left">
+                        <div class="btn-icon-wrapper">👑</div>
+                        <div class="btn-text-wrapper">
+                            <span class="btn-title">Admin Workspace</span>
+                            <span class="btn-subtitle">Manage store, users & orders</span>
+                        </div>
+                    </div>
+                    <div class="btn-right-arrow">➔</div>
+                </a>
+                <a href="/seller-dashboard" class="sheet-link-btn seller-btn">
+                    <div class="btn-left">
+                        <div class="btn-icon-wrapper">🏪</div>
+                        <div class="btn-text-wrapper">
+                            <span class="btn-title">Seller Dashboard</span>
+                            <span class="btn-subtitle">Upload & manage products</span>
+                        </div>
+                    </div>
+                    <div class="btn-right-arrow">➔</div>
+                </a>
+                <a href="/delivery-dashboard" class="sheet-link-btn delivery-btn">
+                    <div class="btn-left">
+                        <div class="btn-icon-wrapper">🛵</div>
+                        <div class="btn-text-wrapper">
+                            <span class="btn-title">Delivery Hub</span>
+                            <span class="btn-subtitle">Track & assign deliveries</span>
+                        </div>
+                    </div>
+                    <div class="btn-right-arrow">➔</div>
+                </a>
             {% elif role == 'seller' %}
-                <a href="/seller-dashboard" class="sheet-link-btn seller-btn"><div class="btn-left"><span style="font-size: 22px;">🏪</span><span>Seller Dashboard</span></div></a>
+                <a href="/seller-dashboard" class="sheet-link-btn seller-btn">
+                    <div class="btn-left">
+                        <div class="btn-icon-wrapper">🏪</div>
+                        <div class="btn-text-wrapper">
+                            <span class="btn-title">Seller Dashboard</span>
+                            <span class="btn-subtitle">Manage your inventory</span>
+                        </div>
+                    </div>
+                    <div class="btn-right-arrow">➔</div>
+                </a>
             {% elif role == 'delivery' %}
-                <a href="/delivery-dashboard" class="sheet-link-btn delivery-btn"><div class="btn-left"><span style="font-size: 22px;">🛵</span><span>Delivery Dashboard</span></div></a>
+                <a href="/delivery-dashboard" class="sheet-link-btn delivery-btn">
+                    <div class="btn-left">
+                        <div class="btn-icon-wrapper">🛵</div>
+                        <div class="btn-text-wrapper">
+                            <span class="btn-title">Delivery Dashboard</span>
+                            <span class="btn-subtitle">View your pending orders</span>
+                        </div>
+                    </div>
+                    <div class="btn-right-arrow">➔</div>
+                </a>
             {% endif %}
         </div>
     </div>
