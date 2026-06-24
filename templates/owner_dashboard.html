@@ -47,13 +47,14 @@
         .btn-green { background: var(--success-green); color: white; }
         .btn-red { background: var(--primary-red); color: white; }
         .btn-dark { background: var(--admin-dark); color: white; }
+        .btn-blue { background: var(--assured-blue); color: white; }
         
-        /* Verification Images - Updated with cursor */
+        /* Verification Images */
         .doc-images { display: flex; gap: 10px; margin-top: 10px; overflow-x: auto; padding-bottom: 5px; }
         .doc-images img { width: 80px; height: 80px; object-fit: cover; border-radius: 6px; border: 1px solid #ccc; cursor: zoom-in; }
         .doc-label { font-size: 10px; color: #888; text-align: center; margin-top: 4px; }
 
-        /* 🔴 NEW: Image Modal Styles */
+        /* Image Modal Styles */
         .img-modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); align-items: center; justify-content: center; backdrop-filter: blur(5px); }
         .img-modal img { max-width: 95%; max-height: 90%; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
         .close-modal { position: absolute; top: 20px; right: 20px; color: white; font-size: 35px; font-weight: bold; cursor: pointer; }
@@ -69,6 +70,19 @@
     <div id="imgModal" class="img-modal" onclick="closeModal()">
         <span class="close-modal">&times;</span>
         <img id="modalImage" src="">
+    </div>
+
+    <!-- Flash Messages -->
+    <div style="position: fixed; top: 15px; left: 50%; transform: translateX(-50%); width: 90%; z-index: 9999;">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div style="background: var(--success-green); color: white; padding: 12px 15px; border-radius: 8px; font-size: 13px; font-weight: bold; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); margin-bottom: 10px;" onclick="this.style.display='none';">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
     </div>
 
     <div class="top-header">
@@ -179,7 +193,6 @@
         {% endfor %}
     {% endif %}
 
-
     <div class="section-title">📦 Pending Products Approval</div>
     <div class="card-container">
         {% if pending_products %}
@@ -206,6 +219,32 @@
             <p style="text-align: center; color: #888; font-size: 13px; margin: 0;">No pending products to verify.</p>
         {% endif %}
     </div>
+
+    <!-- 🔴 NEW SECTION: INWEAR INSURE REQUESTS -->
+    <div class="section-title" style="color: var(--assured-blue);">🏅 Inwear Insure Requests</div>
+    <div class="card-container" style="border: 1px solid var(--assured-blue); background: #f0f7ff;">
+        {% if insure_requests %}
+            {% for p in insure_requests %}
+            <div style="border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-bottom: 10px;">
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <img src="/{{ p.image if p.image else '' }}" onclick="openModal(this.src)" onerror="this.onerror=null; this.src='https://via.placeholder.com/50';" style="width: 50px; height: 50px; border-radius: 6px; object-fit: cover; cursor: zoom-in;">
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0; font-size: 14px;">{{ p.name }}</h4>
+                        <p style="margin: 2px 0 0; font-size: 12px; color: #555;">Store: <strong>{{ p.store_name | default('Unknown') }}</strong></p>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <form action="/owner/verify-insure/{{ p._id }}" method="POST" style="flex: 1;">
+                        <button type="submit" class="btn btn-blue" style="width: 100%; box-shadow: 0 3px 10px rgba(40,116,240,0.3);">🏅 Approve Badge</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p style="text-align: center; color: #888; font-size: 13px; margin: 0;">No pending badge requests right now.</p>
+        {% endif %}
+    </div>
+    <!-- END NEW SECTION -->
 
     <div class="section-title" style="color: #cc0000;">🚨 Danger Zone</div>
     <div class="card-container" style="background: #fff5f5; border: 1px solid #ffdcdb; margin-bottom: 20px;">
