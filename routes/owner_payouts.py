@@ -1,36 +1,53 @@
-from flask import Blueprint, render_template, redirect, flash
+from flask import Blueprint, render_template, redirect, flash, request
 from database import Database
-from routes.auth import get_current_user, role_required
 from bson.objectid import ObjectId
+from routes.auth import role_required
 
-# নতুন ব্লুপ্রিন্ট
-payouts_bp = Blueprint('payouts', __name__)
+owner_payouts_bp = Blueprint('owner_payouts', __name__)
 
-@payouts_bp.route('/owner/payouts')
+# ১. Payout ড্যাশবোর্ড দেখানো
+@owner_payouts_bp.route('/owner/payouts')
 @role_required('owner')
 def owner_payouts():
-    user = get_current_user()
-    db_users = Database.get_collection("users")
-    db_withdrawals = Database.get_collection("withdrawals")
+    col = Database.get_collection("withdrawals")
     
-    # ওনারের মোট আয় (১০% প্ল্যাটফর্ম চার্জ)
-    owner_data = db_users.find_one({"email": "kstomh05@gmail.com"}) if db_users is not None else None
-    platform_revenue = owner_data.get("platform_revenue", 0) if owner_data else 0
+    # পেন্ডিং এবং কমপ্লিট হওয়া রিকোয়েস্টগুলো আলাদা করে ডেটাবেস থেকে টানা হচ্ছে
+    pending_requests = list(col.find({"status": "Pending"}).sort("_id", -1))
+    payout_history = list(col.find({"status": {"$in": ["Paid", "Rejected"]}}).sort("_id", -1).limit(30))
     
-    # সেলারদের পেন্ডিং এবং কমপ্লিট হওয়া রিকোয়েস্ট (হিস্ট্রির জন্য)
-    pending_payouts = list(db_withdrawals.find({"status": "Pending"}).sort("_id", -1)) if db_withdrawals is not None else []
-    completed_payouts = list(db_withdrawals.find({"status": "Paid"}).sort("_id", -1).limit(30)) if db_withdrawals is not None else []
-    
-    return render_template('owner_payouts.html', current_user=user, platform_revenue=platform_revenue, pending=pending_payouts, completed=completed_payouts)
+    return render_template('owner_payouts.html', pending=pending_requests, history=payout_history)
 
-@payouts_bp.route('/owner/approve-payout/<payout_id>', methods=['POST'])
+
+# ২. Payout অ্যাপ্রুভ করা (Paid)
+@owner_payouts_bp.route('/owner/payouts/approve/<req_id>', methods=['POST'])
 @role_required('owner')
-def approve_payout(payout_id):
-    db_withdrawals = Database.get_collection("withdrawals")
-    if db_withdrawals is not None:
-        # পেমেন্ট ক্লিয়ার করে স্ট্যাটাস 'Paid' করা হচ্ছে
-        db_withdrawals.update_one({"_id": ObjectId(payout_id)}, {"$set": {"status": "Paid"}})
-        flash("Payment marked as successful!")
+def approve_payout(req_id):
+    col = Database.get_collection("withdrawals")
+    
+    # স্ট্যাটাস 'Paid' করে দেওয়া হলো
+    col.update_one({"_id": ObjectId(req_id)}, {"$set": {"status": "Paid"}})
+    flash("✅ Payout marked as Paid successfully!")
+    
+    return redirect('/owner/payouts')
+
+
+# ৩. Payout রিজেক্ট করা (Refund)
+@owner_payouts_bp.route('/owner/payouts/reject/<req_id>', methods=['POST'])
+@role_required('owner')
+def reject_payout(req_id):
+    col_withdraw = Database.get_collection("withdrawals")
+    col_users = Database.get_collection("users")
+    
+    req = col_withdraw.find_one({"_id": ObjectId(req_id)})
+    if req and req.get('status') == 'Pending':
+        # রিজেক্ট করলে টাকাটা আবার সেলারের ওয়ালেটে রিফান্ড হয়ে যাবে
+        col_users.update_one(
+            {"discord_id": req['seller_id']}, 
+            {"$inc": {"wallet_balance": float(req['amount'])}}
+        )
+        # স্ট্যাটাস 'Rejected' করে দেওয়া হলো
+        col_withdraw.update_one({"_id": ObjectId(req_id)}, {"$set": {"status": "Rejected"}})
+        flash("❌ Payout rejected. Amount refunded to seller's wallet.")
         
     return redirect('/owner/payouts')
     
