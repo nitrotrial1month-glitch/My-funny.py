@@ -184,6 +184,10 @@ def owner_dashboard():
     total_products = db_products.count_documents({}) if db_products is not None else 0
     
     pending_products = list(db_products.find({"status": "Pending"})) if db_products is not None else []
+    
+    # 🔴 NEW: inwear Insure ব্যাজ অ্যাপ্রুভালের জন্য রিকোয়েস্টগুলো খোঁজা
+    insure_requests = list(db_products.find({"inwear_insure": "Pending Approval"})) if db_products is not None else []
+    
     latest_orders = list(db_orders.find({}).sort("_id", -1).limit(20)) if db_orders is not None else []
     
     pending_sellers = list(db_users.find({"role": "pending_seller"})) if db_users is not None else []
@@ -195,6 +199,7 @@ def owner_dashboard():
                            total_orders=total_orders,
                            total_products=total_products,
                            pending_products=pending_products,
+                           insure_requests=insure_requests, # 🔴 HTML-এ রিকোয়েস্ট পাঠানো হলো
                            orders=latest_orders,
                            pending_sellers=pending_sellers,
                            pending_deliveries=pending_deliveries)
@@ -386,3 +391,4 @@ def reject_user(discord_id):
         flash("Application Rejected and data cleared.")
         
     return redirect('/owner-dashboard')
+    
