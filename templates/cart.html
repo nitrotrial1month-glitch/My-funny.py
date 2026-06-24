@@ -124,26 +124,31 @@
 
     <div class="container">
         {% if cart_items %}
-            
-            {% for item in cart_items %}
-            <div class="cart-card">
-                <img src="/{{ item.image }}" class="item-img" alt="{{ item.name }}" onerror="this.src='https://via.placeholder.com/80x100';">
-                <div class="item-info">
-                    <div>
-                        <h3 class="item-name">{{ item.name }}</h3>
-                        <div class="price-wrap">
-                            <span class="item-price">₹{{ item.price }}</span>
-                        </div>
-                    </div>
-                    
-                    <div class="action-row">
-                        <a href="/remove_from_cart/{{ item._id | string }}" class="btn-remove">
-                            🗑️ Remove Item
-                        </a>
-                    </div>
-                </div>
+
+        <!-- cart.html এর ভেতরের লুপটি এভাবে আপডেট করুন -->
+{% for item in cart_items %}
+<div class="cart-card">
+    <img src="/{{ item.image }}" class="item-img" alt="{{ item.name }}" onerror="this.src='https://via.placeholder.com/80x100';">
+    <div class="item-info">
+        <div>
+            <h3 class="item-name">{{ item.name }}</h3>
+            <!-- 🔴 NEW: প্রোডাক্ট আইডি দেখানো হচ্ছে -->
+            {% if item.wbm_pid %}
+                <p style="font-size: 11px; color: #888; margin: 2px 0;">ID: <strong>{{ item.wbm_pid }}</strong></p>
+            {% endif %}
+            <div class="price-wrap">
+                <span class="item-price">₹{{ item.price }}</span>
             </div>
-            {% endfor %}
+        </div>
+        
+        <div class="action-row">
+            <a href="/remove_from_cart/{{ item._id | string }}" class="btn-remove">
+                🗑️ Remove Item
+            </a>
+        </div>
+    </div>
+</div>
+{% endfor %}
 
             <div class="bill-card">
                 <h3 class="bill-title">Price Details ({{ cart_items|length }} Items)</h3>
