@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Wear By Me </title>
+    <title>Wear By Me</title>
     <style>
         :root { --primary-red: #cc0000; --bg-color: #f1f2f4; --text-dark: #212121; --text-muted: #878787; --white: #ffffff; --verified-green: #00a650; --assured-blue: #2874f0; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--text-dark); margin: 0; padding: 0; padding-bottom: 70px; }
@@ -32,8 +32,30 @@
         .product-img { width: 100%; height: 100%; object-fit: cover; }
         .wishlist-btn { position: absolute; top: 8px; right: 8px; background: rgba(255, 255, 255, 0.9); border-radius: 50%; width: 28px; height: 28px; display: flex; justify-content: center; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 16px; color: #ccc; z-index: 10; }
         
-        .inwear-assured-badge { position: absolute; top: 8px; left: 8px; background-color: var(--assured-blue); color: white; font-size: 10px; font-style: italic; font-weight: 900; padding: 3px 6px; border-radius: 4px; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.15); z-index: 10; }
-        .assured-icon { background-color: white; color: var(--assured-blue); border-radius: 50%; width: 12px; height: 12px; display: flex; justify-content: center; align-items: center; font-size: 9px; font-weight: bold; font-style: normal; }
+        /* 🔴 NEW: Wear By Me Custom Insure Badge CSS */
+        .inwear-assured-badge { 
+            position: absolute; 
+            top: 8px; 
+            left: 8px; 
+            background-color: rgba(255, 255, 255, 0.95); 
+            color: var(--primary-red); 
+            font-size: 12px; 
+            font-style: italic; 
+            font-weight: 900; 
+            padding: 3px 6px; 
+            border-radius: 4px; 
+            display: flex; 
+            align-items: center; 
+            gap: 4px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15); 
+            z-index: 10; 
+            letter-spacing: 0.5px;
+        }
+        .assured-icon-svg {
+            width: 14px;
+            height: 14px;
+            margin-top: -1px;
+        }
         
         .product-info { padding: 10px; }
         .product-title { font-size: 13px; font-weight: bold; color: var(--text-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
@@ -50,7 +72,7 @@
         .nav-icon { font-size: 22px; margin-bottom: 3px; }
         .cart-badge { position: absolute; top: -5px; right: 5px; background: #ff9900; color: white; font-size: 10px; padding: 2px 5px; border-radius: 10px; font-weight: bold; }
 
-        /* 🔴 NEW: Premium Workspace Panel Styles */
+        /* Premium Workspace Panel Styles */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: 1001; display: none; opacity: 0; transition: opacity 0.3s ease; }
         .bottom-sheet { position: fixed; bottom: -100%; left: 0; width: 100%; background: var(--white); z-index: 1002; border-radius: 24px 24px 0 0; padding: 15px 20px 30px 20px; transition: bottom 0.3s; box-sizing: border-box; }
         .drag-handle { width: 40px; height: 5px; background-color: #e0e0e0; border-radius: 10px; margin: 0 auto 20px auto; }
@@ -109,12 +131,19 @@
                 <a href="/product/{{ product._id }}" class="product-card">
                     <div class="product-img-container">
                         {% if product.inwear_insure == 'Verified' %}
-                        <div class="inwear-assured-badge"><span class="assured-icon">✓</span>inwear Assured</div>
+                        <div class="inwear-assured-badge">
+                            <!-- 🔴 Custom Brand Logo SVG (Red Circle with White 'W') -->
+                            <svg class="assured-icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="12" r="12" fill="#cc0000"/>
+                                <path d="M6 8.5 L9 16.5 L12 11.5 L15 16.5 L18 8.5" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                            </svg>
+                            Insure
+                        </div>
                         {% endif %}
 
                         <div class="wishlist-btn" onclick="event.preventDefault(); alert('Added to wishlist!');">♡</div>
                         
-                        <!-- 🔴 UPDATE: Cloudinary Image Links Fixed Here -->
+                        <!-- Cloudinary Image Link -->
                         <img src="{% if product.image and 'http' in product.image %}{{ product.image }}{% else %}/{{ product.image if product.image else '' }}{% endif %}" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x400/f4f6f8/cc0000?text=No+Image';" class="product-img">
                     </div>
                     <div class="product-info">
