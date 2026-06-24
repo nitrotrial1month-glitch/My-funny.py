@@ -63,16 +63,17 @@
 
     <div class="media-wrapper">
         <div class="media-scroller">
+            <!-- 🔴 UPDATE: Cloudinary Image Links Fixed -->
             {% if product.images %}
                 {% for img in product.images %}
-                    <img src="/{{ img }}" class="media-item" alt="Product Image">
+                    <img src="{% if 'http' in img %}{{ img }}{% else %}/{{ img }}{% endif %}" class="media-item" alt="Product Image">
                 {% endfor %}
             {% elif product.image %}
-                <img src="/{{ product.image }}" class="media-item" alt="Product Image" onerror="this.src='https://via.placeholder.com/400';">
+                <img src="{% if product.image and 'http' in product.image %}{{ product.image }}{% else %}/{{ product.image }}{% endif %}" class="media-item" alt="Product Image" onerror="this.src='https://via.placeholder.com/400';">
             {% endif %}
 
             {% if product.video %}
-                <video src="/{{ product.video }}" class="media-item" controls preload="metadata" poster="/{{ product.image }}"></video>
+                <video src="{% if 'http' in product.video %}{{ product.video }}{% else %}/{{ product.video }}{% endif %}" class="media-item" controls preload="metadata" poster="{% if product.image and 'http' in product.image %}{{ product.image }}{% else %}/{{ product.image }}{% endif %}"></video>
             {% endif %}
         </div>
         
