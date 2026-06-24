@@ -29,7 +29,6 @@ def get_current_user():
     
     col = Database.get_collection("users")
     if col is not None:
-        # 🔴 UPDATE: এখন থেকে সবসময় inwear_id দিয়ে ইউজারকে খুঁজবে
         db_user = col.find_one({"wearbyme_id": user_session.get('id')})
         if db_user:
             return db_user
@@ -108,32 +107,31 @@ def discord_callback():
             db_user = col.find_one({"discord_id": discord_id})
         
         if not db_user:
-            random_id = f"INW-{random.randint(100000, 999999)}"
+            random_id = f"WBM-U-{random.randint(100000, 999999)}"
             initial_role = "owner" if email == "kstomh05@gmail.com" else "user"
             
             new_user = {
                 "discord_id": discord_id,
                 "username": user_info.get('username'),
                 "email": email,
-                "inwear_id": random_id,
+                "wearbyme_id": random_id,
                 "role": initial_role,
                 "avatar": f"https://cdn.discordapp.com/avatars/{discord_id}/{user_info.get('avatar')}.png" if user_info.get('avatar') else "https://via.placeholder.com/100"
             }
             col.insert_one(new_user)
             db_user = new_user
         else:
-            if 'inwear_id' not in db_user:
-                inwear_id = f"INW-{random.randint(100000, 999999)}"
-                col.update_one({"_id": db_user["_id"]}, {"$set": {"inwear_id": inwear_id, "discord_id": discord_id}})
-                db_user['inwear_id'] = inwear_id
+            if 'wearbyme_id' not in db_user:
+                wearbyme_id = f"WBM-U-{random.randint(100000, 999999)}"
+                col.update_one({"_id": db_user["_id"]}, {"$set": {"wearbyme_id": wearbyme_id, "discord_id": discord_id}})
+                db_user['wearbyme_id'] = wearbyme_id
                 
             if email == "kstomh05@gmail.com" and db_user.get("role") != "owner":
                 col.update_one({"_id": db_user["_id"]}, {"$set": {"role": "owner"}})
                 db_user["role"] = "owner"
 
-    # 🔴 UPDATE: সেশনে এখন থেকে সবসময় `inwear_id` সেভ হবে
     session['user'] = {
-        'id': db_user.get('inwear_id'),
+        'id': db_user.get('wearbyme_id'),
         'username': user_info.get('username'),
         'email': email,
         'role': db_user.get("role")
@@ -212,7 +210,7 @@ def owner_dashboard():
 @role_required('seller', 'owner')
 def seller_dashboard():
     user = get_current_user()
-    user_id = user.get('inwear_id')
+    user_id = user.get('wearbyme_id')
     
     col = Database.get_collection("products")
     seller_products = list(col.find({"seller_id": str(user_id)})) if col is not None else []
@@ -281,7 +279,7 @@ def submit_seller_application():
             license_file.save(os.path.join(UPLOAD_FOLDER, license_filename))
         
         if col is not None:
-            col.update_one({"inwear_id": user['id']}, {"$set": {
+            col.update_one({"wearbyme_id": user['id']}, {"$set": {
                 "role": "pending_seller",
                 "application_data": {
                     "store_name": store_name,
@@ -338,7 +336,7 @@ def submit_delivery_application():
             dl_file.save(os.path.join(UPLOAD_FOLDER, dl_filename))
         
         if col is not None:
-            col.update_one({"inwear_id": user['id']}, {"$set": {
+            col.update_one({"wearbyme_id": user['id']}, {"$set": {
                 "role": "pending_delivery",
                 "application_data": {
                     "full_name": full_name,
@@ -364,32 +362,35 @@ def submit_delivery_application():
 
 
 # ==========================================
-# ⚖️ Admin Approval / Rejection Routes
+# ⚖️ Admin Approval / Rejection Routes (Updated for wearbyme_id)
 # ==========================================
 
-@auth_bp.route('/admin/approve/<discord_id>')
+@auth_bp.route('/admin/approve/<wearbyme_id>')
 @role_required('owner')
-def approve_user(discord_id):
+def approve_user(wearbyme_id):
     col = Database.get_collection("users")
     if col is not None:
-        user = col.find_one({"discord_id": discord_id})
+        # discord_id-এর পরিবর্তে wearbyme_id দিয়ে খোঁজা হচ্ছে
+        user = col.find_one({"wearbyme_id": wearbyme_id})
         if user:
             new_role = "seller" if user.get('role') == "pending_seller" else "delivery"
-            col.update_one({"discord_id": discord_id}, {"$set": {"role": new_role}})
-            flash(f"User approved as {new_role} successfully!")
+            col.update_one({"wearbyme_id": wearbyme_id}, {"$set": {"role": new_role}})
+            flash(f"User {wearbyme_id} approved as {new_role} successfully!")
             
     return redirect('/owner-dashboard')
 
-@auth_bp.route('/admin/reject/<discord_id>')
+@auth_bp.route('/admin/reject/<wearbyme_id>')
 @role_required('owner')
-def reject_user(discord_id):
+def reject_user(wearbyme_id):
     col = Database.get_collection("users")
     if col is not None:
-        col.update_one({"discord_id": discord_id}, {
+        # discord_id-এর পরিবর্তে wearbyme_id দিয়ে আপডেট করা হচ্ছে
+        col.update_one({"wearbyme_id": wearbyme_id}, {
             "$set": {"role": "user"},
             "$unset": {"application_data": ""}
         })
-        flash("Application Rejected and data cleared.")
+        flash(f"Application for {wearbyme_id} Rejected and data cleared.")
         
     return redirect('/owner-dashboard')
-        
+    
+                               
