@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>My Products | inwear</title>
+    <style>
+        :root { 
+            --primary: #cc0000; --dark: #1a1a2e; --success: #00a650; 
+            --blue: #2874f0; --warning: #ff9900; --bg: #f4f6f8; --white: #ffffff; 
+        }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; padding-bottom: 80px; color: #212121; }
+        
+        /* Header */
+        .header { background: var(--dark); color: white; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .header h3 { margin: 0; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-add-top { background: var(--primary); color: white; border: none; padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: bold; text-decoration: none; }
+
+        .container { padding: 15px; }
+        .section-info { font-size: 12px; color: #666; margin-bottom: 15px; font-weight: bold; text-transform: uppercase; }
+
+        /* Product List Card */
+        .product-item { display: flex; align-items: center; justify-content: space-between; background: white; padding: 12px; border-radius: 12px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border: 1px solid #eee; }
+        .product-img { width: 65px; height: 65px; border-radius: 8px; object-fit: cover; background: #fafafa; }
+        .product-details { flex: 1; margin-left: 12px; }
+        .product-details h4 { margin: 0 0 4px 0; font-size: 14px; color: var(--dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
+        .product-price-row { font-size: 13px; font-weight: bold; color: var(--primary); margin-bottom: 4px; }
+        .stock-count { font-size: 11px; color: #777; font-weight: normal; margin-left: 5px; }
+        
+        .status-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase; }
+        .status-live { background: #e6f7ed; color: var(--success); }
+        .status-pending { background: #fff5e6; color: var(--warning); }
+
+        /* Action Buttons */
+        .action-area { display: flex; flex-direction: column; gap: 6px; }
+        .btn-action { padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; text-decoration: none; text-align: center; cursor: pointer; border: 1px solid transparent; }
+        .btn-edit { background: #e8f4fd; color: var(--blue); border-color: #b8daff; }
+        .btn-delete { background: #ffe6e6; color: var(--primary); border-color: #ffb3b3; }
+
+        .empty-state { text-align: center; padding: 40px 20px; color: #888; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+
+        /* Bottom Nav */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--white); display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -5px 15px rgba(0,0,0,0.05); z-index: 1000; border-top: 1px solid #eee; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #888; font-size: 12px; font-weight: bold; }
+        .nav-item.active { color: var(--primary); }
+        .nav-icon { font-size: 22px; margin-bottom: 3px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h3>My Inventory</h3>
+        <a href="/add-product" class="btn-add-top">+ Add Product</a>
+    </div>
+
+    <div class="container">
+        <div class="section-info">📦 Total Products: {{ products|length }}</div>
+
+        {% if products %}
+            {% for p in products %}
+            <div class="product-item">
+                <img src="/{{ p.image if p.image else '' }}" onerror="this.src='https://via.placeholder.com/65';" class="product-img" alt="Product Thumbnail">
+                
+                <div class="product-details">
+                    <h4>{{ p.name }}</h4>
+                    <div class="product-price-row">
+                        ₹{{ p.price }}
+                        <span class="stock-count">(Stock: {{ p.stock | default(0) }})</span>
+                    </div>
+                    <div>
+                        <span class="status-badge {% if p.status == 'Live' or p.status == 'Approved' %}status-live{% else %}status-pending{% endif %}">
+                            {{ p.status | default('Pending') }}
+                        </span>
+                        {% if p.inwear_insure == 'Verified' %}
+                            <span class="status-badge" style="background: #e8f4fd; color: var(--blue); margin-left: 3px;">✨ Insured</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="action-area">
+                    <a href="/seller/edit-product/{{ p._id }}" class="btn-action btn-edit">✏️ Edit</a>
+                    <form action="/seller/delete-product/{{ p._id }}" method="POST" style="margin: 0;">
+                        <button type="submit" class="btn-action btn-delete" onclick="return confirm('Are you sure you want to delete this product permanently?')">🗑️ Delete</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <span style="font-size: 40px;">👕</span>
+                <h3 style="margin: 10px 0 5px 0; color: var(--dark);">No Products Found</h3>
+                <p style="margin: 0; font-size: 13px;">You haven't added any products to your store yet.</p>
+                <a href="/add-product" class="btn-add-top" style="display: inline-block; margin-top: 15px;">Add Your First Product</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="bottom-nav">
+        <a href="/seller-dashboard" class="nav-item"><span class="nav-icon">📊</span><span>Dashboard</span></a>
+        <a href="/seller/products" class="nav-item active"><span class="nav-icon">👕</span><span>Products</span></a>
+        <a href="/seller/wallet" class="nav-item"><span class="nav-icon">💰</span><span>Payouts</span></a>
+        <a href="/account" class="nav-item"><span class="nav-icon">👤</span><span>Profile</span></a>
+    </div>
+
+</body>
+</html>
