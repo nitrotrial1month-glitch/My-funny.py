@@ -264,3 +264,12 @@ def seller_products_page():
                            products=my_products, 
                            current_user=current_user)
     
+    @seller_bp.route('/seller/print-bill/<order_id>')
+@seller_required
+def print_bill(order_id):
+    col_orders = Database.get_collection("orders")
+    order_data = col_orders.find_one({"_id": ObjectId(order_id)})
+    if not order_data:
+        return "Order not found", 404
+    return render_template('invoice.html', order=order_data)
+             
