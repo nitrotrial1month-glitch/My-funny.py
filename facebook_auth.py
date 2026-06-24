@@ -1,6 +1,9 @@
 import os
+import random
+import uuid
 from flask import Blueprint, redirect, url_for, session, request
 import requests
+from database import Database
 
 facebook_bp = Blueprint('facebook', __name__)
 
@@ -10,7 +13,6 @@ REDIRECT_URI = os.getenv("FACEBOOK_REDIRECT_URI")
 
 @facebook_bp.route('/login/facebook')
 def login_facebook():
-    # ফেসবুক অথরাইজেশন ইউআরএল
     auth_url = (
         f"https://www.facebook.com/v12.0/dialog/oauth?"
         f"client_id={APP_ID}&"
@@ -25,7 +27,6 @@ def facebook_callback():
     if not code:
         return "Facebook Login failed! <a href='/'>Go Home</a>"
 
-    # টোকেন এক্সচেঞ্জ করা
     token_url = f"https://graph.facebook.com/v12.0/oauth/access_token?client_id={APP_ID}&redirect_uri={REDIRECT_URI}&client_secret={APP_SECRET}&code={code}"
     token_r = requests.get(token_url)
     token_data = token_r.json()
@@ -34,18 +35,60 @@ def facebook_callback():
     if not access_token:
         return "Failed to get access token from Facebook."
 
-    # ইউজারের প্রোফাইল তথ্য আনা
     user_info_r = requests.get(f"https://graph.facebook.com/me?fields=id,name,email,picture&access_token={access_token}")
     user_info = user_info_r.json()
 
-    # সেশনে সেভ করা
+    fb_id = str(user_info.get('id'))
+    email = user_info.get('email', '')
+    username = user_info.get('name', 'Facebook User')
+    avatar = user_info.get('picture', {}).get('data', {}).get('url', '')
+
+    col = Database.get_collection("users")
+    db_user = None
+    
+    if col is not None:
+        # আমরা প্রথমে চেক করবো ওই ইমেইল দিয়ে কোনো ইউজার আছে কি না
+        if email:
+            db_user = col.find_one({"email": email})
+        
+        # যদি ইমেইল দিয়ে না পাই, তবে ফেসবুক আইডি দিয়ে চেক করবো
+        if not db_user:
+            db_user = col.find_one({"facebook_id": fb_id})
+            
+        if not db_user:
+            # একদম নতুন ইউজার
+            inwear_id = f"INW-{random.randint(100000, 999999)}"
+            initial_role = "owner" if email == "kstomh05@gmail.com" else "user"
+            db_user = {
+                "facebook_id": fb_id,
+                "username": username,
+                "email": email,
+                "inwear_id": inwear_id,
+                "role": initial_role,
+                "avatar": avatar,
+                "is_facebook": True
+            }
+            col.insert_one(db_user)
+        else:
+            # পুরনো ইউজারের যদি ইনউইয়ার আইডি না থাকে, তবে একটি বানিয়ে দেব
+            if 'inwear_id' not in db_user:
+                inwear_id = f"INW-{random.randint(100000, 999999)}"
+                col.update_one({"_id": db_user["_id"]}, {"$set": {"inwear_id": inwear_id, "facebook_id": fb_id}})
+                db_user['inwear_id'] = inwear_id
+            
+            if email == "kstomh05@gmail.com" and db_user.get("role") != "owner":
+                col.update_one({"_id": db_user["_id"]}, {"$set": {"role": "owner"}})
+                db_user["role"] = "owner"
+
+    # 🔴 UPDATE: সেশনে এখন থেকে সবসময় `inwear_id` সেভ হবে
     session['user'] = {
-        'id': user_info.get('id'),
-        'username': user_info.get('name'),
-        'email': user_info.get('email'),
-        'avatar': user_info.get('picture', {}).get('data', {}).get('url'),
-        'is_facebook': True
+        'id': db_user.get('inwear_id'), 
+        'username': username,
+        'email': email,
+        'avatar': avatar,
+        'is_facebook': True,
+        'role': db_user.get("role")
     }
 
-    return redirect(url_for('home'))
-    
+    return redirect('/')
+            
