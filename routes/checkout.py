@@ -16,7 +16,7 @@ def get_delivery_charge(pincode, seller_id=None):
     
     pincode_str = str(pincode)
     
-    # 🔴 ডেমো লজিক: যদি পিনকোড '713' (বর্ধমান/গুসকরা এলাকা) দিয়ে শুরু হয়, তবে ফ্রি!
+    # 🔴 ডেমো লজিক: যদি পিনকোড '713' (বর্ধমান/गुসকরা এলাকা) দিয়ে শুরু হয়, তবে ফ্রি!
     if pincode_str.startswith('713'):
         return 0
     # কলকাতা বা অন্যান্য এলাকার জন্য 
@@ -99,8 +99,8 @@ def process_checkout():
     is_direct = request.form.get('is_direct') == 'True'
     address_selection = request.form.get('address_selection')
     
-    # 🔴 ফর্ম থেকে সাইজটি নেওয়া হচ্ছে (যদি থাকে)
-    size = request.form.get('size', 'Regular')
+    # 🔴 UPDATE: ফর্ম অথবা ইউআরএল কুয়েরি উভয় জায়গা থেকেই সাইজ খোঁজার সেফ লজিক
+    size = request.form.get('size') or request.args.get('size') or 'Regular'
     
     db_users = Database.get_collection("users")
     user_data = db_users.find_one({"discord_id": str(user['id'])}) if db_users is not None else {}
@@ -140,7 +140,6 @@ def process_checkout():
             return "Invalid Address Selection", 400
 
     delivery_charge = get_delivery_charge(final_pincode)
-    
     col_orders = Database.get_collection("orders")
     
     if is_direct:
@@ -148,15 +147,16 @@ def process_checkout():
         col = Database.get_collection("products")
         product = col.find_one({"_id": ObjectId(product_id)})
         
-        # 🔴 ম্যানুয়ালি অর্ডার সেভ করা (সেলার আইডি সহ)
         initial_status = "Confirmed" if payment_method == "COD" else "Pending Payment"
         final_total = float(product['price']) + delivery_charge
         
+        # 🔴 UPDATE: Added 'product_image' for easy rendering in dashboard
         new_order = {
             "user_id": str(user['id']),
             "seller_id": str(product.get('seller_id', 'Unknown')),
             "store_name": product.get('store_name', 'My Store'),
             "product_name": product.get('name', 'Item'),
+            "product_image": product.get('image', ''),
             "size": size,
             "name": final_name,
             "address": f"{final_address}, PIN: {final_pincode}",
@@ -172,20 +172,20 @@ def process_checkout():
         order_id = str(result.inserted_id)
         
     else:
-        # Cart থেকে অর্ডার (এই লজিকটিও আপডেট করা হলো)
         items = Database.get_user_cart(user['id'])
         items_total = sum(float(item['price']) for item in items)
         final_total = items_total + delivery_charge
         initial_status = "Confirmed" if payment_method == "COD" else "Pending Payment"
         
-        # প্রথম প্রোডাক্টের সেলার আইডি নিচ্ছি (মাল্টি-সেলার কার্টের জন্য পরে আলাদা লজিক লাগবে)
         first_seller_id = items[0].get('seller_id', 'Unknown') if items else 'Unknown'
         first_product_name = items[0].get('name', 'Multiple Items') if items else 'Items'
+        first_product_image = items[0].get('image', '') if items else ''
         
         new_order = {
             "user_id": str(user['id']),
             "seller_id": first_seller_id,
             "product_name": f"{first_product_name} & more",
+            "product_image": first_product_image,
             "size": size,
             "name": final_name,
             "address": f"{final_address}, PIN: {final_pincode}",
@@ -291,4 +291,4 @@ def order_success(order_id):
     order = Database.get_order_by_id(order_id)
     if not order: return "Order not found", 404
     return render_template('order_success.html', order=order)
-            
+        
