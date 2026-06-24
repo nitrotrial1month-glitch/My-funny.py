@@ -123,22 +123,23 @@
                     </span>
                 </div>
                 
-                <h4 style="margin: 5px 0; font-size: 15px; color: var(--primary);">🛍️ Product: {{ order.product_name | default('Item Name') }}</h4>
+                <h4 style="margin: 5px 0; font-size: 15px; color: var(--primary);">🛍️ Product: {{ order.get('product_name', 'Unknown Item') }}</h4>
+                <p style="margin: 0 0 8px 0; font-size: 12px; color: #555;">📏 Size: <strong>{{ order.get('size', 'Regular') }}</strong></p>
                 
                 <div style="background: #f8f9fa; padding: 10px; border-radius: 8px; margin: 8px 0; border: 1px solid #eee;">
-                    <p style="margin: 0; font-size: 12px; color: #333; font-weight: bold;">👤 Buyer: {{ order.name }}</p>
-                    <p style="margin: 3px 0; font-size: 12px; color: #555;">📞 Phone: {{ order.phone }}</p>
-                    <p style="margin: 0; font-size: 12px; color: #555;">📍 Address: {{ order.address }}</p>
+                    <p style="margin: 0; font-size: 12px; color: #333; font-weight: bold;">👤 Buyer: {{ order.get('name', 'Unknown Customer') }}</p>
+                    <p style="margin: 3px 0; font-size: 12px; color: #555;">📞 Phone: {{ order.get('phone', 'N/A') }}</p>
+                    <p style="margin: 0; font-size: 12px; color: #555;">📍 Address: {{ order.get('address', 'N/A') }}</p>
                 </div>
 
                 <div class="math-box">
                     <p style="margin: 0 0 5px 0; font-weight: bold; color: var(--dark);">💰 Payout Breakdown</p>
-                    <div class="math-row"><span>Selling Price:</span> <span>₹{{ order.total_price }}</span></div>
-                    <div class="math-row"><span>inwear Fee (10%):</span> <span style="color: var(--primary);">- ₹{{ (order.total_price|float * 0.10)|round(2) }}</span></div>
+                    <div class="math-row"><span>Selling Price:</span> <span>₹{{ order.get('total_price', 0) }}</span></div>
+                    <div class="math-row"><span>inwear Fee (10%):</span> <span style="color: var(--primary);">- ₹{{ (order.get('total_price', 0)|float * 0.10)|round(2) }}</span></div>
                     <div class="math-row"><span>Delivery Fee:</span> <span style="color: var(--primary);">- ₹40.00</span></div>
                     <div class="math-total">
                         <span>You Will Receive:</span>
-                        <span>₹{{ (order.total_price|float - 40 - (order.total_price|float * 0.10))|round(2) }}</span>
+                        <span>₹{{ (order.get('total_price', 0)|float - 40 - (order.get('total_price', 0)|float * 0.10))|round(2) }}</span>
                     </div>
                 </div>
               
@@ -173,7 +174,7 @@
         {% if products %}
             {% for p in products[:3] %}
             <div class="product-item">
-                <img src="/{{ p.image if p.image else '' }}" onerror="this.src='https://via.placeholder.com/50';">
+                <img src="{% if p.image and 'http' in p.image %}{{ p.image }}{% else %}/{{ p.image }}{% endif %}" onerror="this.src='https://via.placeholder.com/50';">
                 <div class="product-info">
                     <h4>{{ p.name }}</h4>
                     <p>Status: <span style="color: {% if p.status == 'Approved' %}var(--success){% else %}var(--warning){% endif %}; font-weight: bold;">{{ p.status | default('Pending') }}</span></p>
