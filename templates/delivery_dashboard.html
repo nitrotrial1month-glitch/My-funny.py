@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Delivery Panel | inwear</title>
+    <title>Delivery Panel | Wear By Me</title>
     <style>
         :root { 
             --primary: #1a1a2e; --success: #00a650; --blue: #2874f0; 
@@ -178,7 +178,7 @@
                     <p style="margin: 0 0 8px 0; font-weight: bold; color: var(--danger);">💸 Cash Distribution Breakdown</p>
                     <div class="math-row"><span>Total Cash Collected:</span> <strong>₹{{ order.total_price }}</strong></div>
                     <div class="math-row"><span>Your Delivery Share:</span> <span style="color: var(--success);">+ ₹40.00</span></div>
-                    <div class="math-row"><span>inwear Fee (10%):</span> <span style="color: var(--danger);">- ₹{{ (order.total_price|float * 0.10)|round(2) }}</span></div>
+                    <div class="math-row"><span>Wear By Me Fee (10%):</span> <span style="color: var(--danger);">- ₹{{ (order.total_price|float * 0.10)|round(2) }}</span></div>
                     <div style="display: flex; justify-content: space-between; font-weight: bold; border-top: 1px dashed #ccc; margin-top: 8px; padding-top: 8px;">
                         <span>Give Cash to Seller:</span>
                         <span style="color: var(--danger); font-size: 14px;">₹{{ (order.total_price|float - 40 - (order.total_price|float * 0.10))|round(2) }}</span>
