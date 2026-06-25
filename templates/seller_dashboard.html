@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Seller Dashboard | inwear</title>
+    <title>Seller Dashboard | Wear By Me</title>
     <style>
         :root { 
             --primary: #cc0000; --dark: #1a1a2e; --success: #00a650; 
@@ -135,7 +135,8 @@
                 <div class="math-box">
                     <p style="margin: 0 0 5px 0; font-weight: bold; color: var(--dark);">💰 Payout Breakdown</p>
                     <div class="math-row"><span>Selling Price:</span> <span>₹{{ order.get('total_price', 0) }}</span></div>
-                    <div class="math-row"><span>inwear Fee (10%):</span> <span style="color: var(--primary);">- ₹{{ (order.get('total_price', 0)|float * 0.10)|round(2) }}</span></div>
+                    <!-- 🔴 UPDATE: Brand Name update -->
+                    <div class="math-row"><span>Wear By Me Fee (10%):</span> <span style="color: var(--primary);">- ₹{{ (order.get('total_price', 0)|float * 0.10)|round(2) }}</span></div>
                     <div class="math-row"><span>Delivery Fee:</span> <span style="color: var(--primary);">- ₹40.00</span></div>
                     <div class="math-total">
                         <span>You Will Receive:</span>
@@ -177,6 +178,10 @@
                 <img src="{% if p.image and 'http' in p.image %}{{ p.image }}{% else %}/{{ p.image }}{% endif %}" onerror="this.src='https://via.placeholder.com/50';">
                 <div class="product-info">
                     <h4>{{ p.name }}</h4>
+                    <!-- 🔴 UPDATE: Added WBM_P_ID display -->
+                    {% if p.WBM_P_ID %}
+                        <p style="margin: 2px 0 0; font-size: 10px; color: #888;">ID: {{ p.WBM_P_ID }}</p>
+                    {% endif %}
                     <p>Status: <span style="color: {% if p.status == 'Approved' %}var(--success){% else %}var(--warning){% endif %}; font-weight: bold;">{{ p.status | default('Pending') }}</span></p>
                 </div>
                 <div class="product-price">₹{{ p.price }}</div>
