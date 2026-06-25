@@ -16,7 +16,7 @@ def get_delivery_charge(pincode, seller_id=None):
     
     pincode_str = str(pincode)
     
-    # 🔴 ডেমো লজিক: যদি পিনকোড '713' (বর্ধমান/गुসকরা এলাকা) দিয়ে শুরু হয়, তবে ফ্রি!
+    # 🔴 ডেমো লজিক: যদি পিনকোড '713' (বর্ধমান/গুসকরা এলাকা) দিয়ে শুরু হয়, তবে ফ্রি!
     if pincode_str.startswith('713'):
         return 0
     # কলকাতা বা অন্যান্য এলাকার জন্য 
@@ -47,7 +47,8 @@ def checkout_cart():
     if not cart_items: return redirect('/cart')
     
     db_users = Database.get_collection("users")
-    user_data = db_users.find_one({"discord_id": str(user['id'])}) if db_users is not None else {}
+    # 🔴 UPDATE: discord_id এর জায়গায় WBM_U_ID
+    user_data = db_users.find_one({"WBM_U_ID": str(user['id'])}) if db_users is not None else {}
     saved_addresses = user_data.get('addresses', [])
     
     default_pincode = ""
@@ -61,22 +62,35 @@ def checkout_cart():
     return render_template('checkout.html', items=cart_items, total_price=total, is_direct=False, saved_addresses=saved_addresses, user_default_pincode=default_pincode)
 
 # ৩. ডাইরেক্ট চেকআউট (Buy Now) পেজ
-@checkout_bp.route('/checkout/<product_id>')
-def checkout_direct(product_id):
+# 🔴 UPDATE: route parameters updated to handle WBM_P_ID
+@checkout_bp.route('/checkout/<WBM_P_ID>')
+def checkout_direct(WBM_P_ID):
     user = session.get('user')
     if not user: return redirect('/account')
     
     col = Database.get_collection("products")
-    product = col.find_one({"_id": ObjectId(product_id)}) if col is not None else None
+    product = None
+    
+    # 🔴 SMART LOGIC: চেক করবে এটি পুরনো MongoDB Object ID নাকি নতুন WBM_P_ID
+    if len(WBM_P_ID) == 24:
+        try:
+            product = col.find_one({"_id": ObjectId(WBM_P_ID)})
+        except:
+            pass
+    
+    if not product:
+        product = col.find_one({"WBM_P_ID": WBM_P_ID})
+        
     if not product: return "Product not found!", 404
     
-    # 🔴 URL থেকে সাইজটি নেওয়া হচ্ছে
+    # URL থেকে সাইজটি নেওয়া হচ্ছে
     selected_size = request.args.get('size', '')
     if selected_size:
         product['selected_size'] = selected_size
     
     db_users = Database.get_collection("users")
-    user_data = db_users.find_one({"discord_id": str(user['id'])}) if db_users is not None else {}
+    # 🔴 UPDATE: discord_id এর জায়গায় WBM_U_ID
+    user_data = db_users.find_one({"WBM_U_ID": str(user['id'])}) if db_users is not None else {}
     saved_addresses = user_data.get('addresses', [])
     
     default_pincode = ""
@@ -87,7 +101,7 @@ def checkout_direct(product_id):
             
     total = float(product['price'])
     
-    return render_template('checkout.html', items=[product], total_price=total, is_direct=True, direct_product_id=str(product_id), saved_addresses=saved_addresses, user_default_pincode=default_pincode)
+    return render_template('checkout.html', items=[product], total_price=total, is_direct=True, direct_product_id=str(WBM_P_ID), saved_addresses=saved_addresses, user_default_pincode=default_pincode)
 
 # ৪. অর্ডার প্রসেস করা (অর্ডার সাবমিট বাটনে ক্লিক করলে)
 @checkout_bp.route('/process_checkout', methods=['POST'])
@@ -99,11 +113,12 @@ def process_checkout():
     is_direct = request.form.get('is_direct') == 'True'
     address_selection = request.form.get('address_selection')
     
-    # 🔴 UPDATE: ফর্ম অথবা ইউআরএল কুয়েরি উভয় জায়গা থেকেই সাইজ খোঁজার সেফ লজিক
+    # ফর্ম অথবা ইউআরএল কুয়েরি উভয় জায়গা থেকেই সাইজ খোঁজার সেফ লজিক
     size = request.form.get('size') or request.args.get('size') or 'Regular'
     
     db_users = Database.get_collection("users")
-    user_data = db_users.find_one({"discord_id": str(user['id'])}) if db_users is not None else {}
+    # 🔴 UPDATE: discord_id এর জায়গায় WBM_U_ID
+    user_data = db_users.find_one({"WBM_U_ID": str(user['id'])}) if db_users is not None else {}
     saved_addresses = user_data.get('addresses', [])
     
     final_name, final_phone, final_address, final_pincode = "", "", "", ""
@@ -127,7 +142,7 @@ def process_checkout():
         }
         saved_addresses.append(new_address_obj)
         if db_users is not None:
-            db_users.update_one({"discord_id": str(user['id'])}, {"$set": {"addresses": saved_addresses}})
+            db_users.update_one({"WBM_U_ID": str(user['id'])}, {"$set": {"addresses": saved_addresses}})
     else:
         try:
             sel_idx = int(address_selection)
@@ -143,14 +158,23 @@ def process_checkout():
     col_orders = Database.get_collection("orders")
     
     if is_direct:
-        product_id = request.form.get('product_id')
+        # 🔴 UPDATE: Handle both old HTML name "product_id" and new potential "WBM_P_ID"
+        WBM_P_ID = request.form.get('WBM_P_ID') or request.form.get('product_id')
         col = Database.get_collection("products")
-        product = col.find_one({"_id": ObjectId(product_id)})
+        product = None
         
+        if len(str(WBM_P_ID)) == 24:
+            try:
+                product = col.find_one({"_id": ObjectId(WBM_P_ID)})
+            except:
+                pass
+                
+        if not product:
+            product = col.find_one({"WBM_P_ID": WBM_P_ID})
+            
         initial_status = "Confirmed" if payment_method == "COD" else "Pending Payment"
         final_total = float(product['price']) + delivery_charge
         
-        # 🔴 UPDATE: Added 'product_image' for easy rendering in dashboard
         new_order = {
             "user_id": str(user['id']),
             "seller_id": str(product.get('seller_id', 'Unknown')),
@@ -217,7 +241,8 @@ def saved_addresses():
     if not user: return redirect('/account')
     
     db_users = Database.get_collection("users")
-    user_data = db_users.find_one({"discord_id": str(user['id'])}) if db_users is not None else {}
+    # 🔴 UPDATE: discord_id এর জায়গায় WBM_U_ID
+    user_data = db_users.find_one({"WBM_U_ID": str(user['id'])}) if db_users is not None else {}
     addresses = user_data.get('addresses', [])
     
     if request.method == 'POST':
@@ -242,7 +267,7 @@ def saved_addresses():
             }
             addresses.append(new_add)
             if db_users is not None:
-                db_users.update_one({"discord_id": str(user['id'])}, {"$set": {"addresses": addresses}})
+                db_users.update_one({"WBM_U_ID": str(user['id'])}, {"$set": {"addresses": addresses}})
         return redirect('/saved_addresses')
         
     return render_template('saved_addresses.html', addresses=addresses)
@@ -254,7 +279,8 @@ def set_default_address(index):
     if not user: return redirect('/account')
     
     db_users = Database.get_collection("users")
-    user_data = db_users.find_one({"discord_id": str(user['id'])}) if db_users is not None else {}
+    # 🔴 UPDATE: discord_id এর জায়গায় WBM_U_ID
+    user_data = db_users.find_one({"WBM_U_ID": str(user['id'])}) if db_users is not None else {}
     addresses = user_data.get('addresses', [])
     
     if 0 <= index < len(addresses):
@@ -262,7 +288,7 @@ def set_default_address(index):
             add['is_default'] = (i == index)
             
         if db_users is not None:
-            db_users.update_one({"discord_id": str(user['id'])}, {"$set": {"addresses": addresses}})
+            db_users.update_one({"WBM_U_ID": str(user['id'])}, {"$set": {"addresses": addresses}})
             
     return redirect('/saved_addresses')
 
@@ -279,7 +305,7 @@ def pay_online(order_id):
     fampay_upi_id = "9046348427@fam" 
     return render_template('payment.html', order=order, upi_id=fampay_upi_id)
 
-# ৮. পেমেন্ট কনফার্মেশন
+# ۸. পেমেন্ট কনফার্মেশন
 @checkout_bp.route('/confirm_payment/<order_id>', methods=['POST'])
 def confirm_payment(order_id):
     Database.update_order_status(order_id, "Confirmed")
