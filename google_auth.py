@@ -1,6 +1,6 @@
 import os
 import random
-from flask import Blueprint, redirect, url_for, session, request
+from flask import Blueprint, redirect, request, session
 import requests
 from database import Database
 
@@ -64,31 +64,33 @@ def google_callback():
                 db_user = col.find_one({"google_id": google_id})
 
             if not db_user:
-                inwear_id = f"INW-{random.randint(100000, 999999)}"
+                # 🔴 NEW: Generate WBM_U_ID logic
+                new_wbm_id = f"{random.randint(10000, 99999)}WBM{random.randint(100, 999)}"
                 initial_role = "owner" if email == "kstomh05@gmail.com" else "user"
                 db_user = {
                     "google_id": google_id, 
                     "username": username,
                     "email": email,
-                    "inwear_id": inwear_id,
+                    "WBM_U_ID": new_wbm_id, # Updated key
                     "role": initial_role,
                     "avatar": avatar,
                     "is_google": True
                 }
                 col.insert_one(db_user)
             else:
-                if 'inwear_id' not in db_user:
-                    inwear_id = f"INW-{random.randint(100000, 999999)}"
-                    col.update_one({"_id": db_user["_id"]}, {"$set": {"inwear_id": inwear_id, "google_id": google_id}})
-                    db_user['inwear_id'] = inwear_id
+                # 🔴 UPDATE: পুরানো ইনউইয়ার আইডি থাকলে সেটাকে WBM_U_ID তে রূপান্তর বা নতুন করে সেট করা
+                if 'WBM_U_ID' not in db_user:
+                    new_wbm_id = f"{random.randint(10000, 99999)}WBM{random.randint(100, 999)}"
+                    col.update_one({"_id": db_user["_id"]}, {"$set": {"WBM_U_ID": new_wbm_id, "google_id": google_id}})
+                    db_user['WBM_U_ID'] = new_wbm_id
                     
                 if email == "kstomh05@gmail.com" and db_user.get("role") != "owner":
                     col.update_one({"_id": db_user["_id"]}, {"$set": {"role": "owner"}})
                     db_user["role"] = "owner"
 
-        # 🔴 UPDATE: সেশনে এখন থেকে সবসময় `inwear_id` সেভ হবে
+        # 🔴 UPDATE: সেশনে WBM_U_ID সেভ করা হলো
         session['user'] = {
-            'id': db_user.get('inwear_id'),
+            'id': db_user.get('WBM_U_ID'),
             'username': username,
             'email': email,
             'avatar': avatar,
