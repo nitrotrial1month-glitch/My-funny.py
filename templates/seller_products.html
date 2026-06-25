@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- 🔴 UPDATE: Title changed to Wear By Me -->
     <title>My Products | Wear By Me</title>
     
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -27,7 +26,7 @@
         .product-details { flex: 1; margin-left: 12px; }
         .product-details h4 { margin: 0 0 2px 0; font-size: 14px; color: var(--dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
         
-        /* 🔴 NEW: Custom Product ID Style */
+        /* Custom Product ID Style */
         .product-pid { font-size: 10px; color: #888; margin: 0 0 4px 0; font-weight: bold; letter-spacing: 0.5px;}
         
         .product-price-row { font-size: 13px; font-weight: bold; color: var(--primary); margin-bottom: 4px; }
@@ -69,9 +68,9 @@
                 
                 <div class="product-details">
                     <h4>{{ p.name }}</h4>
-                    <!-- 🔴 UPDATE: Display Custom Wear By Me Product ID (WBM-P-XXX) -->
-                    {% if p.wbm_pid %}
-                        <p class="product-pid">ID: {{ p.wbm_pid }}</p>
+                    <!-- 🔴 UPDATE: Changed wbm_pid to WBM_P_ID -->
+                    {% if p.WBM_P_ID %}
+                        <p class="product-pid">ID: {{ p.WBM_P_ID }}</p>
                     {% endif %}
                     
                     <div class="product-price-row">
@@ -89,10 +88,11 @@
                 </div>
                 
                 <div class="action-area">
-                    <a href="/seller/edit-product/{{ p._id | string }}" class="btn-action btn-edit">✏️ Edit</a>
+                    <!-- 🔴 UPDATE: Action links use WBM_P_ID -->
+                    <a href="/seller/edit-product/{% if p.WBM_P_ID %}{{ p.WBM_P_ID }}{% else %}{{ p._id | string }}{% endif %}" class="btn-action btn-edit">✏️ Edit</a>
                     
-                    <form action="/seller/delete-product/{{ p._id | string }}" method="POST" id="delete-form-{{ p._id | string }}" style="margin: 0;">
-                        <button type="button" class="btn-action btn-delete" onclick="confirmDelete('{{ p._id | string }}')">🗑️ Delete</button>
+                    <form action="/seller/delete-product/{% if p.WBM_P_ID %}{{ p.WBM_P_ID }}{% else %}{{ p._id | string }}{% endif %}" method="POST" id="delete-form-{% if p.WBM_P_ID %}{{ p.WBM_P_ID }}{% else %}{{ p._id | string }}{% endif %}" style="margin: 0;">
+                        <button type="button" class="btn-action btn-delete" onclick="confirmDelete('{% if p.WBM_P_ID %}{{ p.WBM_P_ID }}{% else %}{{ p._id | string }}{% endif %}')">🗑️ Delete</button>
                     </form>
                 </div>
             </div>
