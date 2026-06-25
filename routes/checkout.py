@@ -1,35 +1,58 @@
 from flask import Blueprint, render_template, redirect, session, request, jsonify
 from bson import ObjectId
 from database import Database
-import uuid # ইউনিক অ্যাড্রেস আইডি বানানোর জন্য
-from datetime import datetime, timedelta # তারিখ হিসাবের জন্য
+import uuid
+from datetime import datetime
+import random
+import math
+import pgeocode
 
 # ১. Blueprint তৈরি করা হলো
 checkout_bp = Blueprint('checkout', __name__)
 
 # ==========================================================
-# 🚚 SMART DELIVERY CALCULATION LOGIC
+# 🚚 DYNAMIC DISTANCE-BASED DELIVERY CALCULATION
 # ==========================================================
-def get_delivery_charge(pincode, seller_id=None):
-    if not pincode or len(str(pincode)) != 6:
-        return 50 # ভুল পিনকোড হলে ডিফল্ট ৫০ টাকা
+def get_delivery_charge(user_pincode, seller_pincode):
+    # যদি কাস্টমারের পিনকোড না থাকে বা ভুল থাকে
+    if not user_pincode or len(str(user_pincode)) != 6:
+        return 50 
     
-    pincode_str = str(pincode)
-    
-    # 🔴 ডেমো লজিক: যদি পিনকোড '713' (বর্ধমান/গুসকরা এলাকা) দিয়ে শুরু হয়, তবে ফ্রি!
-    if pincode_str.startswith('713'):
-        return 0
-    # কলকাতা বা অন্যান্য এলাকার জন্য 
-    elif pincode_str.startswith('700'):
-        return 40
-    else:
-        return 80 # দূরের জেলার জন্য
+    # ব্যাকআপ: যদি কোনো কারণে সেলারের পিনকোড না পাওয়া যায়
+    if not seller_pincode or len(str(seller_pincode)) != 6:
+        seller_pincode = "713128" 
+
+    try:
+        dist_calculator = pgeocode.GeoDistance('IN')
+        distance_km = dist_calculator.query_postal_code(str(user_pincode), str(seller_pincode))
+        
+        # যদি পিনকোড ইনভ্যালিড হয়
+        if math.isnan(distance_km):
+            return 60
+            
+        distance_km = float(distance_km)
+        
+        # 🔴 সেলার এবং কাস্টমারের দূরত্বের ভিত্তিতে চার্জ
+        if distance_km <= 15:
+            return 0    # ১৫ কিলোমিটারের মধ্যে একদম ফ্রি ডেলিভারি!
+        elif distance_km <= 100:
+            return 40   # ১০০ কিলোমিটারের মধ্যে ৪০ টাকা 
+        elif distance_km <= 500:
+            return 70   # ৫০০ কিলোমিটারের মধ্যে ৭০ টাকা
+        else:
+            return 100  # তার চেয়ে বেশি দূরে হলে ১০০ টাকা
+            
+    except Exception as e:
+        print("Delivery Calc Error:", e)
+        return 50
 
 @checkout_bp.route('/calculate_delivery', methods=['POST'])
 def calculate_delivery():
     data = request.get_json()
     pincode = data.get('pincode', '')
-    charge = get_delivery_charge(pincode)
+    seller_pincode = data.get('seller_pincode', '713128') # HTML থেকে আসবে
+    
+    charge = get_delivery_charge(pincode, seller_pincode)
     return jsonify({"charge": charge})
 
 
@@ -47,7 +70,6 @@ def checkout_cart():
     if not cart_items: return redirect('/cart')
     
     db_users = Database.get_collection("users")
-    # 🔴 UPDATE: discord_id এর জায়গায় WBM_U_ID
     user_data = db_users.find_one({"WBM_U_ID": str(user['id'])}) if db_users is not None else {}
     saved_addresses = user_data.get('addresses', [])
     
@@ -57,12 +79,20 @@ def checkout_cart():
             default_pincode = add.get('pincode', '')
             break
             
+    # কার্টের প্রতিটি আইটেমের জন্য সেলারের আসল পিনকোড বের করা হচ্ছে
+    for item in cart_items:
+        seller_id = str(item.get('seller_id', ''))
+        seller_info = db_users.find_one({"WBM_U_ID": seller_id}) if seller_id else None
+        if seller_info and seller_info.get('pincode'):
+            item['seller_pincode'] = seller_info.get('pincode')
+        else:
+            item['seller_pincode'] = "713128" # ব্যাকআপ
+            
     total = sum(float(item['price']) for item in cart_items)
     
     return render_template('checkout.html', items=cart_items, total_price=total, is_direct=False, saved_addresses=saved_addresses, user_default_pincode=default_pincode)
 
 # ৩. ডাইরেক্ট চেকআউট (Buy Now) পেজ
-# 🔴 UPDATE: route parameters updated to handle WBM_P_ID
 @checkout_bp.route('/checkout/<WBM_P_ID>')
 def checkout_direct(WBM_P_ID):
     user = session.get('user')
@@ -71,7 +101,6 @@ def checkout_direct(WBM_P_ID):
     col = Database.get_collection("products")
     product = None
     
-    # 🔴 SMART LOGIC: চেক করবে এটি পুরনো MongoDB Object ID নাকি নতুন WBM_P_ID
     if len(WBM_P_ID) == 24:
         try:
             product = col.find_one({"_id": ObjectId(WBM_P_ID)})
@@ -83,13 +112,11 @@ def checkout_direct(WBM_P_ID):
         
     if not product: return "Product not found!", 404
     
-    # URL থেকে সাইজটি নেওয়া হচ্ছে
     selected_size = request.args.get('size', '')
     if selected_size:
         product['selected_size'] = selected_size
     
     db_users = Database.get_collection("users")
-    # 🔴 UPDATE: discord_id এর জায়গায় WBM_U_ID
     user_data = db_users.find_one({"WBM_U_ID": str(user['id'])}) if db_users is not None else {}
     saved_addresses = user_data.get('addresses', [])
     
@@ -98,6 +125,14 @@ def checkout_direct(WBM_P_ID):
         if add.get('is_default'):
             default_pincode = add.get('pincode', '')
             break
+            
+    # ডাটাবেস থেকে এই নির্দিষ্ট সেলারের পিনকোড খোঁজা হচ্ছে
+    seller_id = str(product.get('seller_id', ''))
+    seller_info = db_users.find_one({"WBM_U_ID": seller_id}) if seller_id else None
+    if seller_info and seller_info.get('pincode'):
+        product['seller_pincode'] = seller_info.get('pincode')
+    else:
+        product['seller_pincode'] = "713128" # ব্যাকআপ
             
     total = float(product['price'])
     
@@ -112,12 +147,9 @@ def process_checkout():
     payment_method = request.form.get('payment_method')
     is_direct = request.form.get('is_direct') == 'True'
     address_selection = request.form.get('address_selection')
-    
-    # ফর্ম অথবা ইউআরএল কুয়েরি উভয় জায়গা থেকেই সাইজ খোঁজার সেফ লজিক
     size = request.form.get('size') or request.args.get('size') or 'Regular'
     
     db_users = Database.get_collection("users")
-    # 🔴 UPDATE: discord_id এর জায়গায় WBM_U_ID
     user_data = db_users.find_one({"WBM_U_ID": str(user['id'])}) if db_users is not None else {}
     saved_addresses = user_data.get('addresses', [])
     
@@ -154,11 +186,12 @@ def process_checkout():
         except:
             return "Invalid Address Selection", 400
 
-    delivery_charge = get_delivery_charge(final_pincode)
     col_orders = Database.get_collection("orders")
     
+    # 🔴 প্রফেশনাল অর্ডার আইডি (WBM-YYMMDD-XXXX)
+    wbm_order_id = f"WBM-{datetime.now().strftime('%y%m%d')}-{random.randint(1000, 9999)}"
+    
     if is_direct:
-        # 🔴 UPDATE: Handle both old HTML name "product_id" and new potential "WBM_P_ID"
         WBM_P_ID = request.form.get('WBM_P_ID') or request.form.get('product_id')
         col = Database.get_collection("products")
         product = None
@@ -166,19 +199,26 @@ def process_checkout():
         if len(str(WBM_P_ID)) == 24:
             try:
                 product = col.find_one({"_id": ObjectId(WBM_P_ID)})
-            except:
-                pass
+            except: pass
                 
         if not product:
             product = col.find_one({"WBM_P_ID": WBM_P_ID})
+            
+        # সেলারের পিনকোড বের করে ডেলিভারি হিসাব
+        seller_id = str(product.get('seller_id', ''))
+        seller_info = db_users.find_one({"WBM_U_ID": seller_id}) if seller_id else None
+        seller_pincode = seller_info.get('pincode', '713128') if seller_info else '713128'
+        
+        delivery_charge = get_delivery_charge(final_pincode, seller_pincode)
             
         initial_status = "Confirmed" if payment_method == "COD" else "Pending Payment"
         final_total = float(product['price']) + delivery_charge
         
         new_order = {
+            "WBM_O_ID": wbm_order_id,
             "user_id": str(user['id']),
-            "seller_id": str(product.get('seller_id', 'Unknown')),
-            "store_name": product.get('store_name', 'My Store'),
+            "seller_id": seller_id,
+            "store_name": product.get('store_name', 'Wear By Me'),
             "product_name": product.get('name', 'Item'),
             "product_image": product.get('image', ''),
             "size": size,
@@ -192,20 +232,27 @@ def process_checkout():
             "items": [product]
         }
         
-        result = col_orders.insert_one(new_order)
-        order_id = str(result.inserted_id)
+        col_orders.insert_one(new_order)
         
     else:
         items = Database.get_user_cart(user['id'])
+        
+        # কার্টের প্রথম প্রোডাক্টের সেলার পিনকোড দিয়ে ডেলিভারি হিসাব
+        first_seller_id = str(items[0].get('seller_id', '')) if items else ''
+        first_seller_info = db_users.find_one({"WBM_U_ID": first_seller_id}) if first_seller_id else None
+        first_seller_pincode = first_seller_info.get('pincode', '713128') if first_seller_info else '713128'
+        
+        delivery_charge = get_delivery_charge(final_pincode, first_seller_pincode)
+        
         items_total = sum(float(item['price']) for item in items)
         final_total = items_total + delivery_charge
         initial_status = "Confirmed" if payment_method == "COD" else "Pending Payment"
         
-        first_seller_id = items[0].get('seller_id', 'Unknown') if items else 'Unknown'
         first_product_name = items[0].get('name', 'Multiple Items') if items else 'Items'
         first_product_image = items[0].get('image', '') if items else ''
         
         new_order = {
+            "WBM_O_ID": wbm_order_id,
             "user_id": str(user['id']),
             "seller_id": first_seller_id,
             "product_name": f"{first_product_name} & more",
@@ -220,14 +267,15 @@ def process_checkout():
             "date": datetime.now().strftime("%Y-%m-%d %I:%M %p"),
             "items": items
         }
-        result = col_orders.insert_one(new_order)
-        order_id = str(result.inserted_id)
-        Database.clear_user_cart(user['id']) # কার্ট ক্লিয়ার
         
+        col_orders.insert_one(new_order)
+        Database.clear_user_cart(user['id'])
+        
+    # 🔴 리ডাইরেক্টে WBM_O_ID ব্যবহার করা হচ্ছে
     if payment_method == "Online":
-        return redirect(f'/pay/{order_id}')
+        return redirect(f'/pay/{wbm_order_id}')
     else:
-        return redirect(f'/order_success/{order_id}')
+        return redirect(f'/order_success/{wbm_order_id}')
 
 
 # ==========================================================
@@ -241,7 +289,6 @@ def saved_addresses():
     if not user: return redirect('/account')
     
     db_users = Database.get_collection("users")
-    # 🔴 UPDATE: discord_id এর জায়গায় WBM_U_ID
     user_data = db_users.find_one({"WBM_U_ID": str(user['id'])}) if db_users is not None else {}
     addresses = user_data.get('addresses', [])
     
@@ -279,7 +326,6 @@ def set_default_address(index):
     if not user: return redirect('/account')
     
     db_users = Database.get_collection("users")
-    # 🔴 UPDATE: discord_id এর জায়গায় WBM_U_ID
     user_data = db_users.find_one({"WBM_U_ID": str(user['id'])}) if db_users is not None else {}
     addresses = user_data.get('addresses', [])
     
@@ -294,27 +340,30 @@ def set_default_address(index):
 
 
 # ==========================================================
-# 💳 পেমেন্ট রাউটস
+# 💳 পেমেন্ট রাউটস (WBM_O_ID ব্যবহার করে আপডেট করা হয়েছে)
 # ==========================================================
 
 # ৭. অনলাইন পেমেন্ট পেজ
-@checkout_bp.route('/pay/<order_id>')
-def pay_online(order_id):
-    order = Database.get_order_by_id(order_id)
+@checkout_bp.route('/pay/<wbm_order_id>')
+def pay_online(wbm_order_id):
+    col_orders = Database.get_collection("orders")
+    order = col_orders.find_one({"WBM_O_ID": wbm_order_id})
     if not order: return "Order not found", 404
     fampay_upi_id = "9046348427@fam" 
     return render_template('payment.html', order=order, upi_id=fampay_upi_id)
 
 # ۸. পেমেন্ট কনফার্মেশন
-@checkout_bp.route('/confirm_payment/<order_id>', methods=['POST'])
-def confirm_payment(order_id):
-    Database.update_order_status(order_id, "Confirmed")
-    return redirect(f'/order_success/{order_id}')
+@checkout_bp.route('/confirm_payment/<wbm_order_id>', methods=['POST'])
+def confirm_payment(wbm_order_id):
+    col_orders = Database.get_collection("orders")
+    col_orders.update_one({"WBM_O_ID": wbm_order_id}, {"$set": {"status": "Confirmed"}})
+    return redirect(f'/order_success/{wbm_order_id}')
 
 # ৯. অর্ডার সাকসেস পেজ
-@checkout_bp.route('/order_success/<order_id>')
-def order_success(order_id):
-    order = Database.get_order_by_id(order_id)
+@checkout_bp.route('/order_success/<wbm_order_id>')
+def order_success(wbm_order_id):
+    col_orders = Database.get_collection("orders")
+    order = col_orders.find_one({"WBM_O_ID": wbm_order_id})
     if not order: return "Order not found", 404
-    return render_template('order_success.html', order=order)
-        
+    return render_template('order_success.html', order=order, order_id=wbm_order_id)
+    
