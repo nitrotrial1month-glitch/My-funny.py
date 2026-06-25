@@ -9,7 +9,6 @@
         :root { --primary: #cc0000; --bg: #f1f2f4; --surface: #ffffff; --text: #212121; --muted: #878787; --border: #e0e0e0; }
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 0; padding-bottom: 80px; }
         
-        /* Header & Stepper */
         .header { background: var(--surface); padding: 15px; display: flex; align-items: center; gap: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
         .back-btn { font-size: 20px; text-decoration: none; color: var(--text); font-weight: bold; }
         .stepper { display: flex; justify-content: space-between; padding: 15px 20px; background: var(--surface); border-bottom: 1px solid var(--border); font-size: 12px; font-weight: bold; color: var(--muted); }
@@ -20,14 +19,11 @@
         .step:not(:last-child)::after { content: ''; position: absolute; top: 12px; left: 60%; width: 80%; height: 2px; background: var(--border); z-index: 1; }
         .step.active:not(:last-child)::after { background: var(--primary); }
 
-        /* Sections */
         .section { display: none; padding: 15px; animation: fadeIn 0.3s; }
         .section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .card { background: var(--surface); border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        
-        /* Address Section Styles */
         .address-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .card-title { font-size: 16px; font-weight: bold; margin: 0;}
         .change-btn { background: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; }
@@ -41,20 +37,17 @@
         .form-control { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 10px; box-sizing: border-box; font-family: inherit; outline: none; }
         .form-control:focus { border-color: var(--primary); }
 
-        /* Product & Billing */
         .product-row { display: flex; gap: 10px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0; }
         .product-img { width: 60px; height: 80px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); }
         .bill-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; color: #555; }
         .bill-total { display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; border-top: 1px dashed #ccc; padding-top: 10px; margin-top: 5px; color: var(--text); }
         
-        /* Payments Inline Styles */
         .payment-option { border: 1px solid var(--border); border-radius: 6px; margin-bottom: 10px; overflow: hidden; transition: 0.3s; }
         .payment-header { padding: 15px; display: flex; align-items: center; gap: 10px; font-weight: bold; font-size: 14px; background: var(--surface); cursor: pointer; }
         .payment-body { padding: 15px; background: #fcfcfc; border-top: 1px solid var(--border); display: none; font-size: 13px; color: var(--muted); }
         .payment-option.active .payment-body { display: block; }
         .payment-option.active { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
         
-        /* UPI Apps Buttons */
         .upi-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 12px; border-radius: 6px; margin-bottom: 10px; font-weight: bold; text-decoration: none; font-size: 14px; border: 1px solid var(--border); background: white; color: var(--text); }
         .upi-gpay { border-color: #ea4335; color: #ea4335; }
         .upi-phonepe { border-color: #5f259f; color: #5f259f; }
@@ -63,12 +56,18 @@
         .utr-box { background: #fff8e1; border: 1px dashed #ffc107; padding: 10px; border-radius: 6px; margin-top: 15px; text-align: center; }
         .utr-input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; text-align: center; letter-spacing: 2px; font-weight: bold; margin-top: 10px; box-sizing: border-box;}
 
-        /* Bottom Bar */
         .bottom-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--surface); padding: 10px 15px; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; z-index: 100; }
         .btn-continue { background: var(--primary); color: white; padding: 12px 30px; border-radius: 6px; font-weight: bold; border: none; font-size: 16px; cursor: pointer; }
     </style>
 </head>
 <body>
+
+    <div id="app-data" style="display: none;"
+         data-total-price="{{ total_price }}" 
+         data-seller-pincode="{% if items %}{{ items[0].seller_pincode | default('713128', true) }}{% else %}713128{% endif %}"
+         data-has-addresses="{% if saved_addresses %}true{% else %}false{% endif %}"
+         data-default-pin="{% if user_default_pincode %}{{ user_default_pincode }}{% elif saved_addresses %}{{ saved_addresses[0].pincode | default('', true) }}{% else %}{% endif %}">
+    </div>
 
     <form action="/process_checkout" method="POST" id="checkoutForm">
         <input type="hidden" name="is_direct" value="{{ is_direct }}">
@@ -100,9 +99,9 @@
                             <button type="button" class="change-btn" onclick="showAddressList()">Change</button>
                         </div>
                         <div id="selected-address-display" style="font-size: 14px; color: #333; line-height: 1.5; padding: 12px; background: #fff5f5; border-radius: 6px; border: 1px solid #ffcccc;">
-                            <strong>{{ default_add.name }}</strong><br>
-                            {{ default_add.address }}<br>
-                            <div style="margin-top: 5px; font-size: 13px; font-weight: bold; color: #555;">PIN: {{ default_add.pincode }} | Ph: {{ default_add.phone }}</div>
+                            <strong>{{ default_add.name | default('No Name Added', true) }}</strong><br>
+                            {{ default_add.address | default('Address details missing. Please add a new one.', true) }}<br>
+                            <div style="margin-top: 5px; font-size: 13px; font-weight: bold; color: #555;">PIN: {{ default_add.pincode | default('N/A', true) }} | Ph: {{ default_add.phone | default('N/A', true) }}</div>
                         </div>
                     </div>
 
@@ -110,16 +109,16 @@
                         <h3 class="card-title" style="margin-bottom: 15px;">Select Delivery Address</h3>
                         {% for add in saved_addresses %}
                         <label class="address-box {% if add.is_default %}selected{% endif %}" 
-                               data-pincode="{{ add.pincode }}" 
-                               data-name="{{ add.name }}" 
-                               data-address="{{ add.address | replace('\n', ' ') | replace('\r', '') }}" 
-                               data-phone="{{ add.phone }}" 
+                               data-pincode="{{ add.pincode | default('', true) }}" 
+                               data-name="{{ add.name | default('Saved Address', true) }}" 
+                               data-address="{{ add.address | default('', true) | replace('\n', ' ') | replace('\r', '') }}" 
+                               data-phone="{{ add.phone | default('', true) }}" 
                                onclick="selectSavedAddress(this)">
                             <input type="radio" name="address_selection" value="{{ loop.index0 }}" style="accent-color: #cc0000;" {% if add.is_default %}checked{% endif %}>
                             <div>
-                                <div style="font-weight:bold;">{{ add.name }}</div>
-                                <div style="font-size:13px; margin: 4px 0; color: #555;">{{ add.address }}</div>
-                                <div style="font-size:12px; font-weight:bold; color: #333;">PIN: {{ add.pincode }} | Ph: {{ add.phone }}</div>
+                                <div style="font-weight:bold;">{{ add.name | default('Saved Address', true) }}</div>
+                                <div style="font-size:13px; margin: 4px 0; color: #555;">{{ add.address | default('No details', true) }}</div>
+                                <div style="font-size:12px; font-weight:bold; color: #333;">PIN: {{ add.pincode | default('N/A', true) }} | Ph: {{ add.phone | default('N/A', true) }}</div>
                             </div>
                         </label>
                         {% endfor %}
@@ -228,24 +227,25 @@
     </form>
 
     <script>
-        const basePrice = parseFloat("{{ total_price }}");
+        const appData = document.getElementById('app-data');
+        const basePrice = parseFloat(appData.getAttribute('data-total-price')) || 0;
+        const sellerPincode = appData.getAttribute('data-seller-pincode') || "713128";
         const upiId = "9046348427@fam"; 
-        const sellerPincode = "{% if items %}{{ items[0].seller_pincode | default('713128') }}{% else %}713128{% endif %}";
         
         let currentStep = 1;
         let deliveryCalculated = false;
         let finalAmountForUPI = basePrice;
 
-        // 🔴 পৃষ্ঠাটি লোড হওয়ার সাথে সাথে প্রথম ডেলিভারি ক্যালকুলেশন রান করবে
         document.addEventListener("DOMContentLoaded", () => {
-            const hasAddresses = {% if saved_addresses %}true{% else %}false{% endif %};
+            const hasAddresses = appData.getAttribute('data-has-addresses') === "true";
             if (hasAddresses) {
-                const defaultPin = "{% if user_default_pincode %}{{ user_default_pincode }}{% elif saved_addresses %}{{ saved_addresses[0].pincode }}{% endif %}";
-                if(defaultPin) calculateDelivery(defaultPin);
+                const defaultPin = appData.getAttribute('data-default-pin');
+                if(defaultPin && defaultPin.trim() !== "" && defaultPin !== "None") {
+                    calculateDelivery(defaultPin);
+                }
             }
         });
 
-        // --- Address UI Actions ---
         function showAddressList() {
             document.getElementById('address-compact-view').style.display = "none";
             document.getElementById('address-list-view').style.display = "block";
@@ -266,7 +266,6 @@
             deliveryCalculated = false;
         }
 
-        // --- Select Address from List ---
         function selectSavedAddress(element) {
             document.querySelectorAll('.address-box').forEach(box => box.classList.remove('selected'));
             element.classList.add('selected');
@@ -282,21 +281,11 @@
             document.getElementById('address-list-view').style.display = "none";
             document.getElementById('address-compact-view').style.display = "block";
             
-            calculateDelivery(pin);
+            if(pin && pin.trim() !== "") calculateDelivery(pin);
         }
 
-        // --- Auto Detect Location ---
         function autoDetectLocation() {
             document.getElementById('action-btn').innerText = "Locating...";
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(position => {
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
-                    
-                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        let addressStr = data.display_name || '';
-                        let pin = data.address.postcode || '';
-                        
-                        document.getElemen
+              
