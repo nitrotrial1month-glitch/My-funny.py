@@ -22,19 +22,21 @@ def delivery_required(f):
 @delivery_required
 def delivery_dashboard():
     user = session.get('user')
-    discord_id = str(user.get('id'))
+    # 🔴 UPDATE: discord_id এর জায়গায় WBM_U_ID
+    WBM_U_ID = str(user.get('id'))
     
     col_users = Database.get_collection("users")
     col_orders = Database.get_collection("orders")
     
-    current_user = col_users.find_one({"discord_id": discord_id})
+    # 🔴 UPDATE: WBM_U_ID দিয়ে ইউজারকে খোঁজা হচ্ছে
+    current_user = col_users.find_one({"WBM_U_ID": WBM_U_ID})
     
     # 📍 ডেলিভারি বয়ের নিজের এলাকা (Area বা Pincode) বের করা
     delivery_boy_area = ""
     if current_user and current_user.get("application_data"):
         delivery_boy_area = current_user["application_data"].get("area", "")
 
-    # 🟢 OPEN POOL LOGIC (FIXED)
+    # 🟢 OPEN POOL LOGIC
     # ১. কাস্টমারের "Confirmed" অর্ডার দেখাবে না, শুধু সেলারের "Ready for Pickup" দেখাবে।
     # ২. এখনও কোনো রাইডার অ্যাসাইন হয়নি এমন অর্ডার খুঁজবে।
     open_pool_query = {
@@ -46,8 +48,7 @@ def delivery_dashboard():
         ]
     }
     
-    # ৩. লোকেশন ফিল্টার (১-৬ কিমি লজিক): 
-    # ডেলিভারি বয়ের এলাকার নাম দিয়ে সেলারের অ্যাড্রেস বা এরিয়া ম্যাচ করা হচ্ছে
+    # ৩. লোকেশন ফিল্টার (১-৬ কিমি লজিক)
     if delivery_boy_area:
         open_pool_query["$or"].append({"seller_address": {"$regex": delivery_boy_area, "$options": "i"}})
         open_pool_query["$or"].append({"pickup_address": {"$regex": delivery_boy_area, "$options": "i"}})
@@ -57,7 +58,7 @@ def delivery_dashboard():
     # 📦 MY TASKS: যে অর্ডারগুলো এই ডেলিভারি বয় নিজে Grab করেছে
     my_orders = list(col_orders.find({
         "status": {"$in": ["Assigned", "Out for Delivery", "Delivered (Pending Handover)"]},
-        "delivery_partner_id": discord_id
+        "delivery_partner_id": WBM_U_ID # 🔴 UPDATE
     }).sort("_id", -1))
     
     return render_template('delivery-dashboard.html', 
@@ -72,7 +73,8 @@ def delivery_dashboard():
 @delivery_bp.route('/delivery/confirm_job/<order_id>', methods=['POST'])
 @delivery_required
 def confirm_job(order_id):
-    discord_id = str(session.get('user').get('id'))
+    # 🔴 UPDATE: discord_id এর জায়গায় WBM_U_ID
+    WBM_U_ID = str(session.get('user').get('id'))
     col_orders = Database.get_collection("orders")
     
     order = col_orders.find_one({"_id": ObjectId(order_id)})
@@ -83,7 +85,7 @@ def confirm_job(order_id):
             {"_id": ObjectId(order_id)},
             {"$set": {
                 "status": "Assigned",
-                "delivery_partner_id": discord_id
+                "delivery_partner_id": WBM_U_ID # 🔴 UPDATE
             }}
         )
         flash("✅ Task Assigned! Go to the seller shop and scan the parcel.")
@@ -133,7 +135,7 @@ def verify_otp(order_id):
         if is_online:
             col_users = Database.get_collection("users")
             col_users.update_one(
-                {"discord_id": str(session.get('user').get('id'))},
+                {"WBM_U_ID": str(session.get('user').get('id'))}, # 🔴 UPDATE
                 {"$inc": {"wallet_balance": 40.0}}
             )
             flash("OTP Verified! Order Completed and ₹40 added to your wallet. ✅")
@@ -159,7 +161,7 @@ def cash_handover(order_id):
         order_price = float(order.get('total_price', 0))
         # ক্যাশ সেলারকে দেওয়ার পর রাইডারের ওয়ালেট ও ক্যাশ ব্যালেন্স আপডেট
         col_users.update_one(
-            {"discord_id": str(session.get('user').get('id'))},
+            {"WBM_U_ID": str(session.get('user').get('id'))}, # 🔴 UPDATE
             {"$inc": {
                 "wallet_balance": 40.0,
                 "cash_in_hand": order_price
