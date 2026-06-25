@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Checkout | Wear By Me</title>
-    <!-- Favicon -->
     <link rel="icon" type="image/png" href="/static/1000249582.png">
     <style>
         :root { --primary: #cc0000; --bg: #f1f2f4; --surface: #ffffff; --text: #212121; --muted: #878787; --border: #e0e0e0; }
@@ -27,29 +26,42 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .card { background: var(--surface); border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .card-title { font-size: 16px; font-weight: bold; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
-
-        /* Address Options */
-        .address-box { border: 1px solid var(--border); padding: 12px; border-radius: 6px; margin-bottom: 10px; display: flex; gap: 10px; align-items: flex-start; cursor: pointer; transition: 0.2s; }
+        
+        /* Address Section Styles */
+        .address-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .card-title { font-size: 16px; font-weight: bold; margin: 0;}
+        .change-btn { background: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; }
+        
+        .address-box { border: 1px solid var(--border); padding: 12px; border-radius: 6px; margin-bottom: 10px; display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
         .address-box.selected { border-color: var(--primary); background: #fff5f5; }
-        .btn-add { background: none; border: none; color: var(--primary); font-weight: bold; cursor: pointer; margin-top: 10px; padding: 0; font-size: 14px; }
+        
+        .location-btn { width: 100%; background: #e6f6ec; color: #00a650; border: 1px solid #bbf7d0; padding: 12px; border-radius: 6px; font-weight: bold; font-size: 14px; margin-bottom: 10px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .manual-btn { width: 100%; background: transparent; color: var(--primary); border: 1px dashed var(--primary); padding: 12px; border-radius: 6px; font-weight: bold; font-size: 14px; cursor: pointer; }
         
         .form-control { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 10px; box-sizing: border-box; font-family: inherit; outline: none; }
         .form-control:focus { border-color: var(--primary); }
 
-        /* Product & Price */
+        /* Product & Billing */
         .product-row { display: flex; gap: 10px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0; }
         .product-img { width: 60px; height: 80px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); }
         .bill-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; color: #555; }
         .bill-total { display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; border-top: 1px dashed #ccc; padding-top: 10px; margin-top: 5px; color: var(--text); }
-        .free-tag { color: #00a650; font-weight: bold; }
-
-        /* Payments */
-        .payment-option { border: 1px solid var(--border); border-radius: 6px; margin-bottom: 10px; overflow: hidden; }
+        
+        /* Payments Inline Styles */
+        .payment-option { border: 1px solid var(--border); border-radius: 6px; margin-bottom: 10px; overflow: hidden; transition: 0.3s; }
         .payment-header { padding: 15px; display: flex; align-items: center; gap: 10px; font-weight: bold; font-size: 14px; background: var(--surface); cursor: pointer; }
-        .payment-body { padding: 15px; background: #f9f9f9; border-top: 1px solid var(--border); display: none; font-size: 13px; color: var(--muted); }
+        .payment-body { padding: 15px; background: #fcfcfc; border-top: 1px solid var(--border); display: none; font-size: 13px; color: var(--muted); }
         .payment-option.active .payment-body { display: block; }
-        .payment-option.active .payment-header { border-left: 4px solid var(--primary); }
+        .payment-option.active { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+        
+        /* UPI Apps Buttons */
+        .upi-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 12px; border-radius: 6px; margin-bottom: 10px; font-weight: bold; text-decoration: none; font-size: 14px; border: 1px solid var(--border); background: white; color: var(--text); }
+        .upi-gpay { border-color: #ea4335; color: #ea4335; }
+        .upi-phonepe { border-color: #5f259f; color: #5f259f; }
+        .upi-paytm { border-color: #00b9f1; color: #00b9f1; }
+        
+        .utr-box { background: #fff8e1; border: 1px dashed #ffc107; padding: 10px; border-radius: 6px; margin-top: 15px; text-align: center; }
+        .utr-input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; text-align: center; letter-spacing: 2px; font-weight: bold; margin-top: 10px; box-sizing: border-box;}
 
         /* Bottom Bar */
         .bottom-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--surface); padding: 10px 15px; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; z-index: 100; }
@@ -58,7 +70,6 @@
 </head>
 <body onload="initCheckout()">
 
-    <!-- 🔴 MAIN FORM WRAPPER (সরাসরি আগের রাউটে যাবে) -->
     <form action="/process_checkout" method="POST" id="checkoutForm">
         <input type="hidden" name="is_direct" value="{{ is_direct }}">
         {% if is_direct %}<input type="hidden" name="WBM_P_ID" value="{{ direct_product_id }}">{% endif %}
@@ -68,19 +79,26 @@
             <h3 style="margin:0;">Checkout</h3>
         </div>
 
-        <!-- Stepper Indicator -->
         <div class="stepper">
             <div class="step active" id="indicator-address"><div class="step-circle">1</div>Address</div>
             <div class="step" id="indicator-summary"><div class="step-circle">2</div>Summary</div>
             <div class="step" id="indicator-payment"><div class="step-circle">3</div>Payment</div>
         </div>
 
-        <!-- ================= STEP 1: ADDRESS ================= -->
         <div id="step-address" class="section active">
             <div class="card">
-                <div class="card-title">Delivery Address</div>
                 
-                {% if saved_addresses %}
+                <div id="address-compact-view" style="{% if not saved_addresses %}display:none;{% endif %}">
+                    <div class="address-header">
+                        <h3 class="card-title">Deliver to:</h3>
+                        <button type="button" class="change-btn" onclick="showAddressList()">Change</button>
+                    </div>
+                    <div id="selected-address-display" style="font-size: 14px; color: #333; line-height: 1.5; padding: 10px; background: #f9f9f9; border-radius: 6px; border: 1px solid #eee;">
+                        </div>
+                </div>
+
+                <div id="address-list-view" style="display:none;">
+                    <h3 class="card-title" style="margin-bottom: 15px;">Select Delivery Address</h3>
                     {% for add in saved_addresses %}
                     <label class="address-box {% if add.is_default %}selected{% endif %}" onclick="selectSavedAddress(this, '{{ add.pincode }}', '{{ add.name }}', '{{ add.address }}', '{{ add.phone }}')">
                         <input type="radio" name="address_selection" value="{{ loop.index0 }}" style="accent-color: #cc0000;" {% if add.is_default %}checked{% endif %}>
@@ -91,52 +109,42 @@
                         </div>
                     </label>
                     {% endfor %}
-                {% else %}
-                    <p style="font-size: 13px; color: #cc0000; font-weight: bold;">No saved address found. Please enter below.</p>
-                {% endif %}
+                    <button type="button" class="manual-btn" style="margin-top: 10px;" onclick="showAddOptions()">+ Add a New Address</button>
+                </div>
 
-                <button type="button" class="btn-add" onclick="showNewForm()">+ Add New Address</button>
-                
-                <!-- NEW ADDRESS FORM -->
-                <div id="newAddressForm" style="{% if saved_addresses %}display:none;{% else %}display:block;{% endif %} margin-top:15px; border-top: 1px dashed var(--border); padding-top: 15px;">
+                <div id="add-options-view" style="{% if saved_addresses %}display:none;{% else %}display:block;{% endif %} margin-top:10px;">
+                    <h3 class="card-title" style="margin-bottom: 15px;">Add Delivery Address</h3>
+                    <button type="button" class="location-btn" onclick="autoDetectLocation()">📍 Use my current location</button>
+                    <div style="text-align:center; color:#888; font-size:12px; margin-bottom:10px;">OR</div>
+                    <button type="button" class="manual-btn" onclick="showManualForm()">✍️ Add address manually</button>
+                </div>
+
+                <div id="manual-form-view" style="display:none; margin-top:15px; border-top: 1px dashed var(--border); padding-top: 15px;">
                     <input type="radio" name="address_selection" value="new" id="newAddrRadio" style="display:none;" {% if not saved_addresses %}checked{% endif %}>
-                    
                     <input type="text" id="newName" name="name" class="form-control" placeholder="Full Name">
-                    <input type="tel" id="newPhone" name="phone" class="form-control" placeholder="10-digit Phone" pattern="[0-9]{10}">
-                    <input type="text" id="newPincode" name="new_pincode" class="form-control" placeholder="6-digit Pincode" pattern="[0-9]{6}" onkeyup="if(this.value.length === 6) calculateDelivery(this.value)">
-                    <textarea id="newAddress" name="address" class="form-control" rows="3" placeholder="House No., Building Name, Area"></textarea>
-                    
+                    <input type="tel" id="newPhone" name="phone" class="form-control" placeholder="10-digit Phone Number" pattern="[0-9]{10}">
+                    <input type="text" id="newPincode" name="new_pincode" class="form-control" placeholder="6-digit Pincode" onkeyup="if(this.value.length === 6) calculateDelivery(this.value)">
+                    <textarea id="newAddress" name="address" class="form-control" rows="3" placeholder="House No., Building Name, Area, City"></textarea>
                     <div style="font-size: 11px; color: #00a650; font-weight: bold;">✓ This address will be saved securely.</div>
                 </div>
+
             </div>
         </div>
 
-        <!-- ================= STEP 2: ORDER SUMMARY ================= -->
         <div id="step-summary" class="section">
             <div class="card">
-                <div class="card-title">Delivering To <span style="font-size: 12px; color: #cc0000; cursor:pointer;" onclick="goToStep('address')">Change</span></div>
-                <div id="display-address" style="font-size: 13px; color: #555;">
-                    <!-- JS will populate this -->
-                </div>
-            </div>
-
-            <div class="card">
-                <h3 style="font-size: 14px; margin-top: 0;">Items in Order</h3>
+                <h3 style="font-size: 14px; margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px;">Order Summary</h3>
                 {% for item in items %}
                 <div class="product-row">
                     <img src="/{{ item.image }}" class="product-img" onerror="this.src='/static/1000249582.png'">
                     <div>
                         <div style="font-size:14px; font-weight: bold;">{{ item.name|truncate(35, True) }}</div>
-                        {% if item.WBM_P_ID %}
-                            <div style="font-size: 11px; color: #888;">ID: {{ item.WBM_P_ID }}</div>
-                        {% endif %}
                         <div style="font-size:14px; font-weight: bold; margin-top: 4px; color: var(--primary);">₹{{ item.price }}</div>
                     </div>
                 </div>
                 {% endfor %}
             </div>
 
-            <!-- LIVE BILLING DETAILS -->
             <div class="card" style="background: #fcfcfc;">
                 <div class="card-title">Price Details</div>
                 <div class="bill-row">
@@ -154,7 +162,6 @@
             </div>
         </div>
 
-        <!-- ================= STEP 3: PAYMENT ================= -->
         <div id="step-payment" class="section">
             <div class="card" style="background: #fff5f5; border: 1px solid #ffd5d5; display: flex; justify-content: space-between; align-items: center;">
                 <div style="font-size: 14px; font-weight: bold;">Total Amount</div>
@@ -163,23 +170,38 @@
             
             <div style="font-size: 12px; color: #878787; text-align: right; margin-bottom: 10px;">🔒 100% Secure Payments</div>
 
-            <!-- Payment Accordion -->
-            <div class="payment-option active" onclick="selectPaymentMode(this)">
+            <div class="payment-option active" id="opt-online" onclick="selectPaymentMode('Online')">
                 <div class="payment-header">
                     <input type="radio" name="payment_method" value="Online" checked style="accent-color:#cc0000;"> 📱 Online Payment (UPI / Card)
                 </div>
-                <div class="payment-body">Pay directly using GPay, PhonePe, Paytm or Debit/Credit Cards.</div>
+                <div class="payment-body">
+                    <div style="font-weight: bold; margin-bottom: 10px; color: #333;">Select Payment App:</div>
+                    
+                    <a href="#" id="gpay-link" class="upi-btn upi-gpay" onclick="openUPI('gpay')">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg" width="30"> Pay with Google Pay
+                    </a>
+                    <a href="#" id="phonepe-link" class="upi-btn upi-phonepe" onclick="openUPI('phonepe')">
+                        <img src="https://download.logo.wine/logo/PhonePe/PhonePe-Logo.wine.png" width="40" style="margin:-10px 0;"> Pay with PhonePe
+                    </a>
+                    <a href="#" id="paytm-link" class="upi-btn upi-paytm" onclick="openUPI('paytm')">
+                        Pay with Paytm
+                    </a>
+                    
+                    <div class="utr-box">
+                        <div style="font-size: 12px; color: #555;">⚠️ After paying via UPI, please enter the 12-digit UTR / Ref No. below to confirm.</div>
+                        <input type="text" name="utr_number" id="utr_input" class="utr-input" placeholder="Enter 12-digit UTR" maxlength="12" pattern="\d{12}">
+                    </div>
+                </div>
             </div>
 
-            <div class="payment-option" onclick="selectPaymentMode(this)">
+            <div class="payment-option" id="opt-cod" onclick="selectPaymentMode('COD')">
                 <div class="payment-header">
                     <input type="radio" name="payment_method" value="COD" style="accent-color:#cc0000;"> 💵 Cash on Delivery (COD)
                 </div>
-                <div class="payment-body">Pay in cash when your order is delivered.</div>
+                <div class="payment-body">Pay in cash when your order is delivered to your doorstep.</div>
             </div>
         </div>
 
-        <!-- ================= BOTTOM ACTION BAR ================= -->
         <div class="bottom-bar">
             <div>
                 <div style="font-size: 11px; color: #878787;">Total Payable</div>
@@ -192,149 +214,97 @@
 
     <script>
         const basePrice = {{ total_price }};
+        const upiId = "9046348427@fam"; // Your UPI ID
         let currentStep = 1;
         let selectedAddressData = ""; 
         let deliveryCalculated = false;
+        let finalAmountForUPI = basePrice;
 
         function initCheckout() {
-            const checkedRadio = document.querySelector('input[name="address_selection"]:checked');
-            if(checkedRadio && checkedRadio.value !== 'new') {
-                // Find parent label to extract data for Step 2 display
-                let parentLabel = checkedRadio.closest('label');
-                parentLabel.click(); 
-            } else if (document.getElementById('newPincode').value.length === 6) {
-                calculateDelivery(document.getElementById('newPincode').value);
-            } else {
-                document.getElementById('delivery-charge').innerText = "Enter Pincode";
+            const hasAddresses = {% if saved_addresses %}true{% else %}false{% endif %};
+            if (hasAddresses) {
+                const checkedRadio = document.querySelector('input[name="address_selection"]:checked');
+                if(checkedRadio && checkedRadio.value !== 'new') {
+                    // Simulating a click to extract data
+                    checkedRadio.closest('label').click();
+                }
             }
         }
 
-        // Handle visual selection of saved addresses
-        function selectSavedAddress(element, pincode, name, address, phone) {
-            document.querySelectorAll('.address-box').forEach(box => box.classList.remove('selected'));
-            element.classList.add('selected');
-            document.getElementById('newAddressForm').style.display = "none";
-            document.getElementById('newAddrRadio').checked = false;
-            element.querySelector('input').checked = true;
-            
-            selectedAddressData = `<strong>${name}</strong><br>${address}<br>Ph: ${phone}, PIN: ${pincode}`;
-            calculateDelivery(pincode);
+        // --- Address Management UI ---
+        function showAddressList() {
+            document.getElementById('address-compact-view').style.display = "none";
+            document.getElementById('address-list-view').style.display = "block";
+            document.getElementById('add-options-view').style.display = "none";
+            document.getElementById('manual-form-view').style.display = "none";
         }
 
-        // Show New Address Form
-        function showNewForm() {
-            document.querySelectorAll('.address-box').forEach(box => box.classList.remove('selected'));
-            document.getElementById('newAddressForm').style.display = "block";
+        function showAddOptions() {
+            document.getElementById('address-list-view').style.display = "none";
+            document.getElementById('add-options-view').style.display = "block";
+            document.getElementById('manual-form-view').style.display = "none";
             document.getElementById('newAddrRadio').checked = true;
-            document.getElementById('delivery-charge').innerText = "Enter Pincode";
+        }
+
+        function showManualForm() {
+            document.getElementById('add-options-view').style.display = "none";
+            document.getElementById('manual-form-view').style.display = "block";
+            document.getElementById('newAddrRadio').checked = true;
             deliveryCalculated = false;
         }
 
-        // 🔴 AJAX Call to your existing /calculate_delivery route
-        function calculateDelivery(userPincode) {
-            document.getElementById('delivery-charge').innerText = "Calculating...";
-            
-            fetch('/calculate_delivery', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ pincode: userPincode })
-            })
-            .then(res => res.json())
-            .then(data => {
-                let dCharge = data.charge;
-                let finalPrice = basePrice + dCharge;
-
-                if (dCharge === 0) {
-                    document.getElementById('delivery-charge').innerText = "FREE";
-                    document.getElementById('delivery-charge').className = "free-tag";
-                } else {
-                    document.getElementById('delivery-charge').innerText = "₹" + dCharge;
-                    document.getElementById('delivery-charge').className = "";
-                }
-
-                // Update all total fields across the 3 steps
-                document.getElementById('final-total').innerText = "₹" + finalPrice;
-                document.getElementById('payment-total').innerText = "₹" + finalPrice;
-                document.getElementById('bottom-total').innerText = "₹" + finalPrice;
-                deliveryCalculated = true;
-            })
-            .catch(err => console.error("Delivery calc error"));
-        }
-
-        // Stepper Navigation Logic
-        function goToStep(stepNumber) {
-            if (stepNumber === 'address') currentStep = 1;
-            updateUI();
-        }
-
-        function nextStep() {
-            if (currentStep === 1) {
-                // Address Validation before moving to Step 2
-                const isNewForm = document.getElementById('newAddrRadio').checked;
-                if (isNewForm) {
-                    let name = document.getElementById('newName').value;
-                    let phone = document.getElementById('newPhone').value;
-                    let pin = document.getElementById('newPincode').value;
-                    let address = document.getElementById('newAddress').value;
-                    
-                    if(!name || phone.length !== 10 || pin.length !== 6 || !address) {
-                        alert("Please fill all address details correctly.");
-                        return;
-                    }
-                    selectedAddressData = `<strong>${name}</strong><br>${address}<br>Ph: ${phone}, PIN: ${pin}`;
-                }
-                
-                if (!deliveryCalculated) {
-                    alert("Please enter a valid pincode to calculate delivery.");
-                    return;
-                }
-
-                // Populate Step 2 Address Display
-                document.getElementById('display-address').innerHTML = selectedAddressData;
-                currentStep = 2;
-            } 
-            else if (currentStep === 2) {
-                currentStep = 3;
-            }
-            else if (currentStep === 3) {
-                // Submit the entire form to /process_checkout
-                document.getElementById('action-btn').innerHTML = "Processing...";
-                document.getElementById('checkoutForm').submit();
-                return;
-            }
-            updateUI();
-        }
-
-        function updateUI() {
-            // Hide all sections
-            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
-            document.querySelectorAll('.step').forEach(st => st.classList.remove('active'));
-
-            if (currentStep === 1) {
-                document.getElementById('step-address').classList.add('active');
-                document.getElementById('indicator-address').classList.add('active');
-                document.getElementById('action-btn').innerText = "Continue";
-            } else if (currentStep === 2) {
-                document.getElementById('step-summary').classList.add('active');
-                document.getElementById('indicator-address').classList.add('active');
-                document.getElementById('indicator-summary').classList.add('active');
-                document.getElementById('action-btn').innerText = "Continue";
-            } else if (currentStep === 3) {
-                document.getElementById('step-payment').classList.add('active');
-                document.getElementById('indicator-address').classList.add('active');
-                document.getElementById('indicator-summary').classList.add('active');
-                document.getElementById('indicator-payment').classList.add('active');
-                document.getElementById('action-btn').innerText = "Place Order";
-            }
-        }
-
-        // Payment Accordion UI
-        function selectPaymentMode(element) {
-            document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('input[name="payment_method"]').forEach(radio => radio.checked = false);
-            element.classList.add('active');
+        // --- Select Saved Address ---
+        function selectSavedAddress(element, pincode, name, address, phone) {
+            document.querySelectorAll('.address-box').forEach(box => box.classList.remove('selected'));
+            element.classList.add('selected');
             element.querySelector('input').checked = true;
+            
+            selectedAddressData = `<strong>${name}</strong><br>${address}<br>PIN: ${pincode} | Ph: ${phone}`;
+            document.getElementById('selected-address-display').innerHTML = selectedAddressData;
+            
+            // Switch back to compact view
+            document.getElementById('address-list-view').style.display = "none";
+            document.getElementById('address-compact-view').style.display = "block";
+            
+            calculateDelivery(pincode);
         }
-    </script>
-</body>
-</html>
+
+        // --- Auto Detect Location API ---
+        function autoDetectLocation() {
+            document.getElementById('action-btn').innerText = "Locating...";
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    
+                    // Use Free OpenStreetMap Nominatim API
+                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        let addressStr = data.display_name || '';
+                        let pin = data.address.postcode || '';
+                        
+                        document.getElementById('newAddress').value = addressStr;
+                        document.getElementById('newPincode').value = pin;
+                        
+                        showManualForm(); // Open form so user can edit/add name
+                        document.getElementById('action-btn').innerText = "Continue";
+                        if(pin) calculateDelivery(pin);
+                    }).catch(err => {
+                        alert("Could not fetch address details.");
+                        showManualForm();
+                        document.getElementById('action-btn').innerText = "Continue";
+                    });
+                }, err => {
+                    alert("Please allow location access or add manually.");
+                    showManualForm();
+                    document.getElementById('action-btn').innerText = "Continue";
+                });
+            } else {
+                alert("Geolocation not supported.");
+                showManualForm();
+            }
+        }
+
+        // --- Delivery Calculation ---
+        const sellerPincode = "{{ items[0].seller_pi
