@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>My Cart | inwear</title>
+    <title>My Cart | Wear By Me</title>
     <style>
         :root {
             --primary-red: #cc0000;
@@ -125,30 +125,30 @@
     <div class="container">
         {% if cart_items %}
 
-        <!-- cart.html এর ভেতরের লুপটি এভাবে আপডেট করুন -->
-{% for item in cart_items %}
-<div class="cart-card">
-    <img src="/{{ item.image }}" class="item-img" alt="{{ item.name }}" onerror="this.src='https://via.placeholder.com/80x100';">
-    <div class="item-info">
-        <div>
-            <h3 class="item-name">{{ item.name }}</h3>
-            <!-- 🔴 NEW: প্রোডাক্ট আইডি দেখানো হচ্ছে -->
-            {% if item.wbm_pid %}
-                <p style="font-size: 11px; color: #888; margin: 2px 0;">ID: <strong>{{ item.wbm_pid }}</strong></p>
-            {% endif %}
-            <div class="price-wrap">
-                <span class="item-price">₹{{ item.price }}</span>
+        <!-- 🔴 UPDATE: WBM_P_ID দেখানো হচ্ছে -->
+        {% for item in cart_items %}
+        <div class="cart-card">
+            <img src="/{{ item.image }}" class="item-img" alt="{{ item.name }}" onerror="this.src='https://via.placeholder.com/80x100';">
+            <div class="item-info">
+                <div>
+                    <h3 class="item-name">{{ item.name }}</h3>
+                    {% if item.WBM_P_ID %}
+                        <p style="font-size: 11px; color: #888; margin: 2px 0;">ID: <strong>{{ item.WBM_P_ID }}</strong></p>
+                    {% endif %}
+                    <div class="price-wrap">
+                        <span class="item-price">₹{{ item.price }}</span>
+                    </div>
+                </div>
+                
+                <div class="action-row">
+                    <!-- 🔴 UPDATE: ObjectId বা WBM_P_ID পাস করা হবে -->
+                    <a href="/remove_from_cart/{% if item.WBM_P_ID %}{{ item.WBM_P_ID }}{% else %}{{ item._id | string }}{% endif %}" class="btn-remove">
+                        🗑️ Remove Item
+                    </a>
+                </div>
             </div>
         </div>
-        
-        <div class="action-row">
-            <a href="/remove_from_cart/{{ item._id | string }}" class="btn-remove">
-                🗑️ Remove Item
-            </a>
-        </div>
-    </div>
-</div>
-{% endfor %}
+        {% endfor %}
 
             <div class="bill-card">
                 <h3 class="bill-title">Price Details ({{ cart_items|length }} Items)</h3>
