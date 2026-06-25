@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- হোমপেজ -->
+  <url>
+    <loc>https://my-funny-py.onrender.com/</loc>
+    <lastmod>2026-06-25</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  
+  <!-- অ্যাকাউন্ট পেজ -->
+  <url>
+    <loc>https://my-funny-py.onrender.com/account</loc>
+    <lastmod>2026-06-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- ক্যাটাগরি পেজগুলো -->
+  <url>
+    <loc>https://my-funny-py.onrender.com/category/men</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://my-funny-py.onrender.com/category/women</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+</urlset>
+
