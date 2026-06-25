@@ -85,18 +85,22 @@
             <div class="step" id="indicator-payment"><div class="step-circle">3</div>Payment</div>
         </div>
 
+        <!-- ================= STEP 1: ADDRESS ================= -->
         <div id="step-address" class="section active">
             <div class="card">
                 
+                <!-- 1. Compact View (Default if address exists) -->
                 <div id="address-compact-view" style="{% if not saved_addresses %}display:none;{% endif %}">
                     <div class="address-header">
                         <h3 class="card-title">Deliver to:</h3>
                         <button type="button" class="change-btn" onclick="showAddressList()">Change</button>
                     </div>
                     <div id="selected-address-display" style="font-size: 14px; color: #333; line-height: 1.5; padding: 10px; background: #f9f9f9; border-radius: 6px; border: 1px solid #eee;">
-                        </div>
+                        <!-- JS populate -->
+                    </div>
                 </div>
 
+                <!-- 2. Address List View (When Change is clicked) -->
                 <div id="address-list-view" style="display:none;">
                     <h3 class="card-title" style="margin-bottom: 15px;">Select Delivery Address</h3>
                     {% for add in saved_addresses %}
@@ -112,6 +116,7 @@
                     <button type="button" class="manual-btn" style="margin-top: 10px;" onclick="showAddOptions()">+ Add a New Address</button>
                 </div>
 
+                <!-- 3. Add Options (Auto Detect or Manual) -->
                 <div id="add-options-view" style="{% if saved_addresses %}display:none;{% else %}display:block;{% endif %} margin-top:10px;">
                     <h3 class="card-title" style="margin-bottom: 15px;">Add Delivery Address</h3>
                     <button type="button" class="location-btn" onclick="autoDetectLocation()">📍 Use my current location</button>
@@ -119,6 +124,7 @@
                     <button type="button" class="manual-btn" onclick="showManualForm()">✍️ Add address manually</button>
                 </div>
 
+                <!-- 4. Manual Input Form -->
                 <div id="manual-form-view" style="display:none; margin-top:15px; border-top: 1px dashed var(--border); padding-top: 15px;">
                     <input type="radio" name="address_selection" value="new" id="newAddrRadio" style="display:none;" {% if not saved_addresses %}checked{% endif %}>
                     <input type="text" id="newName" name="name" class="form-control" placeholder="Full Name">
@@ -131,6 +137,7 @@
             </div>
         </div>
 
+        <!-- ================= STEP 2: ORDER SUMMARY ================= -->
         <div id="step-summary" class="section">
             <div class="card">
                 <h3 style="font-size: 14px; margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px;">Order Summary</h3>
@@ -162,6 +169,7 @@
             </div>
         </div>
 
+        <!-- ================= STEP 3: PAYMENT (Inline Gateway) ================= -->
         <div id="step-payment" class="section">
             <div class="card" style="background: #fff5f5; border: 1px solid #ffd5d5; display: flex; justify-content: space-between; align-items: center;">
                 <div style="font-size: 14px; font-weight: bold;">Total Amount</div>
@@ -170,6 +178,7 @@
             
             <div style="font-size: 12px; color: #878787; text-align: right; margin-bottom: 10px;">🔒 100% Secure Payments</div>
 
+            <!-- ONLINE PAYMENT (Expanded inline UI) -->
             <div class="payment-option active" id="opt-online" onclick="selectPaymentMode('Online')">
                 <div class="payment-header">
                     <input type="radio" name="payment_method" value="Online" checked style="accent-color:#cc0000;"> 📱 Online Payment (UPI / Card)
@@ -177,6 +186,7 @@
                 <div class="payment-body">
                     <div style="font-weight: bold; margin-bottom: 10px; color: #333;">Select Payment App:</div>
                     
+                    <!-- Deep Links for direct UPI opening -->
                     <a href="#" id="gpay-link" class="upi-btn upi-gpay" onclick="openUPI('gpay')">
                         <img src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg" width="30"> Pay with Google Pay
                     </a>
@@ -194,6 +204,7 @@
                 </div>
             </div>
 
+            <!-- COD PAYMENT -->
             <div class="payment-option" id="opt-cod" onclick="selectPaymentMode('COD')">
                 <div class="payment-header">
                     <input type="radio" name="payment_method" value="COD" style="accent-color:#cc0000;"> 💵 Cash on Delivery (COD)
@@ -202,6 +213,7 @@
             </div>
         </div>
 
+        <!-- ================= BOTTOM ACTION BAR ================= -->
         <div class="bottom-bar">
             <div>
                 <div style="font-size: 11px; color: #878787;">Total Payable</div>
@@ -214,7 +226,7 @@
 
     <script>
         const basePrice = {{ total_price }};
-        const upiId = "9046348427@fam"; // Your UPI ID
+        const upiId = "9046348427@fam"; 
         let currentStep = 1;
         let selectedAddressData = ""; 
         let deliveryCalculated = false;
@@ -225,7 +237,6 @@
             if (hasAddresses) {
                 const checkedRadio = document.querySelector('input[name="address_selection"]:checked');
                 if(checkedRadio && checkedRadio.value !== 'new') {
-                    // Simulating a click to extract data
                     checkedRadio.closest('label').click();
                 }
             }
@@ -262,7 +273,6 @@
             selectedAddressData = `<strong>${name}</strong><br>${address}<br>PIN: ${pincode} | Ph: ${phone}`;
             document.getElementById('selected-address-display').innerHTML = selectedAddressData;
             
-            // Switch back to compact view
             document.getElementById('address-list-view').style.display = "none";
             document.getElementById('address-compact-view').style.display = "block";
             
@@ -277,7 +287,6 @@
                     const lat = position.coords.latitude;
                     const lon = position.coords.longitude;
                     
-                    // Use Free OpenStreetMap Nominatim API
                     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
                     .then(res => res.json())
                     .then(data => {
@@ -287,24 +296,10 @@
                         document.getElementById('newAddress').value = addressStr;
                         document.getElementById('newPincode').value = pin;
                         
-                        showManualForm(); // Open form so user can edit/add name
+                        showManualForm(); 
                         document.getElementById('action-btn').innerText = "Continue";
                         if(pin) calculateDelivery(pin);
                     }).catch(err => {
                         alert("Could not fetch address details.");
                         showManualForm();
-                        document.getElementById('action-btn').innerText = "Continue";
-                    });
-                }, err => {
-                    alert("Please allow location access or add manually.");
-                    showManualForm();
-                    document.getElementById('action-btn').innerText = "Continue";
-                });
-            } else {
-                alert("Geolocation not supported.");
-                showManualForm();
-            }
-        }
-
-        // --- Delivery Calculation ---
-        const sellerPincode = "{{ items[0].seller_pi
+                        document.getElementById
