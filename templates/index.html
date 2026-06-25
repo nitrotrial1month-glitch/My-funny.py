@@ -128,10 +128,11 @@
         <div class="product-grid">
             {% if products %}
                 {% for product in products %}
-                <a href="/product/{{ product._id }}" class="product-card">
+                <!-- 🔴 UPDATE: Added condition for WBM_P_ID or fallback to _id -->
+                <a href="/product/{% if product.WBM_P_ID %}{{ product.WBM_P_ID }}{% else %}{{ product._id | string }}{% endif %}" class="product-card">
                     <div class="product-img-container">
                         
-                        <!-- 🔴 UPDATE: Wear By Me Insure Badge -->
+                        <!-- Wear By Me Insure Badge -->
                         {% if product.inwear_insure == 'Verified' %}
                         <div class="wbm-insure-badge">
                             <svg class="insure-icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
