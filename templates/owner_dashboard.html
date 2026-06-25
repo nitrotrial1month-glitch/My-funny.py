@@ -144,9 +144,10 @@
                 </div>
             </div>
 
+            <!-- 🔴 UPDATE: s.WBM_U_ID used for seller approval/rejection -->
             <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <a href="/admin/approve/{{ s.discord_id }}" class="btn btn-green" style="flex: 1;">✅ Approve</a>
-                <a href="/admin/reject/{{ s.discord_id }}" class="btn btn-red" style="flex: 1;" onclick="return confirm('Reject this Seller?')">❌ Reject</a>
+                <a href="/admin/approve/{{ s.WBM_U_ID }}" class="btn btn-green" style="flex: 1;">✅ Approve</a>
+                <a href="/admin/reject/{{ s.WBM_U_ID }}" class="btn btn-red" style="flex: 1;" onclick="return confirm('Reject this Seller?')">❌ Reject</a>
             </div>
         </div>
         {% endfor %}
@@ -184,9 +185,10 @@
                 {% endif %}
             </div>
 
+            <!-- 🔴 UPDATE: d.WBM_U_ID used for delivery approval/rejection -->
             <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <a href="/admin/approve/{{ d.discord_id }}" class="btn btn-green" style="flex: 1;">✅ Approve</a>
-                <a href="/admin/reject/{{ d.discord_id }}" class="btn btn-red" style="flex: 1;" onclick="return confirm('Reject this Delivery Partner?')">❌ Reject</a>
+                <a href="/admin/approve/{{ d.WBM_U_ID }}" class="btn btn-green" style="flex: 1;">✅ Approve</a>
+                <a href="/admin/reject/{{ d.WBM_U_ID }}" class="btn btn-red" style="flex: 1;" onclick="return confirm('Reject this Delivery Partner?')">❌ Reject</a>
             </div>
         </div>
         {% endfor %}
@@ -204,11 +206,12 @@
                         <p style="margin: 2px 0 0; font-size: 12px; color: #666;">Price: ₹{{ p.price }}</p>
                     </div>
                 </div>
+                <!-- 🔴 UPDATE: Product Verify & Delete (WBM_P_ID or fallback) -->
                 <div style="display: flex; gap: 10px; margin-top: 10px;">
-                    <form action="/owner/verify-product/{{ p._id | string }}" method="POST" style="flex: 1;">
+                    <form action="/owner/verify-product/{% if p.WBM_P_ID %}{{ p.WBM_P_ID }}{% else %}{{ p._id | string }}{% endif %}" method="POST" style="flex: 1;">
                         <button type="submit" class="btn btn-green" style="width: 100%;">✅ Verify</button>
                     </form>
-                    <form action="/owner/delete-product/{{ p._id | string }}" method="POST" style="flex: 1;">
+                    <form action="/owner/delete-product/{% if p.WBM_P_ID %}{{ p.WBM_P_ID }}{% else %}{{ p._id | string }}{% endif %}" method="POST" style="flex: 1;">
                         <button type="submit" class="btn btn-red" style="width: 100%;" onclick="return confirm('Delete this product permanently?')">🗑️ Delete</button>
                     </form>
                 </div>
@@ -232,7 +235,8 @@
                     </div>
                 </div>
                 <div style="display: flex; gap: 10px; margin-top: 10px;">
-                    <form action="/owner/verify-insure/{{ p._id | string }}" method="POST" style="flex: 1;">
+                    <!-- 🔴 UPDATE: Verify Badge with WBM_P_ID -->
+                    <form action="/owner/verify-insure/{% if p.WBM_P_ID %}{{ p.WBM_P_ID }}{% else %}{{ p._id | string }}{% endif %}" method="POST" style="flex: 1;">
                         <button type="submit" class="btn btn-blue" style="width: 100%; box-shadow: 0 3px 10px rgba(40,116,240,0.3);">🏅 Approve Badge</button>
                     </form>
                 </div>
@@ -248,7 +252,7 @@
         <form action="/owner/delete-product-global" method="POST" style="margin-bottom: 20px;">
             <label style="font-size: 12px; font-weight: bold; color: #cc0000; display: block; margin-bottom: 5px;">DELETE ANY PRODUCT</label>
             <div style="display: flex; gap: 5px;">
-                <input type="text" name="product_query" placeholder="Enter Product Name or ID..." required style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; outline: none;">
+                <input type="text" name="product_query" placeholder="Enter Product Name or WBM_P_ID..." required style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; outline: none;">
                 <button type="submit" class="btn btn-red" onclick="return confirm('WARNING: Are you sure you want to permanently delete this product?')">DELETE</button>
             </div>
         </form>
