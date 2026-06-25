@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Saved Addresses | inwear</title>
+    <title>Saved Addresses | Wear By Me</title>
     <style>
         :root { --primary: #2874f0; --bg: #f1f3f6; --text: #212121; }
         body { font-family: Roboto, sans-serif; background: var(--bg); margin: 0; padding: 0; color: var(--text); padding-bottom: 30px;}
@@ -52,7 +52,7 @@
                 <input type="text" name="name" class="form-control" placeholder="Full Name" required>
                 <input type="tel" name="phone" class="form-control" placeholder="10-digit Mobile Number" required pattern="[0-9]{10}">
                 
-                <!-- 🔴 NEW: Pincode explicitly requested for Delivery Calculation -->
+                <!-- Pincode explicitly requested for Delivery Calculation -->
                 <input type="text" name="pincode" id="pincodeField" class="form-control" placeholder="6-digit Pincode (e.g. 713128)" required pattern="[0-9]{6}" style="border-color: #2874f0; background: #fafcff;">
                 
                 <textarea name="address" id="addressField" class="form-control" rows="3" placeholder="House No, Building, Area, City" required></textarea>
@@ -95,7 +95,7 @@
     </div>
 
     <script>
-        // Geolocation Script (Same as before, simplified)
+        // Geolocation Script
         function detectLocation() {
             const statusBox = document.getElementById('loc-status');
             const addressField = document.getElementById('addressField');
