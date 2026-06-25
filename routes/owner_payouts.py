@@ -40,9 +40,9 @@ def reject_payout(req_id):
     
     req = col_withdraw.find_one({"_id": ObjectId(req_id)})
     if req and req.get('status') == 'Pending':
-        # রিজেক্ট করলে টাকাটা আবার সেলারের ওয়ালেটে রিফান্ড হয়ে যাবে
+        # 🔴 UPDATE: WBM_U_ID ব্যবহার করে রিফান্ড করা হচ্ছে
         col_users.update_one(
-            {"discord_id": req['seller_id']}, 
+            {"WBM_U_ID": req['seller_id']}, 
             {"$inc": {"wallet_balance": float(req['amount'])}}
         )
         # স্ট্যাটাস 'Rejected' করে দেওয়া হলো
