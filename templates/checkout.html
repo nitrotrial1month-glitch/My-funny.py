@@ -228,7 +228,6 @@
     </form>
 
     <script>
-        // 🔴 SAFE JAVASCRIPT: No more crashing!
         const basePrice = parseFloat("{{ total_price }}");
         const upiId = "9046348427@fam"; 
         const sellerPincode = "{% if items %}{{ items[0].seller_pincode | default('713128') }}{% else %}713128{% endif %}";
@@ -237,7 +236,7 @@
         let deliveryCalculated = false;
         let finalAmountForUPI = basePrice;
 
-        // Auto trigger delivery calculation on page load
+        // 🔴 পৃষ্ঠাটি লোড হওয়ার সাথে সাথে প্রথম ডেলিভারি ক্যালকুলেশন রান করবে
         document.addEventListener("DOMContentLoaded", () => {
             const hasAddresses = {% if saved_addresses %}true{% else %}false{% endif %};
             if (hasAddresses) {
@@ -246,11 +245,11 @@
             }
         });
 
-        // --- Address UI ---
+        // --- Address UI Actions ---
         function showAddressList() {
             document.getElementById('address-compact-view').style.display = "none";
             document.getElementById('address-list-view').style.display = "block";
-            document.getElementById('add-options-view').style.display = "none";
+            if(document.getElementById('add-options-view')) document.getElementById('add-options-view').style.display = "none";
             document.getElementById('manual-form-view').style.display = "none";
         }
 
@@ -258,30 +257,27 @@
             document.getElementById('address-list-view').style.display = "none";
             document.getElementById('add-options-view').style.display = "block";
             document.getElementById('manual-form-view').style.display = "none";
-            document.getElementById('newAddrRadio').checked = true;
         }
 
         function showManualForm() {
-            document.getElementById('add-options-view').style.display = "none";
+            if(document.getElementById('add-options-view')) document.getElementById('add-options-view').style.display = "none";
             document.getElementById('manual-form-view').style.display = "block";
             document.getElementById('newAddrRadio').checked = true;
             deliveryCalculated = false;
         }
 
-        // --- Select Saved Address ---
+        // --- Select Address from List ---
         function selectSavedAddress(element) {
             document.querySelectorAll('.address-box').forEach(box => box.classList.remove('selected'));
             element.classList.add('selected');
             element.querySelector('input').checked = true;
             
-            // Getting clean string data from HTML attributes
             const pin = element.getAttribute('data-pincode');
             const name = element.getAttribute('data-name');
             const address = element.getAttribute('data-address');
             const phone = element.getAttribute('data-phone');
             
-            const htmlFormat = `<strong>${name}</strong><br>${address}<br><div style="margin-top: 5px; font-size: 13px; font-weight: bold; color: #555;">PIN: ${pin} | Ph: ${phone}</div>`;
-            document.getElementById('selected-address-display').innerHTML = htmlFormat;
+            document.getElementById('selected-address-display').innerHTML = `<strong>${name}</strong><br>${address}<br><div style="margin-top: 5px; font-size: 13px; font-weight: bold; color: #555;">PIN: ${pin} | Ph: ${phone}</div>`;
             
             document.getElementById('address-list-view').style.display = "none";
             document.getElementById('address-compact-view').style.display = "block";
@@ -301,4 +297,6 @@
                     .then(res => res.json())
                     .then(data => {
                         let addressStr = data.display_name || '';
-                        let pin = dat
+                        let pin = data.address.postcode || '';
+                        
+                        document.getElemen
