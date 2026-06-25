@@ -1,7 +1,6 @@
 import os
 import random
-import uuid
-from flask import Blueprint, redirect, url_for, session, request
+from flask import Blueprint, redirect, request, session
 import requests
 from database import Database
 
@@ -47,42 +46,38 @@ def facebook_callback():
     db_user = None
     
     if col is not None:
-        # আমরা প্রথমে চেক করবো ওই ইমেইল দিয়ে কোনো ইউজার আছে কি না
         if email:
             db_user = col.find_one({"email": email})
-        
-        # যদি ইমেইল দিয়ে না পাই, তবে ফেসবুক আইডি দিয়ে চেক করবো
         if not db_user:
             db_user = col.find_one({"facebook_id": fb_id})
             
         if not db_user:
-            # একদম নতুন ইউজার
-            inwear_id = f"INW-{random.randint(100000, 999999)}"
+            # 🔴 NEW: WBM_U_ID জেনারেট লজিক
+            new_wbm_id = f"{random.randint(10000, 99999)}WBM{random.randint(100, 999)}"
             initial_role = "owner" if email == "kstomh05@gmail.com" else "user"
             db_user = {
                 "facebook_id": fb_id,
                 "username": username,
                 "email": email,
-                "inwear_id": inwear_id,
+                "WBM_U_ID": new_wbm_id,
                 "role": initial_role,
                 "avatar": avatar,
                 "is_facebook": True
             }
             col.insert_one(db_user)
         else:
-            # পুরনো ইউজারের যদি ইনউইয়ার আইডি না থাকে, তবে একটি বানিয়ে দেব
-            if 'inwear_id' not in db_user:
-                inwear_id = f"INW-{random.randint(100000, 999999)}"
-                col.update_one({"_id": db_user["_id"]}, {"$set": {"inwear_id": inwear_id, "facebook_id": fb_id}})
-                db_user['inwear_id'] = inwear_id
+            # 🔴 Update old ID to new WBM_U_ID if missing
+            if 'WBM_U_ID' not in db_user:
+                new_wbm_id = f"{random.randint(10000, 99999)}WBM{random.randint(100, 999)}"
+                col.update_one({"_id": db_user["_id"]}, {"$set": {"WBM_U_ID": new_wbm_id, "facebook_id": fb_id}})
+                db_user['WBM_U_ID'] = new_wbm_id
             
             if email == "kstomh05@gmail.com" and db_user.get("role") != "owner":
                 col.update_one({"_id": db_user["_id"]}, {"$set": {"role": "owner"}})
                 db_user["role"] = "owner"
 
-    # 🔴 UPDATE: সেশনে এখন থেকে সবসময় `inwear_id` সেভ হবে
     session['user'] = {
-        'id': db_user.get('inwear_id'), 
+        'id': db_user.get('WBM_U_ID'), 
         'username': username,
         'email': email,
         'avatar': avatar,
@@ -91,4 +86,4 @@ def facebook_callback():
     }
 
     return redirect('/')
-            
+    
