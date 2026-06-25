@@ -33,13 +33,13 @@ def support_page():
 def chat_support(order_id):
     user = session.get('user')
     if not user: return redirect('/account')
-    return render_template('chat_support.html', order_id=order_id, user=user, is_owner=user.get('is_owner', False))
+    return render_template('chat_support.html', order_id=order_id, user=user, is_owner=(user.get('role') == 'owner'))
 
 @support_bp.route('/help')
 def general_help():
     user = session.get('user')
     if not user: return redirect('/account')
-    return render_template('chat_support.html', order_id="General Inquiry", user=user, is_owner=user.get('is_owner', False))
+    return render_template('chat_support.html', order_id="General Inquiry", user=user, is_owner=(user.get('role') == 'owner'))
 
 @support_bp.route('/api/chat', methods=['POST'])
 def api_chat():
@@ -78,8 +78,9 @@ def api_chat():
 
     order_display = f"#{order_id[:8].upper()}" if order_id != "General Inquiry" else "General Inquiry"
 
+    # 🔴 UPDATE: 'inwear' এর বদলে 'Wear By Me' ব্র্যান্ডিং করা হলো
     system_prompt = f"""
-    You are a polite assistant for 'inwear'.
+    You are a polite assistant for 'Wear By Me'.
     - If they ask to become a seller: Explain that they need to contact support or check the seller portal.
     - If they ask for human support: Give them this number: {support_number}.
     - Customer is asking about: {order_display}.
