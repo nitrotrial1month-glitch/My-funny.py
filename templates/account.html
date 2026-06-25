@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Account - inwear</title>
+    <title>Account - Wear By Me</title>
     <style>
         :root {
             --primary-red: #cc0000;
@@ -148,13 +148,13 @@
                     👤
                 {% endif %}
             </div>
-        <div class="profile-info">
-          <h2>{{ current_user.get('username', 'Wear By Me Member') }}</h2>
-          <p>{{ current_user.get('email', 'Premium Member | Wear By Me') }}</p>
-          <p style="margin-top: 4px; font-size: 11px; color: var(--primary-red); font-weight: 800; letter-spacing: 0.5px;">
-          ID: {{ current_user.get('wearbyme_id', 'Pending...') }}
-           </p>
-         </div>  
+            <div class="profile-info">
+                <h2>{{ current_user.get('username', 'Wear By Me Member') }}</h2>
+                <p>{{ current_user.get('email', 'Premium Member | Wear By Me') }}</p>
+                <p style="margin-top: 4px; font-size: 11px; color: var(--primary-red); font-weight: 800; letter-spacing: 0.5px;">
+                    ID: {{ current_user.get('WBM_U_ID', 'Pending...') }}
+                </p>
+            </div>  
         </div>
 
         <div class="action-grid">
@@ -176,7 +176,7 @@
             </a>
         </div>
 
-        <div class="section-title">Earn With inwear</div>
+        <div class="section-title">Earn With Wear By Me</div>
         <div class="list-group">
             
             {% set role = current_user.get('role', 'user') %}
@@ -230,7 +230,7 @@
 
     {% else %}
         <div class="login-container">
-            <h2>Welcome to inwear</h2>
+            <h2>Welcome to Wear By Me</h2>
             <p style="color: var(--text-muted); margin-bottom: 25px; font-size: 14px;">Login or create an account to manage your orders, wishlist, and more.</p>
             
             <a href="/login/google" class="login-btn google-btn">
