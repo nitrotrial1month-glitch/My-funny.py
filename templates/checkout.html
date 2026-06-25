@@ -32,7 +32,7 @@
         .card-title { font-size: 16px; font-weight: bold; margin: 0;}
         .change-btn { background: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; }
         
-        .address-box { border: 1px solid var(--border); padding: 12px; border-radius: 6px; margin-bottom: 10px; display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+        .address-box { border: 1px solid var(--border); padding: 12px; border-radius: 6px; margin-bottom: 10px; display: flex; gap: 10px; align-items: flex-start; cursor: pointer; transition: 0.2s; }
         .address-box.selected { border-color: var(--primary); background: #fff5f5; }
         
         .location-btn { width: 100%; background: #e6f6ec; color: #00a650; border: 1px solid #bbf7d0; padding: 12px; border-radius: 6px; font-weight: bold; font-size: 14px; margin-bottom: 10px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; }
@@ -68,7 +68,7 @@
         .btn-continue { background: var(--primary); color: white; padding: 12px 30px; border-radius: 6px; font-weight: bold; border: none; font-size: 16px; cursor: pointer; }
     </style>
 </head>
-<body onload="initCheckout()">
+<body>
 
     <form action="/process_checkout" method="POST" id="checkoutForm">
         <input type="hidden" name="is_direct" value="{{ is_direct }}">
@@ -85,38 +85,48 @@
             <div class="step" id="indicator-payment"><div class="step-circle">3</div>Payment</div>
         </div>
 
-        <!-- ================= STEP 1: ADDRESS ================= -->
         <div id="step-address" class="section active">
             <div class="card">
                 
-                <!-- 1. Compact View (Default if address exists) -->
-                <div id="address-compact-view" style="{% if not saved_addresses %}display:none;{% endif %}">
-                    <div class="address-header">
-                        <h3 class="card-title">Deliver to:</h3>
-                        <button type="button" class="change-btn" onclick="showAddressList()">Change</button>
-                    </div>
-                    <div id="selected-address-display" style="font-size: 14px; color: #333; line-height: 1.5; padding: 10px; background: #f9f9f9; border-radius: 6px; border: 1px solid #eee;">
-                        <!-- JS populate -->
-                    </div>
-                </div>
-
-                <!-- 2. Address List View (When Change is clicked) -->
-                <div id="address-list-view" style="display:none;">
-                    <h3 class="card-title" style="margin-bottom: 15px;">Select Delivery Address</h3>
+                {% if saved_addresses %}
+                    {% set default_add = saved_addresses[0] %}
                     {% for add in saved_addresses %}
-                    <label class="address-box {% if add.is_default %}selected{% endif %}" onclick="selectSavedAddress(this, '{{ add.pincode }}', '{{ add.name }}', '{{ add.address }}', '{{ add.phone }}')">
-                        <input type="radio" name="address_selection" value="{{ loop.index0 }}" style="accent-color: #cc0000;" {% if add.is_default %}checked{% endif %}>
-                        <div>
-                            <div style="font-weight:bold;">{{ add.name }}</div>
-                            <div style="font-size:13px; margin: 4px 0; color: #555;">{{ add.address }}</div>
-                            <div style="font-size:12px; font-weight:bold; color: #333;">PIN: {{ add.pincode }} | Ph: {{ add.phone }}</div>
-                        </div>
-                    </label>
+                        {% if add.is_default %}{% set default_add = add %}{% endif %}
                     {% endfor %}
-                    <button type="button" class="manual-btn" style="margin-top: 10px;" onclick="showAddOptions()">+ Add a New Address</button>
-                </div>
 
-                <!-- 3. Add Options (Auto Detect or Manual) -->
+                    <div id="address-compact-view">
+                        <div class="address-header">
+                            <h3 class="card-title">Deliver to:</h3>
+                            <button type="button" class="change-btn" onclick="showAddressList()">Change</button>
+                        </div>
+                        <div id="selected-address-display" style="font-size: 14px; color: #333; line-height: 1.5; padding: 12px; background: #fff5f5; border-radius: 6px; border: 1px solid #ffcccc;">
+                            <strong>{{ default_add.name }}</strong><br>
+                            {{ default_add.address }}<br>
+                            <div style="margin-top: 5px; font-size: 13px; font-weight: bold; color: #555;">PIN: {{ default_add.pincode }} | Ph: {{ default_add.phone }}</div>
+                        </div>
+                    </div>
+
+                    <div id="address-list-view" style="display:none;">
+                        <h3 class="card-title" style="margin-bottom: 15px;">Select Delivery Address</h3>
+                        {% for add in saved_addresses %}
+                        <label class="address-box {% if add.is_default %}selected{% endif %}" 
+                               data-pincode="{{ add.pincode }}" 
+                               data-name="{{ add.name }}" 
+                               data-address="{{ add.address | replace('\n', ' ') | replace('\r', '') }}" 
+                               data-phone="{{ add.phone }}" 
+                               onclick="selectSavedAddress(this)">
+                            <input type="radio" name="address_selection" value="{{ loop.index0 }}" style="accent-color: #cc0000;" {% if add.is_default %}checked{% endif %}>
+                            <div>
+                                <div style="font-weight:bold;">{{ add.name }}</div>
+                                <div style="font-size:13px; margin: 4px 0; color: #555;">{{ add.address }}</div>
+                                <div style="font-size:12px; font-weight:bold; color: #333;">PIN: {{ add.pincode }} | Ph: {{ add.phone }}</div>
+                            </div>
+                        </label>
+                        {% endfor %}
+                        <button type="button" class="manual-btn" style="margin-top: 10px;" onclick="showAddOptions()">+ Add a New Address</button>
+                    </div>
+                {% endif %}
+
                 <div id="add-options-view" style="{% if saved_addresses %}display:none;{% else %}display:block;{% endif %} margin-top:10px;">
                     <h3 class="card-title" style="margin-bottom: 15px;">Add Delivery Address</h3>
                     <button type="button" class="location-btn" onclick="autoDetectLocation()">📍 Use my current location</button>
@@ -124,7 +134,6 @@
                     <button type="button" class="manual-btn" onclick="showManualForm()">✍️ Add address manually</button>
                 </div>
 
-                <!-- 4. Manual Input Form -->
                 <div id="manual-form-view" style="display:none; margin-top:15px; border-top: 1px dashed var(--border); padding-top: 15px;">
                     <input type="radio" name="address_selection" value="new" id="newAddrRadio" style="display:none;" {% if not saved_addresses %}checked{% endif %}>
                     <input type="text" id="newName" name="name" class="form-control" placeholder="Full Name">
@@ -137,7 +146,6 @@
             </div>
         </div>
 
-        <!-- ================= STEP 2: ORDER SUMMARY ================= -->
         <div id="step-summary" class="section">
             <div class="card">
                 <h3 style="font-size: 14px; margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px;">Order Summary</h3>
@@ -169,7 +177,6 @@
             </div>
         </div>
 
-        <!-- ================= STEP 3: PAYMENT (Inline Gateway) ================= -->
         <div id="step-payment" class="section">
             <div class="card" style="background: #fff5f5; border: 1px solid #ffd5d5; display: flex; justify-content: space-between; align-items: center;">
                 <div style="font-size: 14px; font-weight: bold;">Total Amount</div>
@@ -178,7 +185,6 @@
             
             <div style="font-size: 12px; color: #878787; text-align: right; margin-bottom: 10px;">🔒 100% Secure Payments</div>
 
-            <!-- ONLINE PAYMENT (Expanded inline UI) -->
             <div class="payment-option active" id="opt-online" onclick="selectPaymentMode('Online')">
                 <div class="payment-header">
                     <input type="radio" name="payment_method" value="Online" checked style="accent-color:#cc0000;"> 📱 Online Payment (UPI / Card)
@@ -186,14 +192,13 @@
                 <div class="payment-body">
                     <div style="font-weight: bold; margin-bottom: 10px; color: #333;">Select Payment App:</div>
                     
-                    <!-- Deep Links for direct UPI opening -->
-                    <a href="#" id="gpay-link" class="upi-btn upi-gpay" onclick="openUPI('gpay')">
+                    <a href="#" id="gpay-link" class="upi-btn upi-gpay">
                         <img src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg" width="30"> Pay with Google Pay
                     </a>
-                    <a href="#" id="phonepe-link" class="upi-btn upi-phonepe" onclick="openUPI('phonepe')">
+                    <a href="#" id="phonepe-link" class="upi-btn upi-phonepe">
                         <img src="https://download.logo.wine/logo/PhonePe/PhonePe-Logo.wine.png" width="40" style="margin:-10px 0;"> Pay with PhonePe
                     </a>
-                    <a href="#" id="paytm-link" class="upi-btn upi-paytm" onclick="openUPI('paytm')">
+                    <a href="#" id="paytm-link" class="upi-btn upi-paytm">
                         Pay with Paytm
                     </a>
                     
@@ -204,7 +209,6 @@
                 </div>
             </div>
 
-            <!-- COD PAYMENT -->
             <div class="payment-option" id="opt-cod" onclick="selectPaymentMode('COD')">
                 <div class="payment-header">
                     <input type="radio" name="payment_method" value="COD" style="accent-color:#cc0000;"> 💵 Cash on Delivery (COD)
@@ -213,7 +217,6 @@
             </div>
         </div>
 
-        <!-- ================= BOTTOM ACTION BAR ================= -->
         <div class="bottom-bar">
             <div>
                 <div style="font-size: 11px; color: #878787;">Total Payable</div>
@@ -225,24 +228,25 @@
     </form>
 
     <script>
-        const basePrice = {{ total_price }};
+        // 🔴 SAFE JAVASCRIPT: No more crashing!
+        const basePrice = parseFloat("{{ total_price }}");
         const upiId = "9046348427@fam"; 
+        const sellerPincode = "{% if items %}{{ items[0].seller_pincode | default('713128') }}{% else %}713128{% endif %}";
+        
         let currentStep = 1;
-        let selectedAddressData = ""; 
         let deliveryCalculated = false;
         let finalAmountForUPI = basePrice;
 
-        function initCheckout() {
+        // Auto trigger delivery calculation on page load
+        document.addEventListener("DOMContentLoaded", () => {
             const hasAddresses = {% if saved_addresses %}true{% else %}false{% endif %};
             if (hasAddresses) {
-                const checkedRadio = document.querySelector('input[name="address_selection"]:checked');
-                if(checkedRadio && checkedRadio.value !== 'new') {
-                    checkedRadio.closest('label').click();
-                }
+                const defaultPin = "{% if user_default_pincode %}{{ user_default_pincode }}{% elif saved_addresses %}{{ saved_addresses[0].pincode }}{% endif %}";
+                if(defaultPin) calculateDelivery(defaultPin);
             }
-        }
+        });
 
-        // --- Address Management UI ---
+        // --- Address UI ---
         function showAddressList() {
             document.getElementById('address-compact-view').style.display = "none";
             document.getElementById('address-list-view').style.display = "block";
@@ -265,21 +269,27 @@
         }
 
         // --- Select Saved Address ---
-        function selectSavedAddress(element, pincode, name, address, phone) {
+        function selectSavedAddress(element) {
             document.querySelectorAll('.address-box').forEach(box => box.classList.remove('selected'));
             element.classList.add('selected');
             element.querySelector('input').checked = true;
             
-            selectedAddressData = `<strong>${name}</strong><br>${address}<br>PIN: ${pincode} | Ph: ${phone}`;
-            document.getElementById('selected-address-display').innerHTML = selectedAddressData;
+            // Getting clean string data from HTML attributes
+            const pin = element.getAttribute('data-pincode');
+            const name = element.getAttribute('data-name');
+            const address = element.getAttribute('data-address');
+            const phone = element.getAttribute('data-phone');
+            
+            const htmlFormat = `<strong>${name}</strong><br>${address}<br><div style="margin-top: 5px; font-size: 13px; font-weight: bold; color: #555;">PIN: ${pin} | Ph: ${phone}</div>`;
+            document.getElementById('selected-address-display').innerHTML = htmlFormat;
             
             document.getElementById('address-list-view').style.display = "none";
             document.getElementById('address-compact-view').style.display = "block";
             
-            calculateDelivery(pincode);
+            calculateDelivery(pin);
         }
 
-        // --- Auto Detect Location API ---
+        // --- Auto Detect Location ---
         function autoDetectLocation() {
             document.getElementById('action-btn').innerText = "Locating...";
             if (navigator.geolocation) {
@@ -291,15 +301,4 @@
                     .then(res => res.json())
                     .then(data => {
                         let addressStr = data.display_name || '';
-                        let pin = data.address.postcode || '';
-                        
-                        document.getElementById('newAddress').value = addressStr;
-                        document.getElementById('newPincode').value = pin;
-                        
-                        showManualForm(); 
-                        document.getElementById('action-btn').innerText = "Continue";
-                        if(pin) calculateDelivery(pin);
-                    }).catch(err => {
-                        alert("Could not fetch address details.");
-                        showManualForm();
-                        document.getElementById
+                        let pin = dat
