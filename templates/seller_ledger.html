@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seller Ledger - inwear</title>
+    <title>Seller Ledger - Wear By Me</title>
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f8; margin: 0; padding: 20px; color: #212121; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
@@ -37,7 +37,8 @@
     <div class="seller-card">
         <h2>{{ seller.application_data.store_name | default(seller.username) }}</h2>
         <p><strong>Email:</strong> {{ seller.email }}</p>
-        <p><strong>Discord ID:</strong> {{ seller.discord_id }}</p>
+        <!-- 🔴 UPDATE: Show WBM_U_ID instead of Discord ID -->
+        <p><strong>Seller ID:</strong> {{ seller.WBM_U_ID }}</p>
         <p><strong>UPI ID:</strong> {{ seller.application_data.upi_id | default('Not Provided') }}</p>
     </div>
 
@@ -47,7 +48,8 @@
             <div class="fin-val" style="color: #2874f0;">₹{{ total_sales | round(2) }}</div>
         </div>
         <div class="fin-box comm">
-            <div style="font-size: 12px; color: #666; font-weight: bold;">INWEAR FEE (10%)</div>
+            <!-- 🔴 UPDATE: Brand Name update -->
+            <div style="font-size: 12px; color: #666; font-weight: bold;">WEAR BY ME FEE (10%)</div>
             <div class="fin-val" style="color: #cc0000;">- ₹{{ total_commission | round(2) }}</div>
         </div>
         <div class="fin-box pay">
@@ -75,4 +77,3 @@
 
 </body>
 </html>
-
