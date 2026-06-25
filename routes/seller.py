@@ -1,5 +1,6 @@
 import os
 import uuid
+import random # 🔴 NEW: For generating WBM_P_ID
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
@@ -61,17 +62,17 @@ def seller_required(f):
 @seller_required
 def seller_dashboard():
     user = session.get('user')
-    discord_id = str(user.get('id'))
+    WBM_U_ID = str(user.get('id')) # 🔴 UPDATE
     
     col_orders = Database.get_collection("orders")
     col_products = Database.get_collection("products")
     col_users = Database.get_collection("users")
     
-    current_user = col_users.find_one({"discord_id": discord_id})
-    my_products = list(col_products.find({"seller_id": discord_id}).sort("_id", -1))
+    current_user = col_users.find_one({"WBM_U_ID": WBM_U_ID})
+    my_products = list(col_products.find({"seller_id": WBM_U_ID}).sort("_id", -1))
     
     active_orders = list(col_orders.find({
-        "seller_id": discord_id,
+        "seller_id": WBM_U_ID,
         "status": {"$in": ["Confirmed", "Ready for Pickup", "Assigned", "Out for Delivery"]}
     }).sort("_id", -1))
     
@@ -88,7 +89,7 @@ def seller_dashboard():
 def seller_wallet():
     user = session.get('user')
     col = Database.get_collection("users")
-    seller_data = col.find_one({"discord_id": str(user['id'])})
+    seller_data = col.find_one({"WBM_U_ID": str(user['id'])}) # 🔴 UPDATE
     
     withdraw_col = Database.get_collection("withdrawals")
     history = list(withdraw_col.find({"seller_id": str(user['id'])}).sort("_id", -1))
@@ -105,11 +106,11 @@ def add_upi():
     new_upi = request.form.get('new_upi')
     if new_upi:
         col = Database.get_collection("users")
-        seller = col.find_one({"discord_id": str(user['id'])})
+        seller = col.find_one({"WBM_U_ID": str(user['id'])}) # 🔴 UPDATE
         upi_list = seller.get('upi_list', [])
         is_first = len(upi_list) == 0
         upi_list.append({"upi_id": new_upi, "is_default": is_first})
-        col.update_one({"discord_id": str(user['id'])}, {"$set": {"upi_list": upi_list}})
+        col.update_one({"WBM_U_ID": str(user['id'])}, {"$set": {"upi_list": upi_list}})
         flash("UPI ID Added Successfully!")
     return redirect(url_for('seller.seller_wallet'))
 
@@ -121,12 +122,12 @@ def add_upi():
 def set_default_upi(index):
     user = session.get('user')
     col = Database.get_collection("users")
-    seller = col.find_one({"discord_id": str(user['id'])})
+    seller = col.find_one({"WBM_U_ID": str(user['id'])}) # 🔴 UPDATE
     upi_list = seller.get('upi_list', [])
     if 0 <= index < len(upi_list):
         for i, upi in enumerate(upi_list):
             upi['is_default'] = (i == index)
-        col.update_one({"discord_id": str(user['id'])}, {"$set": {"upi_list": upi_list}})
+        col.update_one({"WBM_U_ID": str(user['id'])}, {"$set": {"upi_list": upi_list}})
     return redirect(url_for('seller.seller_wallet'))
 
 # ==========================================
@@ -139,11 +140,11 @@ def request_withdrawal():
     amount = float(request.form.get('amount', 0))
     upi_id = request.form.get('upi_id')
     col = Database.get_collection("users")
-    seller = col.find_one({"discord_id": str(user['id'])})
+    seller = col.find_one({"WBM_U_ID": str(user['id'])}) # 🔴 UPDATE
     current_balance = float(seller.get('wallet_balance', 0.0))
 
     if amount >= 100 and amount <= current_balance:
-        col.update_one({"discord_id": str(user['id'])}, {"$inc": {"wallet_balance": -amount}})
+        col.update_one({"WBM_U_ID": str(user['id'])}, {"$inc": {"wallet_balance": -amount}})
         Database.get_collection("withdrawals").insert_one({
             "seller_id": str(user['id']),
             "seller_name": seller.get("username", "Unknown"),
@@ -180,7 +181,7 @@ def add_product():
         col_products = Database.get_collection("products")
         col_users = Database.get_collection("users")
         
-        seller_profile = col_users.find_one({"discord_id": str(user['id'])})
+        seller_profile = col_users.find_one({"WBM_U_ID": str(user['id'])}) # 🔴 UPDATE
         store_name = seller_profile.get('application_data', {}).get('store_name', 'My Store') if seller_profile else 'My Store'
 
         name = request.form.get('product_name')
@@ -194,6 +195,9 @@ def add_product():
         tags = [t.strip() for t in request.form.get('product_tags', '').split(',')]
         return_policy = request.form.get('return_policy')
         insure_status = request.form.get('apply_insure', 'No')
+
+        # 🔴 NEW: Generate WBM_P_ID
+        new_wbm_pid = f"{random.randint(100000, 999999)}WBM{random.randint(1000, 9999)}"
 
         # Upload Images to Cloudinary
         image_urls = []
@@ -212,6 +216,7 @@ def add_product():
                 video_url = upload_to_cloudinary(file, folder_name="inwear_product_videos")
 
         new_product = {
+            "WBM_P_ID": new_wbm_pid, # 🔴 Save generated ID
             "seller_id": str(user['id']),
             "store_name": store_name,
             "name": name,
@@ -235,9 +240,9 @@ def add_product():
         col_products.insert_one(new_product)
         
         if insure_status == "Pending Approval":
-            flash("✅ Product published! Verification request sent.", "success")
+            flash(f"✅ Product published! ID: {new_wbm_pid}. Verification request sent.", "success")
         else:
-            flash("✅ Product successfully published!", "success")
+            flash(f"✅ Product successfully published! ID: {new_wbm_pid}", "success")
             
         return redirect('/seller-dashboard')
         
@@ -246,13 +251,17 @@ def add_product():
 # ==========================================
 # 8. Delete Seller Product
 # ==========================================
-@seller_bp.route('/seller/delete-product/<product_id>', methods=['POST'])
+@seller_bp.route('/seller/delete-product/<WBM_P_ID>', methods=['POST'])
 @seller_required
-def delete_seller_product(product_id):
+def delete_seller_product(WBM_P_ID):
     user = session.get('user')
     col_products = Database.get_collection("products")
     if col_products is not None:
-        result = col_products.delete_one({"_id": ObjectId(product_id), "seller_id": str(user['id'])})
+        # 🔴 Smart Delete
+        query = {"_id": ObjectId(WBM_P_ID)} if len(WBM_P_ID) == 24 else {"WBM_P_ID": WBM_P_ID}
+        query["seller_id"] = str(user['id']) # Security check
+        
+        result = col_products.delete_one(query)
         if result.deleted_count > 0:
             flash("🗑️ Product deleted successfully!")
         else:
@@ -262,13 +271,16 @@ def delete_seller_product(product_id):
 # ==========================================
 # 9. Edit Seller Product
 # ==========================================
-@seller_bp.route('/seller/edit-product/<product_id>', methods=['GET', 'POST'])
+@seller_bp.route('/seller/edit-product/<WBM_P_ID>', methods=['GET', 'POST'])
 @seller_required
-def edit_seller_product(product_id):
+def edit_seller_product(WBM_P_ID):
     user = session.get('user')
     col_products = Database.get_collection("products")
     
-    product = col_products.find_one({"_id": ObjectId(product_id), "seller_id": str(user['id'])})
+    query = {"_id": ObjectId(WBM_P_ID)} if len(WBM_P_ID) == 24 else {"WBM_P_ID": WBM_P_ID}
+    query["seller_id"] = str(user['id']) # Security check
+    product = col_products.find_one(query)
+    
     if not product:
         flash("❌ Product not found.")
         return redirect('/seller/products')
@@ -282,7 +294,7 @@ def edit_seller_product(product_id):
             "details": request.form.get('product_details'),
             "description": request.form.get('product_description')
         }
-        col_products.update_one({"_id": ObjectId(product_id)}, {"$set": updated_data})
+        col_products.update_one(query, {"$set": updated_data})
         flash("✅ Product updated successfully!")
         return redirect('/seller/products')
         
@@ -295,13 +307,13 @@ def edit_seller_product(product_id):
 @seller_required
 def seller_products_page():
     user = session.get('user')
-    discord_id = str(user.get('id'))
+    WBM_U_ID = str(user.get('id')) # 🔴 UPDATE
     
     col_products = Database.get_collection("products")
     col_users = Database.get_collection("users")
     
-    current_user = col_users.find_one({"discord_id": discord_id})
-    my_products = list(col_products.find({"seller_id": discord_id}).sort("_id", -1))
+    current_user = col_users.find_one({"WBM_U_ID": WBM_U_ID})
+    my_products = list(col_products.find({"seller_id": WBM_U_ID}).sort("_id", -1))
     
     return render_template('seller_products.html', products=my_products, current_user=current_user)
 
@@ -316,4 +328,4 @@ def print_bill(order_id):
     if not order_data:
         return "Order not found", 404
     return render_template('invoice.html', order=order_data)
-        
+    
