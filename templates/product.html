@@ -50,7 +50,7 @@
         .current-price { color: var(--text-dark); font-size: 24px; font-weight: bold; }
         .old-price { color: #888; text-decoration: line-through; font-size: 16px; }
         
-        /* 🔴 NEW: Discount Percentage Badge CSS */
+        /* Discount Percentage Badge CSS */
         .discount-pct { color: #00a650; font-size: 15px; font-weight: 900; letter-spacing: 0.5px; }
         
         .delivery-box { background: #fdfdfd; margin: 20px 0; border-radius: 8px; border: 1px dashed #ccc; padding: 15px; }
@@ -100,6 +100,9 @@
     </div>
     
     <div class="details-container">
+        <!-- 🔴 UPDATE: Show WBM_P_ID under title -->
+        <div style="font-size: 11px; color: #888; margin-bottom: 5px; letter-spacing: 0.5px;">Product ID: {{ product.WBM_P_ID | default(product._id) }}</div>
+        
         <h2>
             {{ product.name }}
             
@@ -127,7 +130,7 @@
             <span class="current-price">₹{{ product.price }}</span>
             {% if product.mrp and product.mrp|float > product.price|float %}
                 <span class="old-price">₹{{ product.mrp }}</span>
-                <!-- 🔴 NEW: Automatic Discount Percentage Calculation -->
+                <!-- Automatic Discount Percentage Calculation -->
                 {% set discount = ((product.mrp|float - product.price|float) / product.mrp|float * 100) | round | int %}
                 <span class="discount-pct">{{ discount }}% off</span>
             {% endif %}
@@ -180,7 +183,9 @@
                 return;
             }
             
-            let url = actionType === 'cart' ? '/add_to_cart/{{ product._id | string }}' : '/checkout/{{ product._id | string }}';
+            // 🔴 UPDATE: Use WBM_P_ID or fallback to _id
+            let pId = '{{ product.WBM_P_ID if product.WBM_P_ID else product._id }}';
+            let url = actionType === 'cart' ? '/add_to_cart/' + pId : '/checkout/' + pId;
             if (hasSizes) {
                 url += '?size=' + selectedSize;
             }
