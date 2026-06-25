@@ -8,3 +8,4 @@ Flask-Dance
 requests
 google-genai
 cloudinary
+pgeocode
