@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Support Chat | inwear</title>
+    <!-- 🔴 UPDATE: Brand Name -->
+    <title>AI Support Chat | Wear By Me</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #e5ddd5; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; }
         .chat-header { background: #075e54; color: white; padding: 15px 20px; display: flex; align-items: center; gap: 15px; font-size: 18px; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.2); z-index: 10; }
@@ -80,7 +81,7 @@
             inputField.value = '';
             typingIndicator.style.display = 'block';
 
-                        // API তে রিকোয়েস্ট পাঠানো
+            // API তে রিকোয়েস্ট পাঠানো
             fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
