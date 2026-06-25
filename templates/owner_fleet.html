@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fleet Management - inwear</title>
+    <title>Fleet Management - Wear By Me</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #f4f6f8; margin: 0; padding: 20px; color: #333; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
@@ -26,9 +26,11 @@
             <div class="fleet-info">
                 <h4>{{ boy.username }}</h4>
                 <p>Email: {{ boy.email }}</p>
-                <p>ID: {{ boy.inwear_id }}</p>
+                <!-- 🔴 UPDATE: ID shown as WBM_U_ID -->
+                <p>ID: {{ boy.WBM_U_ID }}</p>
             </div>
-            <form action="/owner/remove-delivery/{{ boy.discord_id }}" method="POST">
+            <!-- 🔴 UPDATE: Form action uses WBM_U_ID -->
+            <form action="/owner/remove-delivery/{{ boy.WBM_U_ID }}" method="POST">
                 <button type="submit" class="fire-btn" onclick="return confirm('Are you sure you want to remove this delivery partner?')">Remove</button>
             </form>
         </div>
@@ -38,4 +40,3 @@
     {% endif %}
 </body>
 </html>
-
