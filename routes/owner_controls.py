@@ -11,42 +11,47 @@ owner_controls_bp = Blueprint('owner_controls', __name__)
 # ==========================================
 
 # ১. প্রোডাক্ট ভেরিফাই করা (Live)
-@owner_controls_bp.route('/owner/verify-product/<product_id>', methods=['POST'])
+@owner_controls_bp.route('/owner/verify-product/<WBM_P_ID>', methods=['POST'])
 @role_required('owner')
-def verify_product(product_id):
+def verify_product(WBM_P_ID):
     db_products = Database.get_collection("products")
     if db_products is not None:
-        db_products.update_one({"_id": ObjectId(product_id)}, {"$set": {"status": "Live"}})
+        # 🔴 SMART LOGIC: WBM_P_ID অথবা পুরনো ObjectId দুটোই হ্যান্ডেল করবে
+        query = {"_id": ObjectId(WBM_P_ID)} if len(WBM_P_ID) == 24 else {"WBM_P_ID": WBM_P_ID}
+        db_products.update_one(query, {"$set": {"status": "Live"}})
         flash("✅ Product successfully verified and is now Live.")
     return redirect('/owner-dashboard')
 
 # ২. প্রোডাক্ট আনভেরিফাই করা (Pending এ পাঠানো)
-@owner_controls_bp.route('/owner/unverify-product/<product_id>', methods=['POST'])
+@owner_controls_bp.route('/owner/unverify-product/<WBM_P_ID>', methods=['POST'])
 @role_required('owner')
-def unverify_product(product_id):
+def unverify_product(WBM_P_ID):
     db_products = Database.get_collection("products")
     if db_products is not None:
-        db_products.update_one({"_id": ObjectId(product_id)}, {"$set": {"status": "Pending"}})
+        query = {"_id": ObjectId(WBM_P_ID)} if len(WBM_P_ID) == 24 else {"WBM_P_ID": WBM_P_ID}
+        db_products.update_one(query, {"$set": {"status": "Pending"}})
     return redirect('/owner-dashboard')
 
 # ৩. যেকোনো প্রোডাক্ট সরাসরি ডিলিট করা
-@owner_controls_bp.route('/owner/delete-product/<product_id>', methods=['POST'])
+@owner_controls_bp.route('/owner/delete-product/<WBM_P_ID>', methods=['POST'])
 @role_required('owner')
-def delete_product(product_id):
+def delete_product(WBM_P_ID):
     db_products = Database.get_collection("products")
     if db_products is not None:
-        db_products.delete_one({"_id": ObjectId(product_id)})
+        query = {"_id": ObjectId(WBM_P_ID)} if len(WBM_P_ID) == 24 else {"WBM_P_ID": WBM_P_ID}
+        db_products.delete_one(query)
         flash("🗑️ Product deleted successfully.")
     return redirect('/owner-dashboard')
 
 # 🔴 NEW: ৪. ইনসিওর (Insure) ব্যাজ অ্যাপ্রুভ করা
-@owner_controls_bp.route('/owner/verify-insure/<product_id>', methods=['POST'])
+@owner_controls_bp.route('/owner/verify-insure/<WBM_P_ID>', methods=['POST'])
 @role_required('owner')
-def verify_insure_badge(product_id):
+def verify_insure_badge(WBM_P_ID):
     db_products = Database.get_collection("products")
     if db_products is not None:
+        query = {"_id": ObjectId(WBM_P_ID)} if len(WBM_P_ID) == 24 else {"WBM_P_ID": WBM_P_ID}
         # স্ট্যাটাস 'Verified' করে দিলে HTML-এ ব্যাজ শো করবে
-        db_products.update_one({"_id": ObjectId(product_id)}, {"$set": {"inwear_insure": "Verified"}})
+        db_products.update_one(query, {"$set": {"inwear_insure": "Verified"}})
         flash("🏅 Insure Badge successfully added to the product.")
     return redirect('/owner-dashboard')
 
@@ -69,9 +74,8 @@ def block_seller():
             # সেলার থেকে সাধারণ ইউজার বানিয়ে দেওয়া (Role কেড়ে নেওয়া)
             db_users.update_one({"email": seller_email}, {"$set": {"role": "user", "is_banned": True}})
             
-            # সেলার ব্যান হওয়ার সাথে সাথে তার সব প্রোডাক্ট অটো-ডিলিট করে দেওয়া
-            # 'discord_id' এর বদলে 'inwear_id' বা যে আইডি দিয়ে সেলার সেভ হয় সেটি ইউজ করা ভালো
-            seller_identifier = user.get('inwear_id') or user.get('discord_id')
+            # 🔴 UPDATE: সেলার ব্যান হওয়ার সাথে সাথে তার সব প্রোডাক্ট অটো-ডিলিট (WBM_U_ID ব্যবহার করে)
+            seller_identifier = user.get('WBM_U_ID')
             if db_products is not None and seller_identifier:
                 db_products.delete_many({"seller_id": str(seller_identifier)})
             
@@ -92,13 +96,22 @@ def delete_product_global():
     
     if db_products is not None and query:
         try:
+            # 🔴 SMART UPDATE: যদি ইনপুটটি নতুন WBM_P_ID ফরম্যাটের হয়
+            if "WBM" in query:
+                result = db_products.delete_one({"WBM_P_ID": query})
+                if result.deleted_count > 0:
+                    flash(f"🗑️ Product with ID {query} deleted.")
+                else:
+                    flash("❌ Product ID not found.", "error")
+                    
             # যদি ইনপুটটি ২৪ ক্যারেক্টারের হয় (মানে এটি একটি MongoDB Object ID)
-            if len(query) == 24 and all(c in '0123456789abcdefABCDEF' for c in query):
+            elif len(query) == 24 and all(c in '0123456789abcdefABCDEF' for c in query):
                 result = db_products.delete_one({"_id": ObjectId(query)})
                 if result.deleted_count > 0:
                     flash(f"🗑️ Product with ID {query} deleted.")
                 else:
                     flash("❌ Product ID not found.", "error")
+                    
             else:
                 # যদি ইনপুটটি নাম হয়, তবে নামের সাথে মিলিয়ে ডিলিট করবে (Case Insensitive)
                 result = db_products.delete_many({"name": {"$regex": f"^{query}$", "$options": "i"}})
@@ -110,4 +123,4 @@ def delete_product_global():
             flash(f"❌ Error deleting product: {str(e)}", "error")
             
     return redirect('/owner-dashboard')
-            
+    
