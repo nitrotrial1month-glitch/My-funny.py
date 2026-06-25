@@ -18,16 +18,14 @@ def my_orders():
     user_orders = []
     
     if col is not None:
-        user_id = user.get('id')
-        username = user.get('username')
+        # 🔴 UPDATE: সেশন থেকে WBM_U_ID নেওয়া হচ্ছে
+        WBM_U_ID = str(user.get('id')) 
         
-        # 🔴 স্মার্ট কোয়েরি: ডেটাবেসে যেভাবেই সেভ হোক না কেন, এটি অর্ডার খুঁজে আনবেই!
+        # 🔴 স্মার্ট কোয়েরি: এখন যেহেতু ডাটাবেস ফ্রেশ, তাই সরাসরি WBM_U_ID দিয়ে খুঁজবে
         query = {
             "$or": [
-                {"user_id": user_id},          # ইনটেজার আইডি
-                {"user_id": str(user_id)},     # স্ট্রিং আইডি
-                {"discord_id": user_id},       # ডিসকর্ড আইডি
-                {"username": username}         # অথবা ইউজারনেম
+                {"user_id": WBM_U_ID},       # Checkout.py সাধারণত user_id ফিল্ডে সেভ করে
+                {"WBM_U_ID": WBM_U_ID}       # সেফটির জন্য ডাইরেক্ট WBM_U_ID ফিল্ডও চেক করা হলো
             ]
         }
         # নতুন অর্ডারগুলো একদম উপরে দেখানোর জন্য sort করা হলো
@@ -47,9 +45,13 @@ def cancel_order(order_id):
     col = Database.get_collection("orders")
     if col is not None:
         try:
-            # সিকিউরিটি: শুধুমাত্র নিজের অর্ডার ক্যানসেল করা যাবে
+            # 🔴 UPDATE: WBM_U_ID ব্যবহার করে সিকিউরিটি চেক
+            WBM_U_ID = str(user.get('id'))
             col.update_one(
-                {"_id": ObjectId(order_id), "$or": [{"user_id": user.get('id')}, {"user_id": str(user.get('id'))}, {"username": user.get('username')}]}, 
+                {
+                    "_id": ObjectId(order_id), 
+                    "$or": [{"user_id": WBM_U_ID}, {"WBM_U_ID": WBM_U_ID}]
+                }, 
                 {"$set": {"status": "Cancelled"}}
             )
         except Exception as e:
@@ -69,8 +71,13 @@ def return_order(order_id):
     col = Database.get_collection("orders")
     if col is not None:
         try:
+            # 🔴 UPDATE: WBM_U_ID ব্যবহার করে সিকিউরিটি চেক
+            WBM_U_ID = str(user.get('id'))
             col.update_one(
-                {"_id": ObjectId(order_id), "$or": [{"user_id": user.get('id')}, {"user_id": str(user.get('id'))}, {"username": user.get('username')}]}, 
+                {
+                    "_id": ObjectId(order_id), 
+                    "$or": [{"user_id": WBM_U_ID}, {"WBM_U_ID": WBM_U_ID}]
+                }, 
                 {"$set": {"status": "Return Requested"}}
             )
         except Exception as e:
@@ -92,10 +99,11 @@ def order_details(order_id):
     
     if col is not None:
         try:
-            # আইডি দিয়ে অর্ডার ডিটেইলস খুঁজে বের করা
+            # 🔴 UPDATE: WBM_U_ID ব্যবহার করে আইডি দিয়ে অর্ডার ডিটেইলস খুঁজে বের করা
+            WBM_U_ID = str(user.get('id'))
             order = col.find_one({
                 "_id": ObjectId(order_id), 
-                "$or": [{"user_id": user.get('id')}, {"user_id": str(user.get('id'))}, {"username": user.get('username')}]
+                "$or": [{"user_id": WBM_U_ID}, {"WBM_U_ID": WBM_U_ID}]
             })
         except Exception as e:
             print(f"Fetch Details Database Error: {e}")
