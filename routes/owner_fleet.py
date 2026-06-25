@@ -16,12 +16,13 @@ def owner_fleet():
     
     return render_template('owner_fleet.html', current_user=user, fleet=delivery_boys)
 
-@fleet_bp.route('/owner/remove-delivery/<user_id>', methods=['POST'])
+# 🔴 UPDATE: user_id বা discord_id এর জায়গায় WBM_U_ID
+@fleet_bp.route('/owner/remove-delivery/<WBM_U_ID>', methods=['POST'])
 @role_required('owner')
-def remove_delivery(user_id):
+def remove_delivery(WBM_U_ID):
     db_users = Database.get_collection("users")
     if db_users is not None:
-        # ডেলিভারি বয়কে সরিয়ে সাধারণ ইউজার বানানো হচ্ছে
-        db_users.update_one({"discord_id": user_id}, {"$set": {"role": "user"}})
+        # 🔴 UPDATE: WBM_U_ID ধরে ডেলিভারি বয়কে সরিয়ে সাধারণ ইউজার বানানো হচ্ছে
+        db_users.update_one({"WBM_U_ID": WBM_U_ID}, {"$set": {"role": "user"}})
     return redirect('/owner/fleet')
-  
+    
