@@ -19,12 +19,11 @@ def seller_ledger():
     col_users = Database.get_collection("users")
     col_orders = Database.get_collection("orders")
     
-    # ডেটাবেস থেকে আইডি বা ইমেইল দিয়ে সেলারকে খোঁজা
+    # 🔴 UPDATE: ডেটাবেস থেকে WBM_U_ID বা ইমেইল দিয়ে সেলারকে খোঁজা
     seller = col_users.find_one({
         "$or": [
             {"email": query},
-            {"discord_id": query},
-            {"inwear_id": query}
+            {"WBM_U_ID": query}
         ],
         "role": "seller"
     })
@@ -34,7 +33,8 @@ def seller_ledger():
         flash("Seller not found or they are not an active seller.")
         return redirect('/owner-dashboard')
 
-    seller_id = seller.get('discord_id')
+    # 🔴 UPDATE: WBM_U_ID নেওয়া হলো
+    seller_id = seller.get('WBM_U_ID')
     
     # ওই নির্দিষ্ট সেলারের সব অর্ডারগুলো বের করা
     seller_orders = list(col_orders.find({"seller_id": str(seller_id)}))
