@@ -46,7 +46,7 @@ def send_verification_to_discord(product_data, WBM_P_ID):
 # 👕 প্রোডাক্ট পেজ এবং সেলার আপলোড/এডিট রাউট
 # ==========================================================
 
-# ২. প্রোডাক্টের ডিটেইলস পেজ (🔴 UPDATED: সেলার পিনকোড পাঠানো হচ্ছে ডেলিভারি ক্যালকুলেশনের জন্য)
+# ২. প্রোডাক্টের ডিটেইলস পেজ
 @products_bp.route('/product/<WBM_P_ID>')
 def product_details(WBM_P_ID):
     col = Database.get_collection("products")
@@ -58,9 +58,9 @@ def product_details(WBM_P_ID):
     
     if not product: return "Product not found!", 404
     
-    # 🔴 সেলারের পিনকোড খোঁজা হচ্ছে (প্রোডাক্ট পেজে ডেলিভারি চার্জ দেখানোর জন্য)
+    # 🔴 FIX: db_users is not None ব্যবহার করা হয়েছে
     seller_id = str(product.get('seller_id', ''))
-    seller_info = db_users.find_one({"WBM_U_ID": seller_id}) if seller_id and db_users else None
+    seller_info = db_users.find_one({"WBM_U_ID": seller_id}) if seller_id and db_users is not None else None
     
     if seller_info and seller_info.get('pincode'):
         product['seller_pincode'] = seller_info.get('pincode')
@@ -132,11 +132,11 @@ def upload_product():
 
     main_image = image_paths[0] if len(image_paths) > 0 else ""
 
-    # 🔴 NEW: Generate Product ID
+    # Generate Product ID
     new_wbm_pid = f"{random.randint(100000, 999999)}WBM{random.randint(1000, 9999)}"
 
     product_data = {
-        "WBM_P_ID": new_wbm_pid,          # 🔴 Add to DB
+        "WBM_P_ID": new_wbm_pid,
         "name": name,
         "description": description,
         "full_details": details,
@@ -154,13 +154,13 @@ def upload_product():
             "replace_eligible": can_replace
         },
         "status": "Pending",
-        "seller_id": str(user.get('id'))  # This matches WBM_U_ID
+        "seller_id": str(user.get('id'))
     }
     
     inserted_id = Database.add_product_from_dict(product_data)
     
     if inserted_id:
-        send_verification_to_discord(product_data, new_wbm_pid) # 🔴 Pass new ID
+        send_verification_to_discord(product_data, new_wbm_pid)
         
     return redirect('/seller-dashboard')
 
