@@ -315,8 +315,8 @@
         </div>
 
     </form>
-
-    <script>
+    
+     <script>
         var backendData = document.getElementById('backend-data');
         var sellerPincode = backendData.getAttribute('data-seller-pin') || "713128";
         var hasAddresses = backendData.getAttribute('data-has-address') === "true";
@@ -324,20 +324,17 @@
         var upiId = "9046348427@fam"; 
 
         var currentStep = 1;
-        var deliveryCalculated = false;
-        var currentDeliveryCharge = 50; 
+        var currentDeliveryCharge = 0; // 🔴 এখন বাই ডিফল্ট কোনো চার্জ চাপানো থাকবে না
         var platformFee = 9;
 
         window.onload = function() {
             updatePricesDynamic(); 
+            // ব্যাকগ্রাউন্ডে সাইলেন্টলি চেক করবে, কাস্টমারকে ডিস্টার্ব করবে না
             if (hasAddresses && defaultPin.length === 6) {
-                calculateDelivery(defaultPin);
-            } else {
-                deliveryCalculated = true; 
+                calculateDeliverySilent(defaultPin);
             }
         };
 
-        // QTY Change & Dynamic Pricing
         function updatePricesDynamic() {
             var totalItemPrice = 0;
             var totalItemsCount = 0;
@@ -367,12 +364,35 @@
             if(document.getElementById('savings-display')) document.getElementById('savings-display').innerText = "You will save ₹" + savings.toFixed(0) + " on this order";
             if(document.getElementById('frontend_total_input')) document.getElementById('frontend_total_input').value = finalAmount.toFixed(0);
 
-            // Update All UPI Links dynamically
             var upiLink = "upi://pay?pa=" + upiId + "&pn=Wear%20By%20Me&am=" + finalAmount.toFixed(0) + "&cu=INR";
             document.querySelectorAll('.app-btn').forEach(function(btn) { btn.href = upiLink; });
         }
 
-        // --- Address UI ---
+        // 🔴 একদম সাইলেন্ট ক্যালকুলেশন (কোনো লোডিং বা এরর দেখাবে না)
+        function calculateDeliverySilent(userPincode) {
+            if(!userPincode || userPincode.length !== 6) return;
+            
+            fetch('/calculate_delivery', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pincode: userPincode, seller_pincode: sellerPincode })
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                currentDeliveryCharge = data.charge || 0;
+                if (document.getElementById('delivery-charge-display')) {
+                    var disp = document.getElementById('delivery-charge-display');
+                    disp.innerText = currentDeliveryCharge === 0 ? "FREE" : "₹" + currentDeliveryCharge;
+                    disp.className = currentDeliveryCharge === 0 ? "green-text" : "";
+                }
+                updatePricesDynamic();
+            })
+            .catch(function(err) {
+                console.log("Delivery calc failed silently.");
+            });
+        }
+
+        // Address UI Functions
         function showAddressList() {
             if(document.getElementById('all-compact-views')) document.getElementById('all-compact-views').style.display = "none";
             if(document.getElementById('address-list-view')) document.getElementById('address-list-view').style.display = "block";
@@ -389,7 +409,7 @@
             document.getElementById('all-compact-views').style.display = "block";
             document.getElementById('compact-view-' + index).style.display = "block";
 
-            if (pincode && pincode.length === 6) calculateDelivery(pincode);
+            if (pincode && pincode.length === 6) calculateDeliverySilent(pincode);
         }
 
         function showManualForm() {
@@ -397,10 +417,8 @@
             if(document.getElementById('all-compact-views')) document.getElementById('all-compact-views').style.display = "none";
             if(document.getElementById('manual-form-view')) document.getElementById('manual-form-view').style.display = "block";
             if(document.getElementById('newAddrRadio')) document.getElementById('newAddrRadio').checked = true;
-            deliveryCalculated = false;
         }
 
-        // Auto Detect Location
         function autoDetectLocation() {
             var btn = document.getElementById('loc-btn');
             if(btn) btn.innerHTML = "Locating... Please wait";
@@ -420,13 +438,13 @@
                         if(document.getElementById('newPincode')) document.getElementById('newPincode').value = pin;
                         
                         if(btn) btn.innerHTML = "📍 Use my current location";
-                        if(pin && pin.length === 6) calculateDelivery(pin);
+                        if(pin && pin.length === 6) calculateDeliverySilent(pin);
                     }).catch(function(err) {
-                        alert("Could not load address automatically. Please enter manually.");
+                        alert("Could not load automatically. Please enter manually.");
                         if(btn) btn.innerHTML = "📍 Use my current location";
                     });
                 }, function(error) {
-                    alert("Location access denied or unavailable. Please fill manually.");
+                    alert("Location access denied. Please fill manually.");
                     if(btn) btn.innerHTML = "📍 Use my current location";
                 }, { timeout: 8000 });
             } else {
@@ -434,39 +452,6 @@
             }
         }
 
-        // Delivery Calc
-        function calculateDelivery(userPincode) {
-            if(!userPincode || userPincode.length !== 6) return;
-            if(document.getElementById('delivery-charge-display')) document.getElementById('delivery-charge-display').innerText = "Calculating...";
-            
-            fetch('/calculate_delivery', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ pincode: userPincode, seller_pincode: sellerPincode })
-            })
-            .then(function(res) { return res.json(); })
-            .then(function(data) {
-                currentDeliveryCharge = data.charge || 0;
-                if (document.getElementById('delivery-charge-display')) {
-                    var disp = document.getElementById('delivery-charge-display');
-                    disp.innerText = currentDeliveryCharge === 0 ? "FREE" : "₹" + currentDeliveryCharge;
-                    disp.className = currentDeliveryCharge === 0 ? "green-text" : "";
-                }
-                updatePricesDynamic();
-                deliveryCalculated = true;
-            })
-            .catch(function(err) {
-                currentDeliveryCharge = 50; 
-                if(document.getElementById('delivery-charge-display')) {
-                    document.getElementById('delivery-charge-display').innerText = "₹50";
-                    document.getElementById('delivery-charge-display').className = "";
-                }
-                updatePricesDynamic();
-                deliveryCalculated = true;
-            });
-        }
-
-        // Payment Option
         function selectPaymentMode(mode) {
             if(mode === 'Card') return; 
             document.querySelectorAll('.payment-option').forEach(function(opt) { opt.classList.remove('active'); });
@@ -484,7 +469,6 @@
             }
         }
 
-        // Copy UPI ID
         function copyStoreUPI() {
             var copyText = document.getElementById("store-upi-id");
             copyText.select();
@@ -493,7 +477,7 @@
             alert("UPI ID Copied: " + copyText.value + "\nNow paste it in any UPI app to pay.");
         }
 
-        // Stepper Flow
+        // 🔴 FIX: একদম নন-ব্লকিং ফ্লো! কোনো অ্যালার্ট দিয়ে আর আটকাবে না।
         function nextStep() {
             if (currentStep === 1) {
                 var isNewForm = document.getElementById('newAddrRadio') ? document.getElementById('newAddrRadio').checked : false;
@@ -508,10 +492,7 @@
                         return;
                     }
                 }
-                if (!deliveryCalculated) {
-                    alert("Please wait for delivery calculation...");
-                    return;
-                }
+                // 🔴 "Please wait for delivery calculation" অ্যালার্ট পুরোপুরি মুছে ফেলা হয়েছে!
                 currentStep = 2;
             } 
             else if (currentStep === 2) {
