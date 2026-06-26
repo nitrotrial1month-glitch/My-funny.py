@@ -220,7 +220,7 @@
     </form>
 
     <script>
-        // 1. Initial Data Setup (Safe from HTML breaking syntax)
+        // 🔴 সম্পূর্ণ সুরক্ষিত জাভাস্ক্রিপ্ট ব্লক (কোনো কিছু ক্র্যাশ করবে না)
         var basePrice = parseFloat("{{ total_price | default(0) }}");
         var sellerPincode = "{% if items %}{{ items[0].seller_pincode | default('713128') }}{% else %}713128{% endif %}";
         var upiId = "9046348427@fam"; 
@@ -231,60 +231,66 @@
         var deliveryCalculated = false;
         var finalAmountForUPI = basePrice;
 
-        // 2. On Load Execution
+        // পেজ লোড হওয়ার সাথে সাথে প্রথম ডেলিভারি ক্যালকুলেশন রান করবে
         window.onload = function() {
-            if (hasAddresses && defaultPin && defaultPin.length === 6) {
-                calculateDelivery(defaultPin);
-            }
+            try {
+                if (hasAddresses && defaultPin && defaultPin.length === 6) {
+                    calculateDelivery(defaultPin);
+                } else {
+                    deliveryCalculated = true; // সেভ অ্যাড্রেস না থাকলে ফর্ম ফিলাপের পর হিসাব হবে
+                }
+            } catch(e) { console.error(e); }
         };
 
-        // 3. Address UI Functions
         function showAddressList() {
-            if(document.getElementById('address-compact-view')) document.getElementById('address-compact-view').style.display = "none";
-            if(document.getElementById('address-list-view')) document.getElementById('address-list-view').style.display = "block";
-            if(document.getElementById('add-options-view')) document.getElementById('add-options-view').style.display = "none";
-            if(document.getElementById('manual-form-view')) document.getElementById('manual-form-view').style.display = "none";
+            try {
+                document.getElementById('address-compact-view').style.display = "none";
+                document.getElementById('address-list-view').style.display = "block";
+                if(document.getElementById('add-options-view')) document.getElementById('add-options-view').style.display = "none";
+                document.getElementById('manual-form-view').style.display = "none";
+            } catch(e) { console.error(e); }
         }
 
         function showAddOptions() {
-            if(document.getElementById('address-list-view')) document.getElementById('address-list-view').style.display = "none";
-            if(document.getElementById('add-options-view')) document.getElementById('add-options-view').style.display = "block";
-            if(document.getElementById('manual-form-view')) document.getElementById('manual-form-view').style.display = "none";
+            try {
+                document.getElementById('address-list-view').style.display = "none";
+                document.getElementById('add-options-view').style.display = "block";
+                document.getElementById('manual-form-view').style.display = "none";
+            } catch(e) { console.error(e); }
         }
 
         function showManualForm() {
-            if(document.getElementById('add-options-view')) document.getElementById('add-options-view').style.display = "none";
-            if(document.getElementById('manual-form-view')) document.getElementById('manual-form-view').style.display = "block";
-            if(document.getElementById('newAddrRadio')) document.getElementById('newAddrRadio').checked = true;
-            deliveryCalculated = false;
+            try {
+                if(document.getElementById('add-options-view')) document.getElementById('add-options-view').style.display = "none";
+                document.getElementById('manual-form-view').style.display = "block";
+                if(document.getElementById('newAddrRadio')) document.getElementById('newAddrRadio').checked = true;
+                deliveryCalculated = false;
+            } catch(e) { console.error(e); }
         }
 
         function selectSavedAddress(element) {
-            document.querySelectorAll('.address-box').forEach(function(box) { box.classList.remove('selected'); });
-            element.classList.add('selected');
-            if(element.querySelector('input')) element.querySelector('input').checked = true;
-            
-            var pin = element.getAttribute('data-pincode') || "";
-            var name = element.getAttribute('data-name') || "";
-            var address = element.getAttribute('data-address') || "";
-            var phone = element.getAttribute('data-phone') || "";
-            
-            var displayHtml = "<strong>" + name + "</strong><br>" + address + "<br><div style='margin-top: 5px; font-size: 13px; font-weight: bold; color: #555;'>PIN: " + pin + " | Ph: " + phone + "</div>";
-            if(document.getElementById('selected-address-display')) document.getElementById('selected-address-display').innerHTML = displayHtml;
-            
-            if(document.getElementById('address-list-view')) document.getElementById('address-list-view').style.display = "none";
-            if(document.getElementById('address-compact-view')) document.getElementById('address-compact-view').style.display = "block";
-            
-            if(pin.length === 6) {
-                calculateDelivery(pin);
-            }
+            try {
+                document.querySelectorAll('.address-box').forEach(function(box) { box.classList.remove('selected'); });
+                element.classList.add('selected');
+                if(element.querySelector('input')) element.querySelector('input').checked = true;
+                
+                var pin = element.getAttribute('data-pincode') || "";
+                var name = element.getAttribute('data-name') || "";
+                var address = element.getAttribute('data-address') || "";
+                var phone = element.getAttribute('data-phone') || "";
+                
+                var displayHtml = "<strong>" + name + "</strong><br>" + address + "<br><div style='margin-top: 5px; font-size: 13px; font-weight: bold; color: #555;'>PIN: " + pin + " | Ph: " + phone + "</div>";
+                if(document.getElementById('selected-address-display')) document.getElementById('selected-address-display').innerHTML = displayHtml;
+                
+                document.getElementById('address-list-view').style.display = "none";
+                document.getElementById('address-compact-view').style.display = "block";
+                
+                if(pin.length === 6) calculateDelivery(pin);
+            } catch(e) { console.error(e); }
         }
 
-        // 4. Auto Detect Location (Made more resilient)
+        // 📍 লোকেশন কোড সম্পূর্ণ আলাদা এবং সুরক্ষিত (ব্যর্থ হলেও বাটন আটকাবে না)
         function autoDetectLocation() {
-            var btn = document.getElementById('action-btn');
-            if(btn) btn.innerText = "Locating...";
-
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function(position) {
-        
+            try {
+                var btn = document.getElementById('action-btn');
+                if(btn) btn.inn
