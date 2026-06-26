@@ -63,6 +63,8 @@
 </head>
 <body>
 
+    {% set my_orders = orders | list if orders else [] %}
+
     <div class="flash-messages">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -93,17 +95,17 @@
     <div class="stats-card">
         <div class="stat-item">
             <p>Total Sales</p>
-            {% set total_sales = [0] %}
-            {% for order in orders %}
-                {% if order.status == 'Delivered' or order.status == 'Completed' or order.status == 'Completed (Cash Settled)' %}
-                    {% set _ = total_sales.append(total_sales.pop() + order.total_price|float) %}
+            {% set sales = namespace(total=0) %}
+            {% for order in my_orders %}
+                {% if order.status in ['Delivered', 'Completed', 'Completed (Cash Settled)'] %}
+                    {% set sales.total = sales.total + order.total_price|float %}
                 {% endif %}
             {% endfor %}
-            <h2>₹{{ total_sales[0] | round(2) }}</h2> 
+            <h2>₹{{ sales.total | round(2) }}</h2> 
         </div>
         <div class="stat-item">
             <p>Active Orders</p>
-            <h2 style="color: var(--blue);">{{ orders|length if orders else 0 }}</h2>
+            <h2 style="color: var(--blue);">{{ my_orders|length }}</h2>
         </div>
     </div>
 
@@ -113,8 +115,8 @@
     </div>
 
     <div class="container">
-        {% if orders %}
-            {% for order in orders %}
+        {% if my_orders %}
+            {% for order in my_orders %}
             <div class="order-card" style="{% if order.status != 'Confirmed' %} border-left-color: var(--blue); {% endif %}">
                 <div class="order-meta">
                     <span style="font-weight: 800; font-size: 14px;">#{{ order._id|string|truncate(8, True, '')|upper }}</span>
@@ -124,7 +126,11 @@
                 </div>
                 
                 <h4 style="margin: 5px 0; font-size: 15px; color: var(--primary);">🛍️ Product: {{ order.get('product_name', 'Unknown Item') }}</h4>
-                <p style="margin: 0 0 8px 0; font-size: 12px; color: #555;">📏 Size: <strong>{{ order.get('size', 'Regular') }}</strong></p>
+                
+                <p style="margin: 0 0 8px 0; font-size: 12px; color: #555;">
+                    📏 Size: <strong>{{ order.get('size', 'Regular') }}</strong> | 
+                    📦 Qty: <strong>{{ order.get('quantity', 1) }}</strong>
+                </p>
                 
                 <div style="background: #f8f9fa; padding: 10px; border-radius: 8px; margin: 8px 0; border: 1px solid #eee;">
                     <p style="margin: 0; font-size: 12px; color: #333; font-weight: bold;">👤 Buyer: {{ order.get('name', 'Unknown Customer') }}</p>
@@ -135,7 +141,6 @@
                 <div class="math-box">
                     <p style="margin: 0 0 5px 0; font-weight: bold; color: var(--dark);">💰 Payout Breakdown</p>
                     <div class="math-row"><span>Selling Price:</span> <span>₹{{ order.get('total_price', 0) }}</span></div>
-                    <!-- 🔴 UPDATE: Brand Name update -->
                     <div class="math-row"><span>Wear By Me Fee (10%):</span> <span style="color: var(--primary);">- ₹{{ (order.get('total_price', 0)|float * 0.10)|round(2) }}</span></div>
                     <div class="math-row"><span>Delivery Fee:</span> <span style="color: var(--primary);">- ₹40.00</span></div>
                     <div class="math-total">
@@ -178,7 +183,6 @@
                 <img src="{% if p.image and 'http' in p.image %}{{ p.image }}{% else %}/{{ p.image }}{% endif %}" onerror="this.src='https://via.placeholder.com/50';">
                 <div class="product-info">
                     <h4>{{ p.name }}</h4>
-                    <!-- 🔴 UPDATE: Added WBM_P_ID display -->
                     {% if p.WBM_P_ID %}
                         <p style="margin: 2px 0 0; font-size: 10px; color: #888;">ID: {{ p.WBM_P_ID }}</p>
                     {% endif %}
@@ -210,7 +214,7 @@
             let messages = document.querySelectorAll('.flash-msg');
             messages.forEach(function(msg) {
                 msg.style.opacity = '0';
-                setTimeout(() => msg.style.display = 'none', 400); // Wait for fade out
+                setTimeout(() => msg.style.display = 'none', 400); 
             });
         }, 3000);
     </script>
