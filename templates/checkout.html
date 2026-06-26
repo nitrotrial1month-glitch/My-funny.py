@@ -151,6 +151,8 @@
 
             </div>
         </div>
+        <!-- PART 2 STARTS HERE -->
+        <!-- ================= STEP 2: ORDER SUMMARY ================= -->
         <div id="step-summary" class="section">
             <div class="card">
                 <div class="card-header" style="border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 15px;">
@@ -160,7 +162,9 @@
                 <div id="product-list">
                     {% for item in items %}
                     <div class="product-row" data-base-price="{{ item.price }}">
-                        <img src="{{ '/' + item.image if item.image and not item.image.startswith('/') else item.image }}" class="product-img" onerror="this.src='https://via.placeholder.com/70x90?text=No+Image';">
+                        
+                        <!-- 🔴 UPDATE: সেলার ড্যাশবোর্ডের মতো সেম ইমেজ লজিক -->
+                        <img src="{% if item.image and 'http' in item.image %}{{ item.image }}{% else %}/{{ item.image }}{% endif %}" class="product-img" onerror="this.src='https://via.placeholder.com/70x90?text=No+Image';">
                         
                         <div style="flex-grow: 1;">
                             <div style="font-size:14px; font-weight: 500; color: #212121; margin-bottom: 4px;">{{ item.name|truncate(40, True) }}</div>
@@ -177,6 +181,7 @@
                                 <span style="font-size:16px; font-weight: 500; color: var(--text);">₹{{ item.price }}</span>
                             </div>
                             
+                            <!-- QTY Selector -->
                             <div class="qty-box">
                                 <span>Qty:</span>
                                 <select class="qty-select" name="item_qty_{{ loop.index0 }}" onchange="updatePricesDynamic()">
@@ -221,6 +226,7 @@
             </div>
         </div>
 
+        <!-- ================= STEP 3: PAYMENT ================= -->
         <div id="step-payment" class="section">
             <div class="card" style="background: #f4f8ff; border: 1px solid #d6e4ff; display: flex; justify-content: space-between; align-items: center;">
                 <div style="font-size: 14px; font-weight: 500;">Total Amount</div>
@@ -231,6 +237,7 @@
 
             <div style="background: var(--surface); border-top: 1px solid #e0e0e0;">
                 
+                <!-- 1. ONLINE PAYMENT (ALL APPS + OTHER PHONE) -->
                 <div class="payment-option active" id="opt-online" onclick="selectPaymentMode('Online')">
                     <div class="payment-header">
                         <input type="radio" name="payment_method" value="Online" checked style="accent-color:var(--fk-blue); width: 16px; height: 16px;"> 
@@ -241,6 +248,7 @@
                     </div>
                     <div class="payment-body">
                         
+                        <!-- Option A: Pay on this phone -->
                         <div style="font-weight: 500; margin-bottom: 12px; color: #333;">Option 1: Pay using App on this phone</div>
                         <div class="app-btn-grid">
                             <a href="#" id="gpay-link" class="app-btn"><span style="color:#ea4335; font-size:16px;">G</span>Pay</a>
@@ -250,6 +258,7 @@
                             <a href="#" id="amazon-link" class="app-btn" style="grid-column: span 2;"><span style="color:#ff9900; font-size:16px;">a</span> Amazon Pay</a>
                         </div>
                         
+                        <!-- Option B: Pay from another phone / Copy UPI -->
                         <div style="font-weight: 500; margin-top: 20px; margin-bottom: 10px; color: #333;">Option 2: Pay from another phone</div>
                         <div style="background: white; border: 1px solid #ddd; padding: 12px; border-radius: 4px;">
                             <p style="margin: 0 0 8px 0; font-size: 12px; color: #555;">Send <strong id="copy-amount-display">₹{{ total_price }}</strong> to our UPI ID:</p>
@@ -259,6 +268,7 @@
                             </div>
                         </div>
 
+                        <!-- UTR Confirmation Box -->
                         <div class="utr-box" style="margin-top: 20px;">
                             <div style="font-size: 12px; color: #555; line-height: 1.4;">⚠️ After payment is complete via any method above, please enter the <strong>12-digit UTR No.</strong> to confirm your order.</div>
                             <input type="text" name="utr_number" id="utr_input" class="utr-input" placeholder="Enter 12-digit UTR / Ref No." maxlength="12" pattern="\d{12}">
@@ -266,6 +276,7 @@
                     </div>
                 </div>
 
+                <!-- 2. CARD PAYMENT (Disabled Dummy) -->
                 <div class="payment-option" id="opt-card" onclick="selectPaymentMode('Card')">
                     <div class="payment-header">
                         <input type="radio" name="payment_method" value="Card" style="accent-color:var(--fk-blue); width: 16px; height: 16px;" disabled> 
@@ -276,6 +287,7 @@
                     </div>
                 </div>
 
+                <!-- 3. COD PAYMENT -->
                 <div class="payment-option" id="opt-cod" onclick="selectPaymentMode('COD')">
                     <div class="payment-header">
                         <input type="radio" name="payment_method" value="COD" style="accent-color:var(--fk-blue); width: 16px; height: 16px;"> 
@@ -292,6 +304,7 @@
 
         <div style="height: 20px;"></div>
 
+        <!-- ================= BOTTOM ACTION BAR ================= -->
         <div class="bottom-bar">
             <div>
                 <div style="font-size: 12px; color: #878787; font-weight: 500; text-decoration: line-through;" id="bottom-strikethrough">₹0</div>
@@ -324,7 +337,7 @@
             }
         };
 
-        // 🔴 QTY Change & Dynamic Pricing
+        // QTY Change & Dynamic Pricing
         function updatePricesDynamic() {
             var totalItemPrice = 0;
             var totalItemsCount = 0;
@@ -387,7 +400,7 @@
             deliveryCalculated = false;
         }
 
-        // 📍 Auto Detect Location
+        // Auto Detect Location
         function autoDetectLocation() {
             var btn = document.getElementById('loc-btn');
             if(btn) btn.innerHTML = "Locating... Please wait";
@@ -421,7 +434,7 @@
             }
         }
 
-        // 🚚 Delivery Calc
+        // Delivery Calc
         function calculateDelivery(userPincode) {
             if(!userPincode || userPincode.length !== 6) return;
             if(document.getElementById('delivery-charge-display')) document.getElementById('delivery-charge-display').innerText = "Calculating...";
@@ -453,7 +466,7 @@
             });
         }
 
-        // 💳 Payment Option
+        // Payment Option
         function selectPaymentMode(mode) {
             if(mode === 'Card') return; 
             document.querySelectorAll('.payment-option').forEach(function(opt) { opt.classList.remove('active'); });
@@ -471,7 +484,7 @@
             }
         }
 
-        // 📋 Copy UPI ID
+        // Copy UPI ID
         function copyStoreUPI() {
             var copyText = document.getElementById("store-upi-id");
             copyText.select();
@@ -480,7 +493,7 @@
             alert("UPI ID Copied: " + copyText.value + "\nNow paste it in any UPI app to pay.");
         }
 
-        // ➡️ Stepper Flow
+        // Stepper Flow
         function nextStep() {
             if (currentStep === 1) {
                 var isNewForm = document.getElementById('newAddrRadio') ? document.getElementById('newAddrRadio').checked : false;
