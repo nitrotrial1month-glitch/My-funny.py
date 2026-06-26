@@ -357,7 +357,8 @@ def saved_addresses():
         
         if name and phone and address and pincode:
             if is_default:
-                for add in addresses: add['is_default'] = False
+                for add in addresses:
+                    add['is_default'] = False
                     
             new_add = {
                 "id": str(uuid.uuid4()),
@@ -373,7 +374,6 @@ def saved_addresses():
         return redirect('/saved_addresses')
         
     return render_template('saved_addresses.html', addresses=addresses)
-
 
 @checkout_bp.route('/set_default_address/<int:index>', methods=['POST'])
 def set_default_address(index):
@@ -392,7 +392,6 @@ def set_default_address(index):
             db_users.update_one({"WBM_U_ID": str(user['id'])}, {"$set": {"addresses": addresses}})
             
     return redirect('/saved_addresses')
-
 
 # ==========================================================
 # 💳 অর্ডার সাকসেস রাউট
