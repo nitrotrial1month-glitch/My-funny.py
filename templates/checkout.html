@@ -6,64 +6,75 @@
     <title>Checkout | Wear By Me</title>
     <link rel="icon" type="image/png" href="/static/1000249582.png">
     <style>
-        :root { --primary: #cc0000; --bg: #f1f2f4; --surface: #ffffff; --text: #212121; --muted: #878787; --border: #e0e0e0; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 0; padding-bottom: 80px; }
+        :root { --fk-blue: #2874f0; --fk-yellow: #ffc200; --fk-green: #388e3c; --bg: #f1f3f6; --surface: #ffffff; --text: #212121; --muted: #878787; --border: #f0f0f0; }
+        body { font-family: Roboto, 'Segoe UI', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 0; padding-bottom: 90px; }
         
-        .header { background: var(--surface); padding: 15px; display: flex; align-items: center; gap: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
-        .back-btn { font-size: 20px; text-decoration: none; color: var(--text); font-weight: bold; }
-        .stepper { display: flex; justify-content: space-between; padding: 15px 20px; background: var(--surface); border-bottom: 1px solid var(--border); font-size: 12px; font-weight: bold; color: var(--muted); }
-        .step { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 33%; position: relative; }
-        .step-circle { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; background: var(--surface); z-index: 2; }
-        .step.active .step-circle { border-color: var(--primary); background: var(--primary); color: white; }
-        .step.active { color: var(--primary); }
-        .step:not(:last-child)::after { content: ''; position: absolute; top: 12px; left: 60%; width: 80%; height: 2px; background: var(--border); z-index: 1; }
-        .step.active:not(:last-child)::after { background: var(--primary); }
+        /* Flipkart Style Header & Stepper */
+        .header { background: var(--fk-blue); padding: 15px; display: flex; align-items: center; gap: 15px; color: white; position: sticky; top: 0; z-index: 100; }
+        .back-btn { font-size: 20px; text-decoration: none; color: white; font-weight: bold; }
+        .stepper { display: flex; justify-content: space-between; padding: 15px 30px; background: var(--surface); box-shadow: 0 2px 4px rgba(0,0,0,0.08); font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 10px;}
+        .step { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 33%; position: relative; }
+        .step-circle { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #e0e0e0; color: white; z-index: 2; font-size: 14px;}
+        .step.active .step-circle { background: var(--fk-blue); }
+        .step.active { color: var(--fk-blue); }
+        .step:not(:last-child)::after { content: ''; position: absolute; top: 12px; left: 50%; width: 100%; height: 2px; background: #e0e0e0; z-index: 1; }
+        .step.active:not(:last-child)::after { background: var(--fk-blue); }
 
-        .section { display: none; padding: 15px; animation: fadeIn 0.3s; }
+        .section { display: none; animation: fadeIn 0.3s; }
         .section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .card { background: var(--surface); border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .address-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .card-title { font-size: 16px; font-weight: bold; margin: 0;}
-        .change-btn { background: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; }
-        
-        .address-box { border: 1px solid var(--border); padding: 12px; border-radius: 6px; margin-bottom: 10px; display: flex; gap: 10px; align-items: flex-start; cursor: pointer; transition: 0.2s; }
-        .address-box.selected { border-color: var(--primary); background: #fff5f5; }
-        
-        .location-btn { width: 100%; background: #e6f6ec; color: #00a650; border: 1px solid #bbf7d0; padding: 12px; border-radius: 6px; font-weight: bold; font-size: 14px; margin-bottom: 10px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; }
-        .manual-btn { width: 100%; background: transparent; color: var(--primary); border: 1px dashed var(--primary); padding: 12px; border-radius: 6px; font-weight: bold; font-size: 14px; cursor: pointer; }
-        
-        .form-control { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 10px; box-sizing: border-box; font-family: inherit; outline: none; }
-        .form-control:focus { border-color: var(--primary); }
+        .card { background: var(--surface); padding: 15px; margin-bottom: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .card-title { font-size: 16px; font-weight: 500; color: var(--text); margin: 0;}
+        .change-btn { background: transparent; color: var(--fk-blue); border: 1px solid var(--border); padding: 6px 16px; border-radius: 4px; font-size: 13px; font-weight: 500; cursor: pointer; }
 
-        .product-row { display: flex; gap: 10px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0; }
-        .product-img { width: 60px; height: 80px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); }
-        .bill-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; color: #555; }
-        .bill-total { display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; border-top: 1px dashed #ccc; padding-top: 10px; margin-top: 5px; color: var(--text); }
+        /* Address UI */
+        .address-box { border: 1px solid var(--border); padding: 15px; border-radius: 4px; margin-bottom: 10px; display: flex; gap: 12px; align-items: flex-start; cursor: pointer; background: #fafafa; }
+        .address-box.selected { border-color: var(--fk-blue); background: #f4f8ff; }
+        .form-control { width: 100%; padding: 12px; border: 1px solid #d4d5d9; border-radius: 4px; margin-bottom: 12px; box-sizing: border-box; font-family: inherit; font-size: 14px; outline: none;}
+        .form-control:focus { border-color: var(--fk-blue); }
+
+        /* Custom Modal (Bottom Sheet) */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; opacity: 0; transition: 0.3s; }
+        .modal-overlay.show { display: block; opacity: 1; }
+        .bottom-sheet { position: fixed; bottom: -100%; left: 0; width: 100%; background: var(--surface); border-radius: 16px 16px 0 0; z-index: 1001; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); padding: 24px; box-sizing: border-box; box-shadow: 0 -4px 10px rgba(0,0,0,0.1); }
+        .bottom-sheet.open { bottom: 0; }
+        .sheet-btn { width: 100%; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 15px; margin-bottom: 12px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .btn-loc { background: var(--fk-blue); color: white; border: none; }
+        .btn-man { background: white; color: var(--fk-blue); border: 1px solid var(--fk-blue); }
+
+        /* Qty & Order Summary */
+        .product-row { display: flex; gap: 15px; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
+        .product-img { width: 70px; height: 90px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); }
+        .qty-box { display: flex; align-items: center; margin-top: 8px; border: 1px solid #ccc; width: fit-content; border-radius: 2px; overflow: hidden; }
+        .qty-box span { padding: 4px 10px; font-size: 13px; background: #f9f9f9; color: #333; }
+        .qty-select { border: none; padding: 4px 8px; font-size: 13px; outline: none; border-left: 1px solid #ccc; font-weight: bold; background: white; }
         
-        .payment-option { border: 1px solid var(--border); border-radius: 6px; margin-bottom: 10px; overflow: hidden; transition: 0.3s; }
-        .payment-header { padding: 15px; display: flex; align-items: center; gap: 10px; font-weight: bold; font-size: 14px; background: var(--surface); cursor: pointer; }
-        .payment-body { padding: 15px; background: #fcfcfc; border-top: 1px solid var(--border); display: none; font-size: 13px; color: var(--muted); }
+        .price-details-box { border-top: 1px dashed #e0e0e0; padding-top: 15px; }
+        .bill-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; color: #333; }
+        .bill-total { display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; border-top: 1px dashed #e0e0e0; padding-top: 15px; margin-top: 5px; color: var(--text); }
+        .green-text { color: var(--fk-green); font-weight: 500; }
+        .savings-tag { background: #e8f5e9; color: var(--fk-green); padding: 8px; text-align: center; border-radius: 4px; font-weight: bold; font-size: 13px; margin-top: 10px; }
+
+        /* Payment Accordion */
+        .payment-option { border: 1px solid var(--border); border-radius: 4px; margin-bottom: 0; border-bottom: none; }
+        .payment-option:last-child { border-bottom: 1px solid var(--border); }
+        .payment-header { padding: 16px; display: flex; align-items: center; gap: 12px; font-weight: 500; font-size: 14px; background: var(--surface); cursor: pointer; }
+        .payment-body { padding: 16px; background: #fafafa; border-top: 1px solid var(--border); display: none; font-size: 13px; color: var(--muted); }
         .payment-option.active .payment-body { display: block; }
-        .payment-option.active { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
-        
-        .upi-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 12px; border-radius: 6px; margin-bottom: 10px; font-weight: bold; text-decoration: none; font-size: 14px; border: 1px solid var(--border); background: white; color: var(--text); }
-        .upi-gpay { border-color: #ea4335; color: #ea4335; }
-        .upi-phonepe { border-color: #5f259f; color: #5f259f; }
-        .upi-paytm { border-color: #00b9f1; color: #00b9f1; }
-        
-        .utr-box { background: #fff8e1; border: 1px dashed #ffc107; padding: 10px; border-radius: 6px; margin-top: 15px; text-align: center; }
-        .utr-input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; text-align: center; letter-spacing: 2px; font-weight: bold; margin-top: 10px; box-sizing: border-box;}
+        .payment-option.active { background: #f4f8ff; border-left: 3px solid var(--fk-blue); }
 
-        .bottom-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--surface); padding: 10px 15px; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; z-index: 100; }
-        .btn-continue { background: var(--primary); color: white; padding: 12px 30px; border-radius: 6px; font-weight: bold; border: none; font-size: 16px; cursor: pointer; }
+        .utr-input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; text-align: center; letter-spacing: 2px; font-weight: bold; margin-top: 10px; box-sizing: border-box;}
+        
+        /* Bottom Bar */
+        .bottom-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--surface); padding: 12px 15px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; z-index: 100; border-top: 1px solid #eee; }
+        .btn-continue { background: #fb641b; color: white; padding: 12px 35px; border-radius: 2px; font-weight: bold; border: none; font-size: 15px; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div id="backend-data" 
-         data-price="{{ total_price }}" 
          data-seller-pin="{% if items %}{{ items[0].seller_pincode }}{% else %}713128{% endif %}"
          data-has-address="{% if saved_addresses %}true{% else %}false{% endif %}"
          data-default-pin="{{ user_default_pincode }}"
@@ -72,15 +83,16 @@
     <form action="/process_checkout" method="POST" id="checkoutForm">
         <input type="hidden" name="is_direct" value="{{ is_direct }}">
         {% if is_direct %}<input type="hidden" name="WBM_P_ID" value="{{ direct_product_id }}">{% endif %}
+        <input type="hidden" name="frontend_total" id="frontend_total_input" value="{{ total_price }}">
 
         <div class="header">
             <a href="javascript:history.back()" class="back-btn">←</a>
-            <h3 style="margin:0;">Checkout</h3>
+            <h3 style="margin:0; font-size: 18px; font-weight: 500;">Checkout</h3>
         </div>
 
         <div class="stepper">
             <div class="step active" id="indicator-address"><div class="step-circle">1</div>Address</div>
-            <div class="step" id="indicator-summary"><div class="step-circle">2</div>Summary</div>
+            <div class="step" id="indicator-summary"><div class="step-circle">2</div>Order Summary</div>
             <div class="step" id="indicator-payment"><div class="step-circle">3</div>Payment</div>
         </div>
 
@@ -88,18 +100,18 @@
             <div class="card">
                 
                 {% if saved_addresses %}
-                    
                     <div id="all-compact-views">
                         {% for add in saved_addresses %}
                         <div id="compact-view-{{ loop.index0 }}" style="display: {% if add.is_default %}block{% else %}none{% endif %};">
-                            <div class="address-header">
-                                <h3 class="card-title">Deliver to:</h3>
+                            <div class="card-header">
+                                <h3 class="card-title" style="color: #878787; font-size: 13px; text-transform: uppercase;">DELIVER TO:</h3>
                                 <button type="button" class="change-btn" onclick="showAddressList()">Change</button>
                             </div>
-                            <div style="font-size: 14px; color: #333; line-height: 1.5; padding: 12px; background: #fff5f5; border-radius: 6px; border: 1px solid #ffcccc;">
-                                <strong>{{ add.name }}</strong><br>
+                            <div style="font-size: 15px; color: #212121; line-height: 1.6;">
+                                <strong style="font-size: 16px;">{{ add.name }}</strong> <span style="background:#f0f0f0; padding:2px 6px; font-size:10px; border-radius:2px; margin-left:5px; color:#878787;">HOME</span><br>
                                 {{ add.address }}<br>
-                                <div style="margin-top: 5px; font-size: 13px; font-weight: bold; color: #555;">PIN: {{ add.pincode }} | Ph: {{ add.phone }}</div>
+                                <strong>{{ add.pincode }}</strong><br>
+                                {{ add.phone }}
                             </div>
                         </div>
                         {% endfor %}
@@ -109,337 +121,401 @@
                         <h3 class="card-title" style="margin-bottom: 15px;">Select Delivery Address</h3>
                         {% for add in saved_addresses %}
                         <label class="address-box {% if add.is_default %}selected{% endif %}" onclick="selectAddress('{{ loop.index0 }}', '{{ add.pincode }}', this)">
-                            <input type="radio" name="address_selection" value="{{ loop.index0 }}" style="accent-color: #cc0000;" {% if add.is_default %}checked{% endif %}>
+                            <input type="radio" name="address_selection" value="{{ loop.index0 }}" style="accent-color: var(--fk-blue); margin-top: 4px;" {% if add.is_default %}checked{% endif %}>
                             <div>
-                                <div style="font-weight:bold;">{{ add.name }}</div>
-                                <div style="font-size:13px; margin: 4px 0; color: #555;">{{ add.address }}</div>
-                                <div style="font-size:12px; font-weight:bold; color: #333;">PIN: {{ add.pincode }} | Ph: {{ add.phone }}</div>
+                                <div style="font-weight:500; font-size: 15px;">{{ add.name }}</div>
+                                <div style="font-size:14px; margin: 4px 0; color: #555;">{{ add.address }}</div>
+                                <div style="font-size:13px; font-weight:bold; color: #333;">{{ add.pincode }} | Ph: {{ add.phone }}</div>
                             </div>
                         </label>
                         {% endfor %}
-                        <button type="button" class="manual-btn" style="margin-top: 10px;" onclick="showAddOptions()">+ Add a New Address</button>
+                        <div style="border-top: 1px solid #f0f0f0; margin-top: 15px; padding-top: 15px;">
+                            <button type="button" style="width: 100%; background: white; color: var(--fk-blue); border: 1px solid var(--border); padding: 12px; font-weight: 500; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05);" onclick="openLocationModal()">
+                                <span style="font-size: 18px;">+</span> Add a new address
+                            </button>
+                        </div>
                     </div>
-
+                {% else %}
+                    <div id="manual-form-view" style="display:block;">
+                        <h3 class="card-title" style="margin-bottom: 15px;">Add Delivery Address</h3>
+                        <input type="radio" name="address_selection" value="new" id="newAddrRadio" style="display:none;" checked>
+                        <input type="text" id="newName" name="name" class="form-control" placeholder="Full Name (Required)">
+                        <input type="tel" id="newPhone" name="phone" class="form-control" placeholder="10-digit Phone Number" pattern="[0-9]{10}">
+                        <input type="text" id="newPincode" name="new_pincode" class="form-control" placeholder="6-digit Pincode" onkeyup="if(this.value.length === 6) calculateDelivery(this.value)">
+                        <textarea id="newAddress" name="address" class="form-control" rows="3" placeholder="House No., Building Name, Road, Area"></textarea>
+                        <div style="font-size: 12px; color: var(--fk-green); font-weight: bold; margin-top: 5px;">✓ This address will be saved securely.</div>
+                    </div>
                 {% endif %}
 
-                <div id="add-options-view" style="{% if saved_addresses %}display:none;{% else %}display:block;{% endif %} margin-top:10px;">
-                    <h3 class="card-title" style="margin-bottom: 15px;">Add Delivery Address</h3>
-                    <button type="button" class="location-btn" onclick="autoDetectLocation()">📍 Use my current location</button>
-                    <div style="text-align:center; color:#888; font-size:12px; margin-bottom:10px;">OR</div>
-                    <button type="button" class="manual-btn" onclick="showManualForm()">✍️ Add address manually</button>
-                </div>
-
                 <div id="manual-form-view" style="display:none; margin-top:15px; border-top: 1px dashed var(--border); padding-top: 15px;">
-                    <input type="radio" name="address_selection" value="new" id="newAddrRadio" style="display:none;" {% if not saved_addresses %}checked{% endif %}>
+                    <h3 class="card-title" style="margin-bottom: 15px;">Add New Address</h3>
+                    <input type="radio" name="address_selection" value="new" id="newAddrRadio" style="display:none;">
                     <input type="text" id="newName" name="name" class="form-control" placeholder="Full Name">
                     <input type="tel" id="newPhone" name="phone" class="form-control" placeholder="10-digit Phone Number" pattern="[0-9]{10}">
                     <input type="text" id="newPincode" name="new_pincode" class="form-control" placeholder="6-digit Pincode" onkeyup="if(this.value.length === 6) calculateDelivery(this.value)">
                     <textarea id="newAddress" name="address" class="form-control" rows="3" placeholder="House No., Building Name, Area, City"></textarea>
-                    <div style="font-size: 11px; color: #00a650; font-weight: bold;">✓ This address will be saved securely.</div>
-                </div>
-
-            </div>
-        </div>
-
-        <div id="step-summary" class="section">
-            <div class="card">
-                <h3 style="font-size: 14px; margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px;">Order Summary</h3>
-                {% for item in items %}
-                <div class="product-row">
-                    <img src="/{{ item.image }}" class="product-img" onerror="this.style.display='none'">
-                    <div>
-                        <div style="font-size:14px; font-weight: bold;">{{ item.name|truncate(35, True) }}</div>
-                        <div style="font-size:14px; font-weight: bold; margin-top: 4px; color: var(--primary);">₹{{ item.price }}</div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-
-            <div class="card" style="background: #fcfcfc;">
-                <div class="card-title">Price Details</div>
-                <div class="bill-row">
-                    <span>Items Total</span>
-                    <span id="items-price">₹{{ total_price }}</span>
-                </div>
-                <div class="bill-row">
-                    <span>Delivery Charge</span>
-                    <span id="delivery-charge" style="color: #cc0000; font-weight: bold;">Calculating...</span>
-                </div>
-                <div class="bill-total">
-                    <span>Total Payable</span>
-                    <span id="final-total" style="color: var(--primary);">₹{{ total_price }}</span>
                 </div>
             </div>
         </div>
 
-        <div id="step-payment" class="section">
-            <div class="card" style="background: #fff5f5; border: 1px solid #ffd5d5; display: flex; justify-content: space-between; align-items: center;">
-                <div style="font-size: 14px; font-weight: bold;">Total Amount</div>
-                <div style="font-size: 18px; font-weight: bold; color: var(--primary);" id="payment-total">₹{{ total_price }}</div>
+        <div class="modal-overlay" id="locModalOverlay" onclick="closeLocationModal()"></div>
+        <div class="bottom-sheet" id="locBottomSheet">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div style="width: 40px; height: 4px; background: #ddd; border-radius: 2px; margin: 0 auto 15px auto;"></div>
+                <div style="font-size: 24px; margin-bottom: 10px;">📍</div>
+                <h3 style="margin: 0 0 5px 0; font-size: 18px;">Where do you want us to deliver?</h3>
+                <p style="margin: 0; font-size: 13px; color: var(--muted);">This will help with the right map location</p>
             </div>
-            
-            <div style="font-size: 12px; color: #878787; text-align: right; margin-bottom: 10px;">🔒 100% Secure Payments</div>
-
-            <div class="payment-option active" id="opt-online" onclick="selectPaymentMode('Online')">
-                <div class="payment-header">
-                    <input type="radio" name="payment_method" value="Online" checked style="accent-color:#cc0000;"> 📱 Online Payment (UPI / Card)
-                </div>
-                <div class="payment-body">
-                    <div style="font-weight: bold; margin-bottom: 10px; color: #333;">Select Payment App:</div>
-                    
-                    <a href="#" id="gpay-link" class="upi-btn upi-gpay">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg" width="30"> Pay with Google Pay
-                    </a>
-                    <a href="#" id="phonepe-link" class="upi-btn upi-phonepe">
-                        <img src="https://download.logo.wine/logo/PhonePe/PhonePe-Logo.wine.png" width="40" style="margin:-10px 0;"> Pay with PhonePe
-                    </a>
-                    <a href="#" id="paytm-link" class="upi-btn upi-paytm">
-                        Pay with Paytm
-                    </a>
-                    
-                    <div class="utr-box">
-                        <div style="font-size: 12px; color: #555;">⚠️ After paying via UPI, please enter the 12-digit UTR / Ref No. below to confirm.</div>
-                        <input type="text" name="utr_number" id="utr_input" class="utr-input" placeholder="Enter 12-digit UTR" maxlength="12" pattern="\d{12}">
-                    </div>
-                </div>
-            </div>
-
-            <div class="payment-option" id="opt-cod" onclick="selectPaymentMode('COD')">
-                <div class="payment-header">
-                    <input type="radio" name="payment_method" value="COD" style="accent-color:#cc0000;"> 💵 Cash on Delivery (COD)
-                </div>
-                <div class="payment-body">Pay in cash when your order is delivered to your doorstep.</div>
-            </div>
+            <button type="button" class="sheet-btn btn-loc" onclick="autoDetectLocation()">
+                🎯 Use my current location
+            </button>
+            <button type="button" class="sheet-btn btn-man" onclick="showManualFormFromModal()">
+                ✍️ Add address manually
+            </button>
         </div>
 
-        <div class="bottom-bar">
-            <div>
-                <div style="font-size: 11px; color: #878787;">Total Payable</div>
-                <div style="font-weight:900; font-size:18px;" id="bottom-total">₹{{ total_price }}</div>
-            </div>
-            <button type="button" class="btn-continue" id="action-btn" onclick="nextStep()">Continue</button>
-        </div>
-
-    </form>
-
-    <script>
-        var backendData = document.getElementById('backend-data');
-        var basePrice = parseFloat(backendData.getAttribute('data-price')) || 0;
-        var sellerPincode = backendData.getAttribute('data-seller-pin') || "713128";
-        var hasAddresses = backendData.getAttribute('data-has-address') === "true";
-        var defaultPin = backendData.getAttribute('data-default-pin') || "";
-        var upiId = "9046348427@fam"; 
-
-        var currentStep = 1;
-        var deliveryCalculated = false;
-        var finalAmountForUPI = basePrice;
-
-        window.onload = function() {
-            if (hasAddresses && defaultPin.length === 6) {
-                calculateDelivery(defaultPin);
-            } else {
-                deliveryCalculated = true; 
-            }
-        };
-
-        function showAddressList() {
-            if(document.getElementById('all-compact-views')) document.getElementById('all-compact-views').style.display = "none";
-            if(document.getElementById('address-list-view')) document.getElementById('address-list-view').style.display = "block";
-            if(document.getElementById('add-options-view')) document.getElementById('add-options-view').style.display = "none";
-            if(document.getElementById('manual-form-view')) document.getElementById('manual-form-view').style.display = "none";
-        }
-
-        function showAddOptions() {
-            if(document.getElementById('address-list-view')) document.getElementById('address-list-view').style.display = "none";
-            if(document.getElementById('add-options-view')) document.getElementById('add-options-view').style.display = "block";
-            if(document.getElementById('manual-form-view')) document.getElementById('manual-form-view').style.display = "none";
-        }
-
-        function showManualForm() {
-            if(document.getElementById('add-options-view')) document.getElementById('add-options-view').style.display = "none";
-            if(document.getElementById('manual-form-view')) document.getElementById('manual-form-view').style.display = "block";
-            if(document.getElementById('newAddrRadio')) document.getElementById('newAddrRadio').checked = true;
-            deliveryCalculated = false;
-        }
-
-        // 🔴 New Smooth Selection Logic
-        function selectAddress(index, pincode, element) {
-            document.querySelectorAll('.address-box').forEach(function(box) { box.classList.remove('selected'); });
-            element.classList.add('selected');
-            element.querySelector('input').checked = true;
-
-            document.getElementById('address-list-view').style.display = "none";
-            document.querySelectorAll('[id^="compact-view-"]').forEach(function(view) { view.style.display = "none"; });
-            
-            document.getElementById('all-compact-views').style.display = "block";
-            document.getElementById('compact-view-' + index).style.display = "block";
-
-            if (pincode && pincode.length === 6) {
-                calculateDelivery(pincode);
-            }
-        }
-
-        // 📍 Safe Auto Detect Location
-        function autoDetectLocation() {
-            var btn = document.getElementById('action-btn');
-            if(btn) btn.innerText = "Locating...";
-
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function(position) {
-                    var lat = position.coords.latitude;
-                    var lon = position.coords.longitude;
-                    
-                    fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lon, {
-                        headers: { 'Accept-Language': 'en' }
-                    })
-                    .then(function(res) { return res.json(); })
-                    .then(function(data) {
-                        var addressStr = data.display_name || '';
-                        var pin = (data.address && data.address.postcode) ? data.address.postcode : '';
-                        
-                        if(document.getElementById('newAddress')) document.getElementById('newAddress').value = addressStr;
-                        if(document.getElementById('newPincode')) document.getElementById('newPincode').value = pin;
-                        
-                        showManualForm(); 
-                        if(btn) btn.innerText = "Continue";
-                        if(pin && pin.length === 6) calculateDelivery(pin);
-                    }).catch(function(err) {
-                        alert("Could not load address automatically. Please enter manually.");
-                        showManualForm();
-                        if(btn) btn.innerText = "Continue";
-                    });
-                }, function(error) {
-                    alert("Location access denied or unavailable. Please fill manually.");
-                    showManualForm();
-                    if(btn) btn.innerText = "Continue";
-                }, { timeout: 8000 });
-            } else {
-                alert("Location not supported by browser.");
-                showManualForm();
-                if(btn) btn.innerText = "Continue";
-            }
-        }
-
-        // 🚚 Delivery Calc
-        function calculateDelivery(userPincode) {
-            if(!userPincode || userPincode.length !== 6) return;
-            if(document.getElementById('delivery-charge')) document.getElementById('delivery-charge').innerText = "Calculating...";
-            
-            fetch('/calculate_delivery', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ pincode: userPincode, seller_pincode: sellerPincode })
-            })
-            .then(function(res) { return res.json(); })
-            .then(function(data) {
-                var dCharge = data.charge || 0;
-                finalAmountForUPI = basePrice + dCharge;
-
-                if (document.getElementById('delivery-charge')) {
-                    document.getElementById('delivery-charge').innerText = dCharge === 0 ? "FREE" : "₹" + dCharge;
-                }
-
-                if(document.getElementById('final-total')) document.getElementById('final-total').innerText = "₹" + finalAmountForUPI;
-                if(document.getElementById('payment-total')) document.getElementById('payment-total').innerText = "₹" + finalAmountForUPI;
-                if(document.getElementById('bottom-total')) document.getElementById('bottom-total').innerText = "₹" + finalAmountForUPI;
-                
-                var upiLink = "upi://pay?pa=" + upiId + "&pn=Wear%20By%20Me&am=" + finalAmountForUPI + "&cu=INR";
-                if(document.getElementById('gpay-link')) document.getElementById('gpay-link').href = upiLink;
-                if(document.getElementById('phonepe-link')) document.getElementById('phonepe-link').href = upiLink;
-                if(document.getElementById('paytm-link')) document.getElementById('paytm-link').href = upiLink;
-                
-                deliveryCalculated = true;
-            })
-            .catch(function(err) {
-                if(document.getElementById('delivery-charge')) document.getElementById('delivery-charge').innerText = "₹50 (Default)";
-                finalAmountForUPI = basePrice + 50;
-                if(document.getElementById('final-total')) document.getElementById('final-total').innerText = "₹" + finalAmountForUPI;
-                deliveryCalculated = true;
-            });
-        }
-
-        // 💳 Payment Option
-        function selectPaymentMode(mode) {
-            if(document.getElementById('opt-online')) document.getElementById('opt-online').classList.remove('active');
-            if(document.getElementById('opt-cod')) document.getElementById('opt-cod').classList.remove('active');
-            
-            if(mode === 'Online') {
-                if(document.getElementById('opt-online')) {
-                    document.getElementById('opt-online').classList.add('active');
-                    document.getElementById('opt-online').querySelector('input').checked = true;
-                }
-            } else {
-                if(document.getElementById('opt-cod')) {
-                    document.getElementById('opt-cod').classList.add('active');
-                    document.getElementById('opt-cod').querySelector('input').checked = true;
-                }
-            }
-        }
-
-        // ➡️ Stepper Flow
-        function nextStep() {
-            if (currentStep === 1) {
-                var isNewForm = document.getElementById('newAddrRadio') ? document.getElementById('newAddrRadio').checked : false;
-                
-                if (!hasAddresses || isNewForm) {
-                    var name = document.getElementById('newName') ? document.getElementById('newName').value : '';
-                    var phone = document.getElementById('newPhone') ? document.getElementById('newPhone').value : '';
-                    var pin = document.getElementById('newPincode') ? document.getElementById('newPincode').value : '';
-                    var addr = document.getElementById('newAddress') ? document.getElementById('newAddress').value : '';
-                    
-                    if(!name || phone.length !== 10 || pin.length !== 6 || !addr) {
-                        alert("Please fill all details correctly (10-digit Phone, 6-digit PIN).");
-                        return;
-                    }
-                }
-                if (!deliveryCalculated) {
-                    alert("Please wait for delivery calculation...");
-                    return;
-                }
-                currentStep = 2;
-            } 
-            else if (currentStep === 2) {
-                currentStep = 3;
-            }
-            else if (currentStep === 3) {
-                var isOnline = document.querySelector('input[name="payment_method"]:checked').value === "Online";
-                if(isOnline) {
-                    var utr = document.getElementById('utr_input') ? document.getElementById('utr_input').value : '';
-                    if(utr.length !== 12) {
-                        alert("Please enter a valid 12-digit UTR/Reference number from your UPI app.");
-                        return;
-                    }
-                }
-                if(document.getElementById('action-btn')) document.getElementById('action-btn').innerHTML = "Processing...";
-                document.getElementById('checkoutForm').submit();
-                return;
-            }
-            updateUI();
-        }
-
-        function updateUI() {
-            document.querySelectorAll('.section').forEach(function(sec) { sec.classList.remove('active'); });
-            document.querySelectorAll('.step').forEach(function(st) { st.classList.remove('active'); });
-
-            var btn = document.getElementById('action-btn');
-
-            if (currentStep === 1) {
-                if(document.getElementById('step-address')) document.getElementById('step-address').classList.add('active');
-                if(document.getElementById('indicator-address')) document.getElementById('indicator-address').classList.add('active');
-                if(btn) btn.innerText = "Continue";
-            } else if (currentStep === 2) {
-                if(document.getElementById('step-summary')) document.getElementById('step-summary').classList.add('active');
-                if(document.getElementById('indicator-address')) document.getElementById('indicator-address').classList.add('active');
-                if(document.getElementById('indicator-summary')) document.getElementById('indicator-summary').classList.add('active');
-                if(btn) btn.innerText = "Continue";
-            } else if (currentStep === 3) {
-                if(document.getElementById('step-payment')) document.getElementById('step-payment').classList.add('active');
-                if(document.getElementById('indicator-address')) document.getElementById('indicator-address').classList.add('active');
-                if(document.getElementById('indicator-summary')) document.getElementById('indicator-summary').classList.add('active');
-                if(document.getElementById('indicator-payment')) document.getElementById('indicator-payment').classList.add('active');
-                if(btn) btn.innerText = "Verify & Place Order";
-            }
-        }
-    </script>
+        `<div id="step-summary" class="section">
+<div class="card">
+<div class="card-header" style="border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 15px;">
+<h3 class="card-title">Order Summary</h3>
+</div>
+<div id="product-list">
+{% for item in items %}
+<div class="product-row" data-base-price="{{ item.price }}">
+<img src="/{{ item.image }}" class="product-img" onerror="this.style.display='none'">
+<div style="flex-grow: 1;">
+<div style="font-size:14px; font-weight: 500; color: #212121; margin-bottom: 4px;">{{ item.name|truncate(40, True) }}</div>
+<div style="font-size:12px; color: var(--muted); margin-bottom: 8px;">Size: {{ item.selected_size | default('Regular') }}</div>
+<div style="display: flex; align-items: center; gap: 5px; margin-bottom: 8px;">
+<span style="background: var(--fk-green); color: white; padding: 2px 5px; border-radius: 3px; font-size: 10px; font-weight: bold;">4.1 ★</span>
+<span style="font-size: 12px; color: var(--muted);">(2,143)</span>
+</div>
+<div style="display: flex; align-items: baseline; gap: 8px;">
+<span class="green-text" style="font-size: 13px;">↓65%</span>
+<span style="text-decoration: line-through; color: var(--muted); font-size: 13px;">₹{{ (item.price|float * 2.85)|int }}</span>
+<span style="font-size:16px; font-weight: 500; color: var(--text);">₹{{ item.price }}</span>
+</div>
+<div class="qty-box">
+<span>Qty:</span>
+<select class="qty-select" name="item_qty_{{ loop.index0 }}" onchange="updatePricesDynamic()">
+<option value="1">1</option>
+<option value="2">2</option>
+<option value="3">3</option>
+<option value="4">4</option>
+<option value="5">5</option>
+</select>
+</div>
+</div>
+</div>
+{% endfor %}
+</div>
+</div>
+<div class="card" style="padding: 0;">
+<div style="padding: 15px; border-bottom: 1px solid #f0f0f0;">
+<h3 class="card-title" style="color: #878787; font-size: 13px; text-transform: uppercase;">Price Details</h3>
+</div>
+<div style="padding: 15px;">
+<div class="bill-row">
+<span>Price (<span id="total-items-count">{{ items|length }}</span> items)</span>
+<span id="items-price-display">₹{{ total_price }}</span>
+</div>
+<div class="bill-row">
+<span>Platform Fee</span>
+<span>₹9</span>
+</div>
+<div class="bill-row">
+<span>Delivery Charges</span>
+<span id="delivery-charge-display" class="green-text">Calculating...</span>
+</div>
+<div class="bill-total">
+<span style="font-size: 16px;">Total Amount</span>
+<span id="final-total-display" style="font-size: 18px;">₹{{ total_price }}</span>
+</div>
+<div class="savings-tag" id="savings-display">
+You will save ₹0 on this order
+</div>
+</div>
+</div>
+</div>
+<div id="step-payment" class="section">
+<div class="card" style="background: #f4f8ff; border: 1px solid #d6e4ff; display: flex; justify-content: space-between; align-items: center;">
+<div style="font-size: 14px; font-weight: 500;">Total Amount</div>
+<div style="font-size: 18px; font-weight: bold; color: var(--fk-blue);" id="payment-total-display">₹{{ total_price }}</div>
+</div>
+<div style="font-size: 12px; color: #878787; text-align: right; margin-bottom: 10px; font-weight: 500;">🔒 100% Secure Payments</div>
+<div style="background: var(--surface); border-top: 1px solid #e0e0e0;">
+<div class="payment-option active" id="opt-online" onclick="selectPaymentMode('Online')">
+<div class="payment-header">
+<input type="radio" name="payment_method" value="Online" checked style="accent-color:var(--fk-blue); width: 16px; height: 16px;">
+<span style="display: flex; flex-direction: column;">
+<span>UPI (Online Payment)</span>
+<span style="font-size: 11px; color: var(--fk-green); font-weight: 400; margin-top: 2px;">Save upto ₹35 • 4 offers available</span>
+</span>
+</div>
+<div class="payment-body">
+<div style="font-weight: 500; margin-bottom: 12px; color: #333;">Pay by any UPI app:</div>
+<a href="#" id="gpay-link" class="upi-btn" style="border-color: #ea4335; color: #ea4335;">
+<img src="[https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg](https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg)" width="30"> Pay with Google Pay
+</a>
+<a href="#" id="phonepe-link" class="upi-btn" style="border-color: #5f259f; color: #5f259f;">
+<img src="[https://download.logo.wine/logo/PhonePe/PhonePe-Logo.wine.png](https://download.logo.wine/logo/PhonePe/PhonePe-Logo.wine.png)" width="40" style="margin:-10px 0;"> Pay with PhonePe
+</a>
+<div style="background: #fff9e6; border: 1px dashed #ffc200; padding: 12px; border-radius: 4px; margin-top: 15px; text-align: center;">
+<div style="font-size: 12px; color: #555; line-height: 1.4;">⚠️ After payment is complete in your app, please enter the <strong>12-digit UTR No.</strong> below to confirm.</div>
+<input type="text" name="utr_number" id="utr_input" class="utr-input" placeholder="Enter 12-digit UTR" maxlength="12" pattern="\d{12}">
+</div>
+</div>
+</div>
+<div class="payment-option" id="opt-card" onclick="selectPaymentMode('Card')">
+<div class="payment-header">
+<input type="radio" name="payment_method" value="Card" style="accent-color:var(--fk-blue); width: 16px; height: 16px;" disabled>
+<span style="display: flex; flex-direction: column; color: var(--muted);">
+<span>Credit / Debit / ATM Card</span>
+<span style="font-size: 11px; font-weight: 400; margin-top: 2px;">Temporarily Unavailable</span>
+</span>
+</div>
+</div>
+<div class="payment-option" id="opt-cod" onclick="selectPaymentMode('COD')">
+<div class="payment-header">
+<input type="radio" name="payment_method" value="COD" style="accent-color:var(--fk-blue); width: 16px; height: 16px;">
+<span>Cash on Delivery</span>
+</div>
+<div class="payment-body">
+<div style="background: #f9f9f9; padding: 12px; border-radius: 4px; font-size: 12px; color: #555; line-height: 1.5; border: 1px solid #eee;">
+Due to handling costs, a nominal fee of ₹10 will be charged for orders placed using this option. Avoid this fee by paying online now.
+</div>
+</div>
+</div>
+</div>
+</div>
+<div style="height: 20px;"></div> <div class="bottom-bar">
+<div>
+<div style="font-size: 12px; color: #878787; font-weight: 500; text-decoration: line-through;" id="bottom-strikethrough">₹0</div>
+<div style="font-weight:bold; font-size:18px; color: #212121;" id="bottom-total-display">₹{{ total_price }}</div>
+<div style="font-size: 11px; color: var(--fk-green); font-weight: bold; margin-top: 2px;">Free Delivery</div>
+</div>
+<button type="button" class="btn-continue" id="action-btn" onclick="nextStep()">Continue</button>
+</div>
+</form>
+<script>
+var backendData = document.getElementById('backend-data');
+var sellerPincode = backendData.getAttribute('data-seller-pin') || "713128";
+var hasAddresses = backendData.getAttribute('data-has-address') === "true";
+var defaultPin = backendData.getAttribute('data-default-pin') || "";
+var upiId = "9046348427@fam";
+var currentStep = 1;
+var deliveryCalculated = false;
+var currentDeliveryCharge = 50; // Default fallback
+var platformFee = 9;
+// On Load
+window.onload = function() {
+updatePricesDynamic(); // Initial calculation
+if (hasAddresses && defaultPin.length === 6) {
+calculateDelivery(defaultPin);
+} else {
+deliveryCalculated = true;
+}
+};
+// 🔴 QTY Change & Dynamic Pricing Logic
+function updatePricesDynamic() {
+var totalItemPrice = 0;
+var totalItemsCount = 0;
+var totalFakeMRP = 0;
+document.querySelectorAll('.product-row').forEach(function(row) {
+var basePrice = parseFloat(row.getAttribute('data-base-price')) || 0;
+var select = row.querySelector('.qty-select');
+var qty = select ? parseInt(select.value) : 1;
+totalItemPrice += (basePrice * qty);
+totalItemsCount += qty;
+totalFakeMRP += (basePrice * 2.85 * qty); // Flipkart style dummy MRP
+});
+var finalAmount = totalItemPrice + platformFee + currentDeliveryCharge;
+var savings = totalFakeMRP - totalItemPrice;
+// Update DOM Elements
+if(document.getElementById('total-items-count')) document.getElementById('total-items-count').innerText = totalItemsCount;
+if(document.getElementById('items-price-display')) document.getElementById('items-price-display').innerText = "₹" + totalItemPrice.toFixed(0);
+if(document.getElementById('final-total-display')) document.getElementById('final-total-display').innerText = "₹" + finalAmount.toFixed(0);
+if(document.getElementById('payment-total-display')) document.getElementById('payment-total-display').innerText = "₹" + finalAmount.toFixed(0);
+if(document.getElementById('bottom-total-display')) document.getElementById('bottom-total-display').innerText = "₹" + finalAmount.toFixed(0);
+if(document.getElementById('bottom-strikethrough')) document.getElementById('bottom-strikethrough').innerText = "₹" + totalFakeMRP.toFixed(0);
+if(document.getElementById('savings-display')) document.getElementById('savings-display').innerText = "You will save ₹" + savings.toFixed(0) + " on this order";
+// Update Backend Form Input
+if(document.getElementById('frontend_total_input')) document.getElementById('frontend_total_input').value = finalAmount.toFixed(0);
+// Update UPI Links
+var upiLink = "upi://pay?pa=" + upiId + "&pn=Wear%20By%20Me&am=" + finalAmount.toFixed(0) + "&cu=INR";
+if(document.getElementById('gpay-link')) document.getElementById('gpay-link').href = upiLink;
+if(document.getElementById('phonepe-link')) document.getElementById('phonepe-link').href = upiLink;
+}
+// --- Address UI ---
+function showAddressList() {
+if(document.getElementById('all-compact-views')) document.getElementById('all-compact-views').style.display = "none";
+if(document.getElementById('address-list-view')) document.getElementById('address-list-view').style.display = "block";
+if(document.getElementById('add-options-view')) document.getElementById('add-options-view').style.display = "none";
+if(document.getElementById('manual-form-view')) document.getElementById('manual-form-view').style.display = "none";
+}
+function selectAddress(index, pincode, element) {
+document.querySelectorAll('.address-box').forEach(function(box) { box.classList.remove('selected'); });
+element.classList.add('selected');
+element.querySelector('input').checked = true;
+document.getElementById('address-list-view').style.display = "none";
+document.querySelectorAll('[id^="compact-view-"]').forEach(function(view) { view.style.display = "none"; });
+document.getElementById('all-compact-views').style.display = "block";
+document.getElementById('compact-view-' + index).style.display = "block";
+if (pincode && pincode.length === 6) calculateDelivery(pincode);
+}
+// 🔴 Custom Modal Logic
+function openLocationModal() {
+document.getElementById('locModalOverlay').classList.add('show');
+document.getElementById('locBottomSheet').classList.add('open');
+}
+function closeLocationModal() {
+document.getElementById('locModalOverlay').classList.remove('show');
+document.getElementById('locBottomSheet').classList.remove('open');
+}
+function showAddOptions() { openLocationModal(); }
+function showManualFormFromModal() {
+closeLocationModal();
+setTimeout(function() {
+if(document.getElementById('address-list-view')) document.getElementById('address-list-view').style.display = "none";
+if(document.getElementById('all-compact-views')) document.getElementById('all-compact-views').style.display = "none";
+if(document.getElementById('manual-form-view')) document.getElementById('manual-form-view').style.display = "block";
+if(document.getElementById('newAddrRadio')) document.getElementById('newAddrRadio').checked = true;
+deliveryCalculated = false;
+}, 300);
+}
+function autoDetectLocation() {
+var btn = document.querySelector('.btn-loc');
+if(btn) btn.innerHTML = "Locating... Please wait";
+if (navigator.geolocation) {
+navigator.geolocation.getCurrentPosition(function(position) {
+var lat = position.coords.latitude;
+var lon = position.coords.longitude;
+fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lon, { headers: { 'Accept-Language': 'en' } })
+.then(function(res) { return res.json(); })
+.then(function(data) {
+var addressStr = data.display_name || '';
+var pin = (data.address && data.address.postcode) ? data.address.postcode : '';
+if(document.getElementById('newAddress')) document.getElementById('newAddress').value = addressStr;
+if(document.getElementById('newPincode')) document.getElementById('newPincode').value = pin;
+if(btn) btn.innerHTML = "🎯 Use my current location";
+showManualFormFromModal();
+if(pin && pin.length === 6) calculateDelivery(pin);
+}).catch(function(err) {
+alert("Could not load address automatically. Please enter manually.");
+if(btn) btn.innerHTML = "🎯 Use my current location";
+showManualFormFromModal();
+});
+}, function(error) {
+alert("Location access denied or unavailable. Please fill manually.");
+if(btn) btn.innerHTML = "🎯 Use my current location";
+showManualFormFromModal();
+}, { timeout: 8000 });
+} else {
+alert("Location not supported by browser.");
+showManualFormFromModal();
+}
+}
+function calculateDelivery(userPincode) {
+if(!userPincode || userPincode.length !== 6) return;
+if(document.getElementById('delivery-charge-display')) document.getElementById('delivery-charge-display').innerText = "Calculating...";
+fetch('/calculate_delivery', {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({ pincode: userPincode, seller_pincode: sellerPincode })
+})
+.then(function(res) { return res.json(); })
+.then(function(data) {
+currentDeliveryCharge = data.charge || 0;
+if (document.getElementById('delivery-charge-display')) {
+var disp = document.getElementById('delivery-charge-display');
+disp.innerText = currentDeliveryCharge === 0 ? "FREE" : "₹" + currentDeliveryCharge;
+disp.className = currentDeliveryCharge === 0 ? "green-text" : "";
+}
+updatePricesDynamic();
+deliveryCalculated = true;
+})
+.catch(function(err) {
+currentDeliveryCharge = 50; // Fallback
+if(document.getElementById('delivery-charge-display')) {
+document.getElementById('delivery-charge-display').innerText = "₹50";
+document.getElementById('delivery-charge-display').className = "";
+}
+updatePricesDynamic();
+deliveryCalculated = true;
+});
+}
+function selectPaymentMode(mode) {
+if(mode === 'Card') return; // Disabled
+document.querySelectorAll('.payment-option').forEach(function(opt) { opt.classList.remove('active'); });
+if(mode === 'Online') {
+if(document.getElementById('opt-online')) {
+document.getElementById('opt-online').classList.add('active');
+document.getElementById('opt-online').querySelector('input').checked = true;
+}
+} else {
+if(document.getElementById('opt-cod')) {
+document.getElementById('opt-cod').classList.add('active');
+document.getElementById('opt-cod').querySelector('input').checked = true;
+}
+}
+}
+function nextStep() {
+if (currentStep === 1) {
+var isNewForm = document.getElementById('newAddrRadio') ? document.getElementById('newAddrRadio').checked : false;
+if (!hasAddresses || isNewForm) {
+var name = document.getElementById('newName') ? document.getElementById('newName').value : '';
+var phone = document.getElementById('newPhone') ? document.getElementById('newPhone').value : '';
+var pin = document.getElementById('newPincode') ? document.getElementById('newPincode').value : '';
+if(!name || phone.length !== 10 || pin.length !== 6) {
+alert("Please fill name, 10-digit phone, and 6-digit PIN correctly.");
+return;
+}
+}
+if (!deliveryCalculated) {
+alert("Please wait for delivery calculation...");
+return;
+}
+currentStep = 2;
+}
+else if (currentStep === 2) {
+currentStep = 3;
+}
+else if (currentStep === 3) {
+var isOnline = document.querySelector('input[name="payment_method"]:checked').value === "Online";
+if(isOnline) {
+var utr = document.getElementById('utr_input') ? document.getElementById('utr_input').value : '';
+if(utr.length !== 12) {
+alert("Please enter a valid 12-digit UTR/Reference number to place the order.");
+return;
+}
+}
+if(document.getElementById('action-btn')) document.getElementById('action-btn').innerHTML = "Placing Order...";
+document.getElementById('checkoutForm').submit();
+return;
+}
+updateUI();
+}
+function updateUI() {
+document.querySelectorAll('.section').forEach(function(sec) { sec.classList.remove('active'); });
+document.querySelectorAll('.step').forEach(function(st) { st.classList.remove('active'); });
+var btn = document.getElementById('action-btn');
+if (currentStep === 1) {
+document.getElementById('step-address').classList.add('active');
+document.getElementById('indicator-address').classList.add('active');
+if(btn) btn.innerText = "Continue";
+} else if (currentStep === 2) {
+document.getElementById('step-summary').classList.add('active');
+document.getElementById('indicator-address').classList.add('active');
+document.getElementById('indicator-summary').classList.add('active');
+if(btn) btn.innerText = "Continue";
+} else if (currentStep === 3) {
+document.getElementById('step-payment').classList.add('active');
+document.getElementById('indicator-address').classList.add('active');
+document.getElementById('indicator-summary').classList.add('active');
+document.getElementById('indicator-payment').classList.add('active');
+if(btn) btn.innerText = "Place Order";
+}
+}
+</script>
 </body>
 </html>
