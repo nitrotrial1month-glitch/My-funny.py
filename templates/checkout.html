@@ -173,349 +173,407 @@
                 ✍️ Add address manually
             </button>
         </div>
+                <!-- ================= STEP 2: ORDER SUMMARY ================= -->
+        <div id="step-summary" class="section">
+            <div class="card">
+                <div class="card-header" style="border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 15px;">
+                    <h3 class="card-title">Order Summary</h3>
+                </div>
+                
+                <div id="product-list">
+                    {% for item in items %}
+                    <div class="product-row" data-base-price="{{ item.price }}">
+                        <img src="/{{ item.image }}" class="product-img" onerror="this.style.display='none'">
+                        <div style="flex-grow: 1;">
+                            <div style="font-size:14px; font-weight: 500; color: #212121; margin-bottom: 4px;">{{ item.name|truncate(40, True) }}</div>
+                            <div style="font-size:12px; color: var(--muted); margin-bottom: 8px;">Size: {{ item.selected_size | default('Regular') }}</div>
+                            
+                            <!-- Dummy Rating like Flipkart -->
+                            <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 8px;">
+                                <span style="background: var(--fk-green); color: white; padding: 2px 5px; border-radius: 3px; font-size: 10px; font-weight: bold;">4.1 ★</span>
+                                <span style="font-size: 12px; color: var(--muted);">(2,143)</span>
+                            </div>
 
-        `<div id="step-summary" class="section">
-<div class="card">
-<div class="card-header" style="border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 15px;">
-<h3 class="card-title">Order Summary</h3>
-</div>
-<div id="product-list">
-{% for item in items %}
-<div class="product-row" data-base-price="{{ item.price }}">
-<img src="/{{ item.image }}" class="product-img" onerror="this.style.display='none'">
-<div style="flex-grow: 1;">
-<div style="font-size:14px; font-weight: 500; color: #212121; margin-bottom: 4px;">{{ item.name|truncate(40, True) }}</div>
-<div style="font-size:12px; color: var(--muted); margin-bottom: 8px;">Size: {{ item.selected_size | default('Regular') }}</div>
-<div style="display: flex; align-items: center; gap: 5px; margin-bottom: 8px;">
-<span style="background: var(--fk-green); color: white; padding: 2px 5px; border-radius: 3px; font-size: 10px; font-weight: bold;">4.1 ★</span>
-<span style="font-size: 12px; color: var(--muted);">(2,143)</span>
-</div>
-<div style="display: flex; align-items: baseline; gap: 8px;">
-<span class="green-text" style="font-size: 13px;">↓65%</span>
-<span style="text-decoration: line-through; color: var(--muted); font-size: 13px;">₹{{ (item.price|float * 2.85)|int }}</span>
-<span style="font-size:16px; font-weight: 500; color: var(--text);">₹{{ item.price }}</span>
-</div>
-<div class="qty-box">
-<span>Qty:</span>
-<select class="qty-select" name="item_qty_{{ loop.index0 }}" onchange="updatePricesDynamic()">
-<option value="1">1</option>
-<option value="2">2</option>
-<option value="3">3</option>
-<option value="4">4</option>
-<option value="5">5</option>
-</select>
-</div>
-</div>
-</div>
-{% endfor %}
-</div>
-</div>
-<div class="card" style="padding: 0;">
-<div style="padding: 15px; border-bottom: 1px solid #f0f0f0;">
-<h3 class="card-title" style="color: #878787; font-size: 13px; text-transform: uppercase;">Price Details</h3>
-</div>
-<div style="padding: 15px;">
-<div class="bill-row">
-<span>Price (<span id="total-items-count">{{ items|length }}</span> items)</span>
-<span id="items-price-display">₹{{ total_price }}</span>
-</div>
-<div class="bill-row">
-<span>Platform Fee</span>
-<span>₹9</span>
-</div>
-<div class="bill-row">
-<span>Delivery Charges</span>
-<span id="delivery-charge-display" class="green-text">Calculating...</span>
-</div>
-<div class="bill-total">
-<span style="font-size: 16px;">Total Amount</span>
-<span id="final-total-display" style="font-size: 18px;">₹{{ total_price }}</span>
-</div>
-<div class="savings-tag" id="savings-display">
-You will save ₹0 on this order
-</div>
-</div>
-</div>
-</div>
-<div id="step-payment" class="section">
-<div class="card" style="background: #f4f8ff; border: 1px solid #d6e4ff; display: flex; justify-content: space-between; align-items: center;">
-<div style="font-size: 14px; font-weight: 500;">Total Amount</div>
-<div style="font-size: 18px; font-weight: bold; color: var(--fk-blue);" id="payment-total-display">₹{{ total_price }}</div>
-</div>
-<div style="font-size: 12px; color: #878787; text-align: right; margin-bottom: 10px; font-weight: 500;">🔒 100% Secure Payments</div>
-<div style="background: var(--surface); border-top: 1px solid #e0e0e0;">
-<div class="payment-option active" id="opt-online" onclick="selectPaymentMode('Online')">
-<div class="payment-header">
-<input type="radio" name="payment_method" value="Online" checked style="accent-color:var(--fk-blue); width: 16px; height: 16px;">
-<span style="display: flex; flex-direction: column;">
-<span>UPI (Online Payment)</span>
-<span style="font-size: 11px; color: var(--fk-green); font-weight: 400; margin-top: 2px;">Save upto ₹35 • 4 offers available</span>
-</span>
-</div>
-<div class="payment-body">
-<div style="font-weight: 500; margin-bottom: 12px; color: #333;">Pay by any UPI app:</div>
-<a href="#" id="gpay-link" class="upi-btn" style="border-color: #ea4335; color: #ea4335;">
-<img src="[https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg](https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg)" width="30"> Pay with Google Pay
-</a>
-<a href="#" id="phonepe-link" class="upi-btn" style="border-color: #5f259f; color: #5f259f;">
-<img src="[https://download.logo.wine/logo/PhonePe/PhonePe-Logo.wine.png](https://download.logo.wine/logo/PhonePe/PhonePe-Logo.wine.png)" width="40" style="margin:-10px 0;"> Pay with PhonePe
-</a>
-<div style="background: #fff9e6; border: 1px dashed #ffc200; padding: 12px; border-radius: 4px; margin-top: 15px; text-align: center;">
-<div style="font-size: 12px; color: #555; line-height: 1.4;">⚠️ After payment is complete in your app, please enter the <strong>12-digit UTR No.</strong> below to confirm.</div>
-<input type="text" name="utr_number" id="utr_input" class="utr-input" placeholder="Enter 12-digit UTR" maxlength="12" pattern="\d{12}">
-</div>
-</div>
-</div>
-<div class="payment-option" id="opt-card" onclick="selectPaymentMode('Card')">
-<div class="payment-header">
-<input type="radio" name="payment_method" value="Card" style="accent-color:var(--fk-blue); width: 16px; height: 16px;" disabled>
-<span style="display: flex; flex-direction: column; color: var(--muted);">
-<span>Credit / Debit / ATM Card</span>
-<span style="font-size: 11px; font-weight: 400; margin-top: 2px;">Temporarily Unavailable</span>
-</span>
-</div>
-</div>
-<div class="payment-option" id="opt-cod" onclick="selectPaymentMode('COD')">
-<div class="payment-header">
-<input type="radio" name="payment_method" value="COD" style="accent-color:var(--fk-blue); width: 16px; height: 16px;">
-<span>Cash on Delivery</span>
-</div>
-<div class="payment-body">
-<div style="background: #f9f9f9; padding: 12px; border-radius: 4px; font-size: 12px; color: #555; line-height: 1.5; border: 1px solid #eee;">
-Due to handling costs, a nominal fee of ₹10 will be charged for orders placed using this option. Avoid this fee by paying online now.
-</div>
-</div>
-</div>
-</div>
-</div>
-<div style="height: 20px;"></div> <div class="bottom-bar">
-<div>
-<div style="font-size: 12px; color: #878787; font-weight: 500; text-decoration: line-through;" id="bottom-strikethrough">₹0</div>
-<div style="font-weight:bold; font-size:18px; color: #212121;" id="bottom-total-display">₹{{ total_price }}</div>
-<div style="font-size: 11px; color: var(--fk-green); font-weight: bold; margin-top: 2px;">Free Delivery</div>
-</div>
-<button type="button" class="btn-continue" id="action-btn" onclick="nextStep()">Continue</button>
-</div>
-</form>
-<script>
-var backendData = document.getElementById('backend-data');
-var sellerPincode = backendData.getAttribute('data-seller-pin') || "713128";
-var hasAddresses = backendData.getAttribute('data-has-address') === "true";
-var defaultPin = backendData.getAttribute('data-default-pin') || "";
-var upiId = "9046348427@fam";
-var currentStep = 1;
-var deliveryCalculated = false;
-var currentDeliveryCharge = 50; // Default fallback
-var platformFee = 9;
-// On Load
-window.onload = function() {
-updatePricesDynamic(); // Initial calculation
-if (hasAddresses && defaultPin.length === 6) {
-calculateDelivery(defaultPin);
-} else {
-deliveryCalculated = true;
-}
-};
-// 🔴 QTY Change & Dynamic Pricing Logic
-function updatePricesDynamic() {
-var totalItemPrice = 0;
-var totalItemsCount = 0;
-var totalFakeMRP = 0;
-document.querySelectorAll('.product-row').forEach(function(row) {
-var basePrice = parseFloat(row.getAttribute('data-base-price')) || 0;
-var select = row.querySelector('.qty-select');
-var qty = select ? parseInt(select.value) : 1;
-totalItemPrice += (basePrice * qty);
-totalItemsCount += qty;
-totalFakeMRP += (basePrice * 2.85 * qty); // Flipkart style dummy MRP
-});
-var finalAmount = totalItemPrice + platformFee + currentDeliveryCharge;
-var savings = totalFakeMRP - totalItemPrice;
-// Update DOM Elements
-if(document.getElementById('total-items-count')) document.getElementById('total-items-count').innerText = totalItemsCount;
-if(document.getElementById('items-price-display')) document.getElementById('items-price-display').innerText = "₹" + totalItemPrice.toFixed(0);
-if(document.getElementById('final-total-display')) document.getElementById('final-total-display').innerText = "₹" + finalAmount.toFixed(0);
-if(document.getElementById('payment-total-display')) document.getElementById('payment-total-display').innerText = "₹" + finalAmount.toFixed(0);
-if(document.getElementById('bottom-total-display')) document.getElementById('bottom-total-display').innerText = "₹" + finalAmount.toFixed(0);
-if(document.getElementById('bottom-strikethrough')) document.getElementById('bottom-strikethrough').innerText = "₹" + totalFakeMRP.toFixed(0);
-if(document.getElementById('savings-display')) document.getElementById('savings-display').innerText = "You will save ₹" + savings.toFixed(0) + " on this order";
-// Update Backend Form Input
-if(document.getElementById('frontend_total_input')) document.getElementById('frontend_total_input').value = finalAmount.toFixed(0);
-// Update UPI Links
-var upiLink = "upi://pay?pa=" + upiId + "&pn=Wear%20By%20Me&am=" + finalAmount.toFixed(0) + "&cu=INR";
-if(document.getElementById('gpay-link')) document.getElementById('gpay-link').href = upiLink;
-if(document.getElementById('phonepe-link')) document.getElementById('phonepe-link').href = upiLink;
-}
-// --- Address UI ---
-function showAddressList() {
-if(document.getElementById('all-compact-views')) document.getElementById('all-compact-views').style.display = "none";
-if(document.getElementById('address-list-view')) document.getElementById('address-list-view').style.display = "block";
-if(document.getElementById('add-options-view')) document.getElementById('add-options-view').style.display = "none";
-if(document.getElementById('manual-form-view')) document.getElementById('manual-form-view').style.display = "none";
-}
-function selectAddress(index, pincode, element) {
-document.querySelectorAll('.address-box').forEach(function(box) { box.classList.remove('selected'); });
-element.classList.add('selected');
-element.querySelector('input').checked = true;
-document.getElementById('address-list-view').style.display = "none";
-document.querySelectorAll('[id^="compact-view-"]').forEach(function(view) { view.style.display = "none"; });
-document.getElementById('all-compact-views').style.display = "block";
-document.getElementById('compact-view-' + index).style.display = "block";
-if (pincode && pincode.length === 6) calculateDelivery(pincode);
-}
-// 🔴 Custom Modal Logic
-function openLocationModal() {
-document.getElementById('locModalOverlay').classList.add('show');
-document.getElementById('locBottomSheet').classList.add('open');
-}
-function closeLocationModal() {
-document.getElementById('locModalOverlay').classList.remove('show');
-document.getElementById('locBottomSheet').classList.remove('open');
-}
-function showAddOptions() { openLocationModal(); }
-function showManualFormFromModal() {
-closeLocationModal();
-setTimeout(function() {
-if(document.getElementById('address-list-view')) document.getElementById('address-list-view').style.display = "none";
-if(document.getElementById('all-compact-views')) document.getElementById('all-compact-views').style.display = "none";
-if(document.getElementById('manual-form-view')) document.getElementById('manual-form-view').style.display = "block";
-if(document.getElementById('newAddrRadio')) document.getElementById('newAddrRadio').checked = true;
-deliveryCalculated = false;
-}, 300);
-}
-function autoDetectLocation() {
-var btn = document.querySelector('.btn-loc');
-if(btn) btn.innerHTML = "Locating... Please wait";
-if (navigator.geolocation) {
-navigator.geolocation.getCurrentPosition(function(position) {
-var lat = position.coords.latitude;
-var lon = position.coords.longitude;
-fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lon, { headers: { 'Accept-Language': 'en' } })
-.then(function(res) { return res.json(); })
-.then(function(data) {
-var addressStr = data.display_name || '';
-var pin = (data.address && data.address.postcode) ? data.address.postcode : '';
-if(document.getElementById('newAddress')) document.getElementById('newAddress').value = addressStr;
-if(document.getElementById('newPincode')) document.getElementById('newPincode').value = pin;
-if(btn) btn.innerHTML = "🎯 Use my current location";
-showManualFormFromModal();
-if(pin && pin.length === 6) calculateDelivery(pin);
-}).catch(function(err) {
-alert("Could not load address automatically. Please enter manually.");
-if(btn) btn.innerHTML = "🎯 Use my current location";
-showManualFormFromModal();
-});
-}, function(error) {
-alert("Location access denied or unavailable. Please fill manually.");
-if(btn) btn.innerHTML = "🎯 Use my current location";
-showManualFormFromModal();
-}, { timeout: 8000 });
-} else {
-alert("Location not supported by browser.");
-showManualFormFromModal();
-}
-}
-function calculateDelivery(userPincode) {
-if(!userPincode || userPincode.length !== 6) return;
-if(document.getElementById('delivery-charge-display')) document.getElementById('delivery-charge-display').innerText = "Calculating...";
-fetch('/calculate_delivery', {
-method: 'POST',
-headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({ pincode: userPincode, seller_pincode: sellerPincode })
-})
-.then(function(res) { return res.json(); })
-.then(function(data) {
-currentDeliveryCharge = data.charge || 0;
-if (document.getElementById('delivery-charge-display')) {
-var disp = document.getElementById('delivery-charge-display');
-disp.innerText = currentDeliveryCharge === 0 ? "FREE" : "₹" + currentDeliveryCharge;
-disp.className = currentDeliveryCharge === 0 ? "green-text" : "";
-}
-updatePricesDynamic();
-deliveryCalculated = true;
-})
-.catch(function(err) {
-currentDeliveryCharge = 50; // Fallback
-if(document.getElementById('delivery-charge-display')) {
-document.getElementById('delivery-charge-display').innerText = "₹50";
-document.getElementById('delivery-charge-display').className = "";
-}
-updatePricesDynamic();
-deliveryCalculated = true;
-});
-}
-function selectPaymentMode(mode) {
-if(mode === 'Card') return; // Disabled
-document.querySelectorAll('.payment-option').forEach(function(opt) { opt.classList.remove('active'); });
-if(mode === 'Online') {
-if(document.getElementById('opt-online')) {
-document.getElementById('opt-online').classList.add('active');
-document.getElementById('opt-online').querySelector('input').checked = true;
-}
-} else {
-if(document.getElementById('opt-cod')) {
-document.getElementById('opt-cod').classList.add('active');
-document.getElementById('opt-cod').querySelector('input').checked = true;
-}
-}
-}
-function nextStep() {
-if (currentStep === 1) {
-var isNewForm = document.getElementById('newAddrRadio') ? document.getElementById('newAddrRadio').checked : false;
-if (!hasAddresses || isNewForm) {
-var name = document.getElementById('newName') ? document.getElementById('newName').value : '';
-var phone = document.getElementById('newPhone') ? document.getElementById('newPhone').value : '';
-var pin = document.getElementById('newPincode') ? document.getElementById('newPincode').value : '';
-if(!name || phone.length !== 10 || pin.length !== 6) {
-alert("Please fill name, 10-digit phone, and 6-digit PIN correctly.");
-return;
-}
-}
-if (!deliveryCalculated) {
-alert("Please wait for delivery calculation...");
-return;
-}
-currentStep = 2;
-}
-else if (currentStep === 2) {
-currentStep = 3;
-}
-else if (currentStep === 3) {
-var isOnline = document.querySelector('input[name="payment_method"]:checked').value === "Online";
-if(isOnline) {
-var utr = document.getElementById('utr_input') ? document.getElementById('utr_input').value : '';
-if(utr.length !== 12) {
-alert("Please enter a valid 12-digit UTR/Reference number to place the order.");
-return;
-}
-}
-if(document.getElementById('action-btn')) document.getElementById('action-btn').innerHTML = "Placing Order...";
-document.getElementById('checkoutForm').submit();
-return;
-}
-updateUI();
-}
-function updateUI() {
-document.querySelectorAll('.section').forEach(function(sec) { sec.classList.remove('active'); });
-document.querySelectorAll('.step').forEach(function(st) { st.classList.remove('active'); });
-var btn = document.getElementById('action-btn');
-if (currentStep === 1) {
-document.getElementById('step-address').classList.add('active');
-document.getElementById('indicator-address').classList.add('active');
-if(btn) btn.innerText = "Continue";
-} else if (currentStep === 2) {
-document.getElementById('step-summary').classList.add('active');
-document.getElementById('indicator-address').classList.add('active');
-document.getElementById('indicator-summary').classList.add('active');
-if(btn) btn.innerText = "Continue";
-} else if (currentStep === 3) {
-document.getElementById('step-payment').classList.add('active');
-document.getElementById('indicator-address').classList.add('active');
-document.getElementById('indicator-summary').classList.add('active');
-document.getElementById('indicator-payment').classList.add('active');
-if(btn) btn.innerText = "Place Order";
-}
-}
-</script>
+                            <div style="display: flex; align-items: baseline; gap: 8px;">
+                                <span class="green-text" style="font-size: 13px;">↓65%</span>
+                                <span style="text-decoration: line-through; color: var(--muted); font-size: 13px;">₹{{ (item.price|float * 2.85)|int }}</span>
+                                <span style="font-size:16px; font-weight: 500; color: var(--text);">₹{{ item.price }}</span>
+                            </div>
+                            
+                            <!-- 🔴 QTY Selector -->
+                            <div class="qty-box">
+                                <span>Qty:</span>
+                                <select class="qty-select" name="item_qty_{{ loop.index0 }}" onchange="updatePricesDynamic()">
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="card" style="padding: 0;">
+                <div style="padding: 15px; border-bottom: 1px solid #f0f0f0;">
+                    <h3 class="card-title" style="color: #878787; font-size: 13px; text-transform: uppercase;">Price Details</h3>
+                </div>
+                <div style="padding: 15px;">
+                    <div class="bill-row">
+                        <span>Price (<span id="total-items-count">{{ items|length }}</span> items)</span>
+                        <span id="items-price-display">₹{{ total_price }}</span>
+                    </div>
+                    <div class="bill-row">
+                        <span>Platform Fee</span>
+                        <span>₹9</span>
+                    </div>
+                    <div class="bill-row">
+                        <span>Delivery Charges</span>
+                        <span id="delivery-charge-display" class="green-text">Calculating...</span>
+                    </div>
+                    <div class="bill-total">
+                        <span style="font-size: 16px;">Total Amount</span>
+                        <span id="final-total-display" style="font-size: 18px;">₹{{ total_price }}</span>
+                    </div>
+                    <div class="savings-tag" id="savings-display">
+                        You will save ₹0 on this order
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= STEP 3: PAYMENT ================= -->
+        <div id="step-payment" class="section">
+            <div class="card" style="background: #f4f8ff; border: 1px solid #d6e4ff; display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-size: 14px; font-weight: 500;">Total Amount</div>
+                <div style="font-size: 18px; font-weight: bold; color: var(--fk-blue);" id="payment-total-display">₹{{ total_price }}</div>
+            </div>
+            
+            <div style="font-size: 12px; color: #878787; text-align: right; margin-bottom: 10px; font-weight: 500;">🔒 100% Secure Payments</div>
+
+            <div style="background: var(--surface); border-top: 1px solid #e0e0e0;">
+                <!-- ONLINE PAYMENT -->
+                <div class="payment-option active" id="opt-online" onclick="selectPaymentMode('Online')">
+                    <div class="payment-header">
+                        <input type="radio" name="payment_method" value="Online" checked style="accent-color:var(--fk-blue); width: 16px; height: 16px;"> 
+                        <span style="display: flex; flex-direction: column;">
+                            <span>UPI (Online Payment)</span>
+                            <span style="font-size: 11px; color: var(--fk-green); font-weight: 400; margin-top: 2px;">Save upto ₹35 • 4 offers available</span>
+                        </span>
+                    </div>
+                    <div class="payment-body">
+                        <div style="font-weight: 500; margin-bottom: 12px; color: #333;">Pay by any UPI app:</div>
+                        
+                        <a href="#" id="gpay-link" class="upi-btn" style="border-color: #ea4335; color: #ea4335;">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg" width="30"> Pay with Google Pay
+                        </a>
+                        <a href="#" id="phonepe-link" class="upi-btn" style="border-color: #5f259f; color: #5f259f;">
+                            <img src="https://download.logo.wine/logo/PhonePe/PhonePe-Logo.wine.png" width="40" style="margin:-10px 0;"> Pay with PhonePe
+                        </a>
+                        
+                        <div style="background: #fff9e6; border: 1px dashed #ffc200; padding: 12px; border-radius: 4px; margin-top: 15px; text-align: center;">
+                            <div style="font-size: 12px; color: #555; line-height: 1.4;">⚠️ After payment is complete in your app, please enter the <strong>12-digit UTR No.</strong> below to confirm.</div>
+                            <input type="text" name="utr_number" id="utr_input" class="utr-input" placeholder="Enter 12-digit UTR" maxlength="12" pattern="\d{12}">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DUMMY CARD PAYMENT (For Flipkart feel) -->
+                <div class="payment-option" id="opt-card" onclick="selectPaymentMode('Card')">
+                    <div class="payment-header">
+                        <input type="radio" name="payment_method" value="Card" style="accent-color:var(--fk-blue); width: 16px; height: 16px;" disabled> 
+                        <span style="display: flex; flex-direction: column; color: var(--muted);">
+                            <span>Credit / Debit / ATM Card</span>
+                            <span style="font-size: 11px; font-weight: 400; margin-top: 2px;">Temporarily Unavailable</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- COD PAYMENT -->
+                <div class="payment-option" id="opt-cod" onclick="selectPaymentMode('COD')">
+                    <div class="payment-header">
+                        <input type="radio" name="payment_method" value="COD" style="accent-color:var(--fk-blue); width: 16px; height: 16px;"> 
+                        <span>Cash on Delivery</span>
+                    </div>
+                    <div class="payment-body">
+                        <div style="background: #f9f9f9; padding: 12px; border-radius: 4px; font-size: 12px; color: #555; line-height: 1.5; border: 1px solid #eee;">
+                            Due to handling costs, a nominal fee of ₹10 will be charged for orders placed using this option. Avoid this fee by paying online now.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="height: 20px;"></div> <!-- Spacer -->
+
+        <!-- ================= BOTTOM ACTION BAR ================= -->
+        <div class="bottom-bar">
+            <div>
+                <div style="font-size: 12px; color: #878787; font-weight: 500; text-decoration: line-through;" id="bottom-strikethrough">₹0</div>
+                <div style="font-weight:bold; font-size:18px; color: #212121;" id="bottom-total-display">₹{{ total_price }}</div>
+                <div style="font-size: 11px; color: var(--fk-green); font-weight: bold; margin-top: 2px;">Free Delivery</div>
+            </div>
+            <button type="button" class="btn-continue" id="action-btn" onclick="nextStep()">Continue</button>
+        </div>
+
+    </form>
+
+    <script>
+        var backendData = document.getElementById('backend-data');
+        var sellerPincode = backendData.getAttribute('data-seller-pin') || "713128";
+        var hasAddresses = backendData.getAttribute('data-has-address') === "true";
+        var defaultPin = backendData.getAttribute('data-default-pin') || "";
+        var upiId = "9046348427@fam"; 
+
+        var currentStep = 1;
+        var deliveryCalculated = false;
+        var currentDeliveryCharge = 50; // Default fallback
+        var platformFee = 9;
+
+        // On Load
+        window.onload = function() {
+            updatePricesDynamic(); // Initial calculation
+            if (hasAddresses && defaultPin.length === 6) {
+                calculateDelivery(defaultPin);
+            } else {
+                deliveryCalculated = true; 
+            }
+        };
+
+        // 🔴 QTY Change & Dynamic Pricing Logic
+        function updatePricesDynamic() {
+            var totalItemPrice = 0;
+            var totalItemsCount = 0;
+            var totalFakeMRP = 0;
+
+            document.querySelectorAll('.product-row').forEach(function(row) {
+                var basePrice = parseFloat(row.getAttribute('data-base-price')) || 0;
+                var select = row.querySelector('.qty-select');
+                var qty = select ? parseInt(select.value) : 1;
+                
+                totalItemPrice += (basePrice * qty);
+                totalItemsCount += qty;
+                totalFakeMRP += (basePrice * 2.85 * qty); // Flipkart style dummy MRP
+            });
+
+            var finalAmount = totalItemPrice + platformFee + currentDeliveryCharge;
+            var savings = totalFakeMRP - totalItemPrice;
+
+            // Update DOM Elements
+            if(document.getElementById('total-items-count')) document.getElementById('total-items-count').innerText = totalItemsCount;
+            if(document.getElementById('items-price-display')) document.getElementById('items-price-display').innerText = "₹" + totalItemPrice.toFixed(0);
+            
+            if(document.getElementById('final-total-display')) document.getElementById('final-total-display').innerText = "₹" + finalAmount.toFixed(0);
+            if(document.getElementById('payment-total-display')) document.getElementById('payment-total-display').innerText = "₹" + finalAmount.toFixed(0);
+            if(document.getElementById('bottom-total-display')) document.getElementById('bottom-total-display').innerText = "₹" + finalAmount.toFixed(0);
+            if(document.getElementById('bottom-strikethrough')) document.getElementById('bottom-strikethrough').innerText = "₹" + totalFakeMRP.toFixed(0);
+            
+            if(document.getElementById('savings-display')) document.getElementById('savings-display').innerText = "You will save ₹" + savings.toFixed(0) + " on this order";
+
+            // Update Backend Form Input
+            if(document.getElementById('frontend_total_input')) document.getElementById('frontend_total_input').value = finalAmount.toFixed(0);
+
+            // Update UPI Links
+            var upiLink = "upi://pay?pa=" + upiId + "&pn=Wear%20By%20Me&am=" + finalAmount.toFixed(0) + "&cu=INR";
+            if(document.getElementById('gpay-link')) document.getElementById('gpay-link').href = upiLink;
+            if(document.getElementById('phonepe-link')) document.getElementById('phonepe-link').href = upiLink;
+        }
+
+        // --- Address UI ---
+        function showAddressList() {
+            if(document.getElementById('all-compact-views')) document.getElementById('all-compact-views').style.display = "none";
+            if(document.getElementById('address-list-view')) document.getElementById('address-list-view').style.display = "block";
+            if(document.getElementById('add-options-view')) document.getElementById('add-options-view').style.display = "none";
+            if(document.getElementById('manual-form-view')) document.getElementById('manual-form-view').style.display = "none";
+        }
+
+        function selectAddress(index, pincode, element) {
+            document.querySelectorAll('.address-box').forEach(function(box) { box.classList.remove('selected'); });
+            element.classList.add('selected');
+            element.querySelector('input').checked = true;
+
+            document.getElementById('address-list-view').style.display = "none";
+            document.querySelectorAll('[id^="compact-view-"]').forEach(function(view) { view.style.display = "none"; });
+            document.getElementById('all-compact-views').style.display = "block";
+            document.getElementById('compact-view-' + index).style.display = "block";
+
+            if (pincode && pincode.length === 6) calculateDelivery(pincode);
+        }
+
+        // 🔴 Custom Modal Logic
+        function openLocationModal() {
+            document.getElementById('locModalOverlay').classList.add('show');
+            document.getElementById('locBottomSheet').classList.add('open');
+        }
+        
+        function closeLocationModal() {
+            document.getElementById('locModalOverlay').classList.remove('show');
+            document.getElementById('locBottomSheet').classList.remove('open');
+        }
+
+        function showAddOptions() { openLocationModal(); }
+
+        function showManualFormFromModal() {
+            closeLocationModal();
+            setTimeout(function() {
+                if(document.getElementById('address-list-view')) document.getElementById('address-list-view').style.display = "none";
+                if(document.getElementById('all-compact-views')) document.getElementById('all-compact-views').style.display = "none";
+                if(document.getElementById('manual-form-view')) document.getElementById('manual-form-view').style.display = "block";
+                if(document.getElementById('newAddrRadio')) document.getElementById('newAddrRadio').checked = true;
+                deliveryCalculated = false;
+            }, 300);
+        }
+
+        function autoDetectLocation() {
+            var btn = document.querySelector('.btn-loc');
+            if(btn) btn.innerHTML = "Locating... Please wait";
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    var lat = position.coords.latitude;
+                    var lon = position.coords.longitude;
+                    
+                    fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lon, { headers: { 'Accept-Language': 'en' } })
+                    .then(function(res) { return res.json(); })
+                    .then(function(data) {
+                        var addressStr = data.display_name || '';
+                        var pin = (data.address && data.address.postcode) ? data.address.postcode : '';
+                        
+                        if(document.getElementById('newAddress')) document.getElementById('newAddress').value = addressStr;
+                        if(document.getElementById('newPincode')) document.getElementById('newPincode').value = pin;
+                        
+                        if(btn) btn.innerHTML = "🎯 Use my current location";
+                        showManualFormFromModal(); 
+                        if(pin && pin.length === 6) calculateDelivery(pin);
+                    }).catch(function(err) {
+                        alert("Could not load address automatically. Please enter manually.");
+                        if(btn) btn.innerHTML = "🎯 Use my current location";
+                        showManualFormFromModal();
+                    });
+                }, function(error) {
+                    alert("Location access denied or unavailable. Please fill manually.");
+                    if(btn) btn.innerHTML = "🎯 Use my current location";
+                    showManualFormFromModal();
+                }, { timeout: 8000 });
+            } else {
+                alert("Location not supported by browser.");
+                showManualFormFromModal();
+            }
+        }
+
+        function calculateDelivery(userPincode) {
+            if(!userPincode || userPincode.length !== 6) return;
+            if(document.getElementById('delivery-charge-display')) document.getElementById('delivery-charge-display').innerText = "Calculating...";
+            
+            fetch('/calculate_delivery', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pincode: userPincode, seller_pincode: sellerPincode })
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                currentDeliveryCharge = data.charge || 0;
+                if (document.getElementById('delivery-charge-display')) {
+                    var disp = document.getElementById('delivery-charge-display');
+                    disp.innerText = currentDeliveryCharge === 0 ? "FREE" : "₹" + currentDeliveryCharge;
+                    disp.className = currentDeliveryCharge === 0 ? "green-text" : "";
+                }
+                updatePricesDynamic();
+                deliveryCalculated = true;
+            })
+            .catch(function(err) {
+                currentDeliveryCharge = 50; // Fallback
+                if(document.getElementById('delivery-charge-display')) {
+                    document.getElementById('delivery-charge-display').innerText = "₹50";
+                    document.getElementById('delivery-charge-display').className = "";
+                }
+                updatePricesDynamic();
+                deliveryCalculated = true;
+            });
+        }
+
+        function selectPaymentMode(mode) {
+            if(mode === 'Card') return; // Disabled
+            document.querySelectorAll('.payment-option').forEach(function(opt) { opt.classList.remove('active'); });
+            
+            if(mode === 'Online') {
+                if(document.getElementById('opt-online')) {
+                    document.getElementById('opt-online').classList.add('active');
+                    document.getElementById('opt-online').querySelector('input').checked = true;
+                }
+            } else {
+                if(document.getElementById('opt-cod')) {
+                    document.getElementById('opt-cod').classList.add('active');
+                    document.getElementById('opt-cod').querySelector('input').checked = true;
+                }
+            }
+        }
+      
+        function nextStep() {
+            if (currentStep === 1) {
+                var isNewForm = document.getElementById('newAddrRadio') ? document.getElementById('newAddrRadio').checked : false;
+                
+                if (!hasAddresses || isNewForm) {
+                    var name = document.getElementById('newName') ? document.getElementById('newName').value : '';
+                    var phone = document.getElementById('newPhone') ? document.getElementById('newPhone').value : '';
+                    var pin = document.getElementById('newPincode') ? document.getElementById('newPincode').value : '';
+                    
+                    if(!name || phone.length !== 10 || pin.length !== 6) {
+                        alert("Please fill name, 10-digit phone, and 6-digit PIN correctly.");
+                        return;
+                    }
+                }
+                if (!deliveryCalculated) {
+                    alert("Please wait for delivery calculation...");
+                    return;
+                }
+                currentStep = 2;
+            } 
+            else if (currentStep === 2) {
+                currentStep = 3;
+            }
+            else if (currentStep === 3) {
+                var isOnline = document.querySelector('input[name="payment_method"]:checked').value === "Online";
+                if(isOnline) {
+                    var utr = document.getElementById('utr_input') ? document.getElementById('utr_input').value : '';
+                    if(utr.length !== 12) {
+                        alert("Please enter a valid 12-digit UTR/Reference number to place the order.");
+                        return;
+                    }
+                }
+                if(document.getElementById('action-btn')) document.getElementById('action-btn').innerHTML = "Placing Order...";
+                document.getElementById('checkoutForm').submit();
+                return;
+            }
+            updateUI();
+        }
+
+        function updateUI() {
+            document.querySelectorAll('.section').forEach(function(sec) { sec.classList.remove('active'); });
+            document.querySelectorAll('.step').forEach(function(st) { st.classList.remove('active'); });
+
+            var btn = document.getElementById('action-btn');
+
+            if (currentStep === 1) {
+                document.getElementById('step-address').classList.add('active');
+                document.getElementById('indicator-address').classList.add('active');
+                if(btn) btn.innerText = "Continue";
+            } else if (currentStep === 2) {
+                document.getElementById('step-summary').classList.add('active');
+                document.getElementById('indicator-address').classList.add('active');
+                document.getElementById('indicator-summary').classList.add('active');
+                if(btn) btn.innerText = "Continue";
+            } else if (currentStep === 3) {
+                document.getElementById('step-payment').classList.add('active');
+                document.getElementById('indicator-address').classList.add('active');
+                document.getElementById('indicator-summary').classList.add('active');
+                document.getElementById('indicator-payment').classList.add('active');
+                if(btn) btn.innerText = "Place Order";
+            }
+        }
+    </script>
 </body>
 </html>
