@@ -17,9 +17,6 @@
         .media-scroller { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none; }
         .media-scroller::-webkit-scrollbar { display: none; }
         .media-item { flex: 0 0 100%; width: 100%; aspect-ratio: 3/4; object-fit: cover; scroll-snap-align: start; background: #f9f9f9; }
-        
-        .rating-badge-img { position: absolute; bottom: 15px; left: 15px; background: rgba(255,255,255,0.9); padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #eee; }
-        .rating-star { color: var(--success); font-size: 10px; }
 
         /* Product Details Card */
         .card { background: white; padding: 15px; margin-bottom: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
@@ -51,16 +48,8 @@
         .trust-item { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 30%; }
         .trust-icon { width: 35px; height: 35px; background: #f1f3f6; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 18px; color: var(--primary); }
         .trust-text { font-size: 11px; color: #555; font-weight: 500; line-height: 1.3; }
-
-        /* Ratings & Reviews */
-        .review-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .review-score { display: inline-flex; align-items: center; gap: 5px; font-size: 24px; font-weight: bold; }
-        .review-images { display: flex; gap: 10px; overflow-x: auto; margin-bottom: 15px; scrollbar-width: none; }
-        .review-images::-webkit-scrollbar { display: none; }
-        .review-images img { width: 80px; height: 80px; object-fit: cover; border-radius: 6px; }
-        .review-card { border: 1px solid #eee; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
         
-        /* Bottom Actions (Website Theme Matched) */
+        /* Bottom Actions */
         .action-btns { display: flex; position: fixed; bottom: 0; left: 0; width: 100%; background: white; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000;}
         .btn { flex: 1; padding: 16px; border: none; font-weight: bold; text-align: center; cursor: pointer; font-size: 15px; text-transform: uppercase; transition: 0.2s; }
         .btn:active { opacity: 0.8; }
@@ -91,7 +80,12 @@
                 <video src="{% if 'http' in product.video %}{{ product.video }}{% else %}/{{ product.video }}{% endif %}" class="media-item" controls preload="metadata" poster="{% if product.image and 'http' in product.image %}{{ product.image }}{% else %}/{{ product.image }}{% endif %}"></video>
             {% endif %}
         </div>
-        <div class="rating-badge-img">4.1 <span class="rating-star">★</span> | 12.4K+</div>
+        
+        {% if product.rating %}
+        <div style="position: absolute; bottom: 15px; left: 15px; background: rgba(255,255,255,0.9); padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; display: flex; align-items: center; gap: 4px; border: 1px solid #eee;">
+            {{ product.rating }} <span style="color: var(--success); font-size: 10px;">★</span>
+        </div>
+        {% endif %}
     </div>
     
     <div class="card" style="margin-top: 0; border-radius: 0;">
@@ -112,13 +106,9 @@
         </div>
     </div>
 
-    <!-- Size Selection -->
     {% if product.sizes %}
     <div class="card">
-        <div class="section-title" style="display: flex; justify-content: space-between;">
-            <span>Select Size</span>
-            <span class="link-text">Size Chart</span>
-        </div>
+        <div class="section-title">Select Size</div>
         <div class="size-container">
             {% for size in product.sizes %}
                 <button class="size-btn" onclick="selectSize('{{ size }}', this)">{{ size }}</button>
@@ -127,7 +117,6 @@
     </div>
     {% endif %}
 
-    <!-- Auto Delivery Calculator -->
     <div class="card">
         <div class="delivery-header">Delivery details</div>
         
@@ -148,7 +137,6 @@
             </div>
         </div>
 
-        <!-- Trust Badges -->
         <div class="trust-badges">
             <div class="trust-item">
                 <div class="trust-icon">🔄</div>
@@ -165,41 +153,6 @@
         </div>
     </div>
 
-    <!-- Ratings & Reviews (UI Mockup) -->
-    <div class="card">
-        <div class="review-header">
-            <div style="font-weight: bold; font-size: 16px;">Ratings and reviews</div>
-            <span class="link-text">View All</span>
-        </div>
-        
-        <div class="review-score">
-            4.1 <span style="color: white; background: var(--success); padding: 2px 6px; border-radius: 4px; font-size: 14px;">★</span>
-            <span style="font-size: 13px; font-weight: normal; color: var(--muted); margin-left: 10px;">54.1K+ ratings</span>
-        </div>
-        
-        <div style="margin: 15px 0; display: flex; gap: 8px;">
-            <span style="border: 1px solid #ddd; padding: 4px 10px; border-radius: 12px; font-size: 12px;">Fabric Quality</span>
-            <span style="border: 1px solid #ddd; padding: 4px 10px; border-radius: 12px; font-size: 12px;">True to Size</span>
-        </div>
-
-        <div class="review-images">
-            <img src="https://via.placeholder.com/80/cccccc" alt="Review">
-            <img src="https://via.placeholder.com/80/dddddd" alt="Review">
-            <img src="https://via.placeholder.com/80/eeeeee" alt="Review">
-            <div style="width: 80px; height: 80px; background: #f0f0f0; border-radius: 6px; display: flex; justify-content: center; align-items: center; font-weight: bold; color: var(--muted);">+153</div>
-        </div>
-
-        <div class="review-card">
-            <div style="display: flex; gap: 10px; margin-bottom: 8px; align-items: center;">
-                <span style="background: var(--success); color: white; padding: 2px 5px; border-radius: 4px; font-size: 11px; font-weight: bold;">4 ★</span>
-                <span style="font-weight: bold; font-size: 13px;">Worth the price!</span>
-            </div>
-            <p style="font-size: 13px; color: #444; margin: 0 0 10px 0; line-height: 1.4;">Product quality is very good. Fabric is comfortable. Delivered on time.</p>
-            <div style="font-size: 11px; color: var(--muted);">Rahul Singh • Verified Buyer</div>
-        </div>
-    </div>
-
-    <!-- Product Details -->
     <div class="card" style="margin-bottom: 20px;">
         <div class="section-title">Product Details</div>
         <div style="white-space: pre-wrap; line-height: 1.6; font-size: 13px; color: #444;">{{ product.description | default('High quality product from Wear By Me.') }}</div>
@@ -214,7 +167,6 @@
         <button onclick="handleAction('checkout')" class="btn buy-now">Buy at ₹{{ product.price }}</button>
     </div>
 
-    <!-- Hidden Backend Data -->
     <div id="backend-data" data-seller-pin="{{ product.seller_pincode | default('713128') }}" style="display: none;"></div>
 
     <script>
