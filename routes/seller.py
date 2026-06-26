@@ -1,6 +1,6 @@
 import os
 import uuid
-import random # 🔴 NEW: For generating WBM_P_ID
+import random 
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
@@ -13,6 +13,9 @@ from werkzeug.utils import secure_filename
 
 seller_bp = Blueprint('seller', __name__)
 
+UPLOAD_FOLDER = 'static/uploads'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
 # ==========================================
 # Cloudinary Configuration
 # ==========================================
@@ -22,29 +25,20 @@ cloudinary.config(
     api_secret="pb_LkF6p4FQBD2fwv4Yp8j-qIUI"
 )
 
-# ==========================================
-# File Upload Configuration & Logic
-# ==========================================
 ALLOWED_EXTENSIONS_IMG = {'png', 'jpg', 'jpeg', 'webp'}
 ALLOWED_EXTENSIONS_VID = {'mp4', 'mkv', 'mov'}
 
 def allowed_file(filename, is_video=False):
     ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
-    if is_video:
-        return ext in ALLOWED_EXTENSIONS_VID
+    if is_video: return ext in ALLOWED_EXTENSIONS_VID
     return ext in ALLOWED_EXTENSIONS_IMG
 
 def upload_to_cloudinary(file_obj, folder_name="inwear_products"):
-    """Uploads file to Cloudinary and returns the secure live URL."""
-    response = cloudinary.uploader.upload(
-        file_obj,
-        folder=folder_name,
-        resource_type="auto" # Automatically detects if it's an image or video
-    )
+    response = cloudinary.uploader.upload(file_obj, folder=folder_name, resource_type="auto")
     return response.get('secure_url')
 
 # ==========================================
-# Seller Authentication Security
+# Security
 # ==========================================
 def seller_required(f):
     @wraps(f)
@@ -56,13 +50,67 @@ def seller_required(f):
     return decorated_function
 
 # ==========================================
-# 1. Seller Dashboard
+# 📋 Seller Application (Moved from Auth)
+# ==========================================
+@seller_bp.route('/apply-seller')
+def apply_seller():
+    if not session.get('user'): return redirect('/account')
+    return render_template('apply-seller.html')
+
+@seller_bp.route('/submit-seller-application', methods=['POST'])
+def submit_seller_application():
+    if not session.get('user'): return redirect('/account')
+    try:
+        user = session.get('user')
+        col = Database.get_collection("users")
+        
+        store_name = request.form.get('store_name')
+        phone = request.form.get('phone_number')
+        address = request.form.get('address')
+        upi_id = request.form.get('upi_id')
+        bank_account = request.form.get('bank_account', '')
+        ifsc_code = request.form.get('ifsc_code', '')
+        id_type = request.form.get('id_type')
+        id_number = request.form.get('id_number')
+        
+        kyc_file = request.files.get('id_document')
+        profile_file = request.files.get('user_profile_photo')
+        license_file = request.files.get('trade_license')
+        
+        kyc_filename = secure_filename(kyc_file.filename) if kyc_file and kyc_file.filename else ""
+        profile_filename = secure_filename(profile_file.filename) if profile_file and profile_file.filename else ""
+        license_filename = secure_filename(license_file.filename) if license_file and license_file.filename else ""
+        
+        if kyc_file and kyc_file.filename: kyc_file.save(os.path.join(UPLOAD_FOLDER, kyc_filename))
+        if profile_file and profile_file.filename: profile_file.save(os.path.join(UPLOAD_FOLDER, profile_filename))
+        if license_file and license_file.filename: license_file.save(os.path.join(UPLOAD_FOLDER, license_filename))
+        
+        if col is not None:
+            col.update_one({"WBM_U_ID": user['id']}, {"$set": {
+                "role": "pending_seller",
+                "application_data": {
+                    "store_name": store_name, "phone": phone, "address": address, "upi_id": upi_id,
+                    "bank_account": bank_account, "ifsc_code": ifsc_code, "id_type": id_type,
+                    "id_number": id_number, "kyc_image": kyc_filename, "profile_image": profile_filename,
+                    "license_image": license_filename
+                }
+            }})
+        
+        session['user']['role'] = 'pending_seller'
+        session.modified = True
+        flash("Your Seller application is submitted and waiting for Admin approval.")
+        return redirect('/account')
+    except Exception as e:
+        return f"Submission Error: {str(e)}", 500
+
+# ==========================================
+# 📊 Seller Dashboard & Logic
 # ==========================================
 @seller_bp.route('/seller-dashboard')
 @seller_required
 def seller_dashboard():
     user = session.get('user')
-    WBM_U_ID = str(user.get('id')) # 🔴 UPDATE
+    WBM_U_ID = str(user.get('id')) 
     
     col_orders = Database.get_collection("orders")
     col_products = Database.get_collection("products")
@@ -76,29 +124,19 @@ def seller_dashboard():
         "status": {"$in": ["Confirmed", "Ready for Pickup", "Assigned", "Out for Delivery"]}
     }).sort("_id", -1))
     
-    return render_template('seller-dashboard.html', 
-                           orders=active_orders, 
-                           products=my_products, 
-                           current_user=current_user)
+    return render_template('seller-dashboard.html', orders=active_orders, products=my_products, current_user=current_user)
 
-# ==========================================
-# 2. Seller Wallet Page
-# ==========================================
 @seller_bp.route('/seller/wallet')
 @seller_required
 def seller_wallet():
     user = session.get('user')
     col = Database.get_collection("users")
-    seller_data = col.find_one({"WBM_U_ID": str(user['id'])}) # 🔴 UPDATE
+    seller_data = col.find_one({"WBM_U_ID": str(user['id'])}) 
     
     withdraw_col = Database.get_collection("withdrawals")
     history = list(withdraw_col.find({"seller_id": str(user['id'])}).sort("_id", -1))
-
     return render_template('seller_wallet.html', seller=seller_data, withdrawals=history)
 
-# ==========================================
-# 3. Add New UPI ID
-# ==========================================
 @seller_bp.route('/seller/add_upi', methods=['POST'])
 @seller_required
 def add_upi():
@@ -106,7 +144,7 @@ def add_upi():
     new_upi = request.form.get('new_upi')
     if new_upi:
         col = Database.get_collection("users")
-        seller = col.find_one({"WBM_U_ID": str(user['id'])}) # 🔴 UPDATE
+        seller = col.find_one({"WBM_U_ID": str(user['id'])}) 
         upi_list = seller.get('upi_list', [])
         is_first = len(upi_list) == 0
         upi_list.append({"upi_id": new_upi, "is_default": is_first})
@@ -114,15 +152,12 @@ def add_upi():
         flash("UPI ID Added Successfully!")
     return redirect(url_for('seller.seller_wallet'))
 
-# ==========================================
-# 4. Set Default UPI
-# ==========================================
 @seller_bp.route('/seller/set_default_upi/<int:index>', methods=['POST'])
 @seller_required
 def set_default_upi(index):
     user = session.get('user')
     col = Database.get_collection("users")
-    seller = col.find_one({"WBM_U_ID": str(user['id'])}) # 🔴 UPDATE
+    seller = col.find_one({"WBM_U_ID": str(user['id'])}) 
     upi_list = seller.get('upi_list', [])
     if 0 <= index < len(upi_list):
         for i, upi in enumerate(upi_list):
@@ -130,9 +165,6 @@ def set_default_upi(index):
         col.update_one({"WBM_U_ID": str(user['id'])}, {"$set": {"upi_list": upi_list}})
     return redirect(url_for('seller.seller_wallet'))
 
-# ==========================================
-# 5. Send Withdrawal Request
-# ==========================================
 @seller_bp.route('/seller/withdraw', methods=['POST'])
 @seller_required
 def request_withdrawal():
@@ -140,7 +172,7 @@ def request_withdrawal():
     amount = float(request.form.get('amount', 0))
     upi_id = request.form.get('upi_id')
     col = Database.get_collection("users")
-    seller = col.find_one({"WBM_U_ID": str(user['id'])}) # 🔴 UPDATE
+    seller = col.find_one({"WBM_U_ID": str(user['id'])}) 
     current_balance = float(seller.get('wallet_balance', 0.0))
 
     if amount >= 100 and amount <= current_balance:
@@ -158,9 +190,6 @@ def request_withdrawal():
         flash("Invalid amount or insufficient balance.")
     return redirect(url_for('seller.seller_wallet'))
 
-# ==========================================
-# 6. Mark Order Ready for Delivery
-# ==========================================
 @seller_bp.route('/seller/mark_ready/<order_id>', methods=['POST'])
 @seller_required
 def mark_order_ready(order_id):
@@ -170,9 +199,6 @@ def mark_order_ready(order_id):
         flash("📦 Order packed and marked ready! Local delivery boys have been notified.")
     return redirect('/seller-dashboard')
 
-# ==========================================
-# 7. ADD NEW PRODUCT (Cloudinary Upload Logic)
-# ==========================================
 @seller_bp.route('/add-product', methods=['GET', 'POST'])
 @seller_required
 def add_product():
@@ -181,7 +207,7 @@ def add_product():
         col_products = Database.get_collection("products")
         col_users = Database.get_collection("users")
         
-        seller_profile = col_users.find_one({"WBM_U_ID": str(user['id'])}) # 🔴 UPDATE
+        seller_profile = col_users.find_one({"WBM_U_ID": str(user['id'])}) 
         store_name = seller_profile.get('application_data', {}).get('store_name', 'My Store') if seller_profile else 'My Store'
 
         name = request.form.get('product_name')
@@ -196,10 +222,8 @@ def add_product():
         return_policy = request.form.get('return_policy')
         insure_status = request.form.get('apply_insure', 'No')
 
-        # 🔴 NEW: Generate WBM_P_ID
         new_wbm_pid = f"{random.randint(100000, 999999)}WBM{random.randint(1000, 9999)}"
 
-        # Upload Images to Cloudinary
         image_urls = []
         if 'product_images' in request.files:
             files = request.files.getlist('product_images')
@@ -208,7 +232,6 @@ def add_product():
                     live_url = upload_to_cloudinary(file, folder_name="inwear_product_images")
                     image_urls.append(live_url)
 
-        # Upload Video to Cloudinary
         video_url = ""
         if 'product_video' in request.files:
             file = request.files['product_video']
@@ -216,7 +239,7 @@ def add_product():
                 video_url = upload_to_cloudinary(file, folder_name="inwear_product_videos")
 
         new_product = {
-            "WBM_P_ID": new_wbm_pid, # 🔴 Save generated ID
+            "WBM_P_ID": new_wbm_pid, 
             "seller_id": str(user['id']),
             "store_name": store_name,
             "name": name,
@@ -238,28 +261,19 @@ def add_product():
         }
         
         col_products.insert_one(new_product)
-        
-        if insure_status == "Pending Approval":
-            flash(f"✅ Product published! ID: {new_wbm_pid}. Verification request sent.", "success")
-        else:
-            flash(f"✅ Product successfully published! ID: {new_wbm_pid}", "success")
-            
+        flash(f"✅ Product successfully published! ID: {new_wbm_pid}", "success")
         return redirect('/seller-dashboard')
         
     return render_template('add_product.html')
 
-# ==========================================
-# 8. Delete Seller Product
-# ==========================================
 @seller_bp.route('/seller/delete-product/<WBM_P_ID>', methods=['POST'])
 @seller_required
 def delete_seller_product(WBM_P_ID):
     user = session.get('user')
     col_products = Database.get_collection("products")
     if col_products is not None:
-        # 🔴 Smart Delete
         query = {"_id": ObjectId(WBM_P_ID)} if len(WBM_P_ID) == 24 else {"WBM_P_ID": WBM_P_ID}
-        query["seller_id"] = str(user['id']) # Security check
+        query["seller_id"] = str(user['id']) 
         
         result = col_products.delete_one(query)
         if result.deleted_count > 0:
@@ -268,9 +282,6 @@ def delete_seller_product(WBM_P_ID):
             flash("❌ Product not found or permission denied.")
     return redirect('/seller/products')
 
-# ==========================================
-# 9. Edit Seller Product
-# ==========================================
 @seller_bp.route('/seller/edit-product/<WBM_P_ID>', methods=['GET', 'POST'])
 @seller_required
 def edit_seller_product(WBM_P_ID):
@@ -278,7 +289,7 @@ def edit_seller_product(WBM_P_ID):
     col_products = Database.get_collection("products")
     
     query = {"_id": ObjectId(WBM_P_ID)} if len(WBM_P_ID) == 24 else {"WBM_P_ID": WBM_P_ID}
-    query["seller_id"] = str(user['id']) # Security check
+    query["seller_id"] = str(user['id']) 
     product = col_products.find_one(query)
     
     if not product:
@@ -300,14 +311,11 @@ def edit_seller_product(WBM_P_ID):
         
     return render_template('edit_product.html', product=product)
 
-# ==========================================
-# 10. Dedicated Seller Products Page
-# ==========================================
 @seller_bp.route('/seller/products')
 @seller_required
 def seller_products_page():
     user = session.get('user')
-    WBM_U_ID = str(user.get('id')) # 🔴 UPDATE
+    WBM_U_ID = str(user.get('id')) 
     
     col_products = Database.get_collection("products")
     col_users = Database.get_collection("users")
@@ -317,15 +325,11 @@ def seller_products_page():
     
     return render_template('seller_products.html', products=my_products, current_user=current_user)
 
-# ==========================================
-# 11. Print Invoice / Bill
-# ==========================================
 @seller_bp.route('/seller/print-bill/<order_id>')
 @seller_required
 def print_bill(order_id):
     col_orders = Database.get_collection("orders")
     order_data = col_orders.find_one({"_id": ObjectId(order_id)})
-    if not order_data:
-        return "Order not found", 404
+    if not order_data: return "Order not found", 404
     return render_template('invoice.html', order=order_data)
     
