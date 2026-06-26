@@ -72,16 +72,30 @@ def product_details(WBM_P_ID):
     if 'seller_id' in product:
         seller_products = Database.get_products_by_seller(product['seller_id'])
 
-    # 🔴 NEW: চেক করা হচ্ছে ইউজার আগে রেটিং দিয়েছে কি না
+    # চেক করা হচ্ছে ইউজার আগে রেটিং দিয়েছে কি না
     has_rated = False
     if user and product.get('reviews'):
         for r in product['reviews']:
             if r.get('user_id') == str(user['id']) and r.get('rating') is not None:
                 has_rated = True
                 break
-        
-    return render_template('product.html', product=product, seller_products=seller_products, has_rated=has_rated)
 
+    # 🔴 NEW LOGIC: ইউজারের সেভ করা পিনকোড খোঁজা
+    user_saved_pincode = ""
+    if user and db_users is not None:
+        user_data = db_users.find_one({"WBM_U_ID": str(user['id'])})
+        if user_data and user_data.get('addresses'):
+            # প্রথমে ডিফল্ট অ্যাড্রেস খুঁজবে
+            for add in user_data['addresses']:
+                if add.get('is_default'):
+                    user_saved_pincode = add.get('pincode', '')
+                    break
+            # ডিফল্ট না থাকলে লিস্টের প্রথম অ্যাড্রেসটা নেবে
+            if not user_saved_pincode and len(user_data['addresses']) > 0:
+                user_saved_pincode = user_data['addresses'][0].get('pincode', '')
+        
+    return render_template('product.html', product=product, seller_products=seller_products, has_rated=has_rated, user_saved_pincode=user_saved_pincode)
+    
 # ==========================================================
 # ⭐ ৩. অ্যাডভান্সড রিভিউ সাবমিট (ফটো/ভিডিও সহ)
 # ==========================================================
