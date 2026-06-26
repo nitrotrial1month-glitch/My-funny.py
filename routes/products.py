@@ -1,6 +1,7 @@
 import os
 import requests
 import random
+from datetime import datetime # 🔴 NEW: রিভিউয়ের তারিখ সেভ করার জন্য
 from flask import Blueprint, render_template, redirect, session, request
 from werkzeug.utils import secure_filename
 from bson import ObjectId
@@ -58,7 +59,7 @@ def product_details(WBM_P_ID):
     
     if not product: return "Product not found!", 404
     
-    # 🔴 FIX: db_users is not None ব্যবহার করা হয়েছে
+    # db_users is not None ব্যবহার করা হয়েছে
     seller_id = str(product.get('seller_id', ''))
     seller_info = db_users.find_one({"WBM_U_ID": seller_id}) if seller_id and db_users is not None else None
     
@@ -74,6 +75,39 @@ def product_details(WBM_P_ID):
         seller_products = Database.get_products_by_seller(product['seller_id'])
         
     return render_template('product.html', product=product, seller_products=seller_products)
+
+# ==========================================================
+# ⭐ নতুন রুট: কাস্টমার রিভিউ সাবমিট করার জন্য
+# ==========================================================
+@products_bp.route('/submit_review/<WBM_P_ID>', methods=['POST'])
+def submit_review(WBM_P_ID):
+    user = session.get('user')
+    if not user:
+        return redirect('/account') # ইউজার লগইন না থাকলে রিভিউ দিতে পারবে না
+        
+    rating = request.form.get('rating')
+    comment = request.form.get('comment')
+    
+    if not rating or not comment:
+        return redirect(f'/product/{WBM_P_ID}')
+    
+    # ইউজারের নাম বের করা (যদি 'name' না থাকে তবে 'username' ব্যবহার করবে)
+    reviewer_name = user.get('name') or user.get('username', 'Verified Buyer')
+    
+    new_review = {
+        "user_name": reviewer_name,
+        "rating": int(rating),
+        "comment": comment,
+        "date": datetime.now().strftime("%d %b, %Y")
+    }
+    
+    col = Database.get_collection("products")
+    query = {"_id": ObjectId(WBM_P_ID)} if len(WBM_P_ID) == 24 else {"WBM_P_ID": WBM_P_ID}
+    
+    # ডাটাবেসে রিভিউয়ের লিস্টে নতুন রিভিউটি পুশ (Push) করা হচ্ছে
+    col.update_one(query, {"$push": {"reviews": new_review}})
+    
+    return redirect(f'/product/{WBM_P_ID}')
     
 
 # ৩. সেলার প্রোডাক্ট আপলোড
