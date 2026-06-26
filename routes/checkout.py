@@ -9,6 +9,17 @@ import requests
 
 checkout_bp = Blueprint('checkout', __name__)
 
+# 🔴 নতুন ফাংশন: জিপিএস কোঅর্ডিনেট থেকে পিনকোড বের করার জন্য
+def get_pincode_from_gps(lat, lon):
+    try:
+        # OpenStreetMap Nominatim API
+        url = f"https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lon}"
+        headers = {'User-Agent': 'WBM-Store-App/1.0'} # Nominatim এর জন্য ইউজার এজেন্ট জরুরি
+        res = requests.get(url, headers=headers, timeout=2).json()
+        return res.get('address', {}).get('postcode')
+    except:
+        return None
+        
 # ==========================================================
 # 🚀 1. PURE MATH DISTANCE CALCULATION (0.0001s Speed)
 # ==========================================================
