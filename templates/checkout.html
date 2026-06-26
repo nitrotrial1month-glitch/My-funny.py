@@ -62,6 +62,13 @@
 </head>
 <body>
 
+    <div id="backend-data" 
+         data-price="{{ total_price }}" 
+         data-seller-pin="{% if items %}{{ items[0].seller_pincode }}{% else %}713128{% endif %}"
+         data-has-address="{% if saved_addresses %}true{% else %}false{% endif %}"
+         data-default-pin="{{ user_default_pincode }}"
+         style="display:none;"></div>
+
     <form action="/process_checkout" method="POST" id="checkoutForm">
         <input type="hidden" name="is_direct" value="{{ is_direct }}">
         {% if is_direct %}<input type="hidden" name="WBM_P_ID" value="{{ direct_product_id }}">{% endif %}
@@ -81,32 +88,27 @@
             <div class="card">
                 
                 {% if saved_addresses %}
-                    {% set default_add = saved_addresses[0] %}
-                    {% for add in saved_addresses %}
-                        {% if add.is_default %}{% set default_add = add %}{% endif %}
-                    {% endfor %}
-
-                    <div id="address-compact-view">
-                        <div class="address-header">
-                            <h3 class="card-title">Deliver to:</h3>
-                            <button type="button" class="change-btn" onclick="showAddressList()">Change</button>
+                    
+                    <div id="all-compact-views">
+                        {% for add in saved_addresses %}
+                        <div id="compact-view-{{ loop.index0 }}" style="display: {% if add.is_default %}block{% else %}none{% endif %};">
+                            <div class="address-header">
+                                <h3 class="card-title">Deliver to:</h3>
+                                <button type="button" class="change-btn" onclick="showAddressList()">Change</button>
+                            </div>
+                            <div style="font-size: 14px; color: #333; line-height: 1.5; padding: 12px; background: #fff5f5; border-radius: 6px; border: 1px solid #ffcccc;">
+                                <strong>{{ add.name }}</strong><br>
+                                {{ add.address }}<br>
+                                <div style="margin-top: 5px; font-size: 13px; font-weight: bold; color: #555;">PIN: {{ add.pincode }} | Ph: {{ add.phone }}</div>
+                            </div>
                         </div>
-                        <div id="selected-address-display" style="font-size: 14px; color: #333; line-height: 1.5; padding: 12px; background: #fff5f5; border-radius: 6px; border: 1px solid #ffcccc;">
-                            <strong>{{ default_add.name }}</strong><br>
-                            {{ default_add.address }}<br>
-                            <div style="margin-top: 5px; font-size: 13px; font-weight: bold; color: #555;">PIN: {{ default_add.pincode }} | Ph: {{ default_add.phone }}</div>
-                        </div>
+                        {% endfor %}
                     </div>
 
                     <div id="address-list-view" style="display:none;">
                         <h3 class="card-title" style="margin-bottom: 15px;">Select Delivery Address</h3>
                         {% for add in saved_addresses %}
-                        <label class="address-box {% if add.is_default %}selected{% endif %}" 
-                               data-pincode="{{ add.pincode }}" 
-                               data-name="{{ add.name }}" 
-                               data-address="{{ add.address | replace('\n', ' ') | replace('\r', '') }}" 
-                               data-phone="{{ add.phone }}" 
-                               onclick="selectSavedAddress(this)">
+                        <label class="address-box {% if add.is_default %}selected{% endif %}" onclick="selectAddress('{{ loop.index0 }}', '{{ add.pincode }}', this)">
                             <input type="radio" name="address_selection" value="{{ loop.index0 }}" style="accent-color: #cc0000;" {% if add.is_default %}checked{% endif %}>
                             <div>
                                 <div style="font-weight:bold;">{{ add.name }}</div>
@@ -117,6 +119,7 @@
                         {% endfor %}
                         <button type="button" class="manual-btn" style="margin-top: 10px;" onclick="showAddOptions()">+ Add a New Address</button>
                     </div>
+
                 {% endif %}
 
                 <div id="add-options-view" style="{% if saved_addresses %}display:none;{% else %}display:block;{% endif %} margin-top:10px;">
@@ -220,77 +223,76 @@
     </form>
 
     <script>
-        // 🔴 সম্পূর্ণ সুরক্ষিত জাভাস্ক্রিপ্ট ব্লক (কোনো কিছু ক্র্যাশ করবে না)
-        var basePrice = parseFloat("{{ total_price | default(0) }}");
-        var sellerPincode = "{% if items %}{{ items[0].seller_pincode | default('713128') }}{% else %}713128{% endif %}";
+        var backendData = document.getElementById('backend-data');
+        var basePrice = parseFloat(backendData.getAttribute('data-price')) || 0;
+        var sellerPincode = backendData.getAttribute('data-seller-pin') || "713128";
+        var hasAddresses = backendData.getAttribute('data-has-address') === "true";
+        var defaultPin = backendData.getAttribute('data-default-pin') || "";
         var upiId = "9046348427@fam"; 
-        var hasAddresses = {% if saved_addresses %}true{% else %}false{% endif %};
-        var defaultPin = "{% if user_default_pincode %}{{ user_default_pincode }}{% elif saved_addresses %}{{ saved_addresses[0].pincode }}{% else %}{% endif %}";
 
         var currentStep = 1;
         var deliveryCalculated = false;
         var finalAmountForUPI = basePrice;
 
-        // পেজ লোড হওয়ার সাথে সাথে প্রথম ডেলিভারি ক্যালকুলেশন রান করবে
         window.onload = function() {
-            try {
-                if (hasAddresses && defaultPin && defaultPin.length === 6) {
-                    calculateDelivery(defaultPin);
-                } else {
-                    deliveryCalculated = true; // সেভ অ্যাড্রেস না থাকলে ফর্ম ফিলাপের পর হিসাব হবে
-                }
-            } catch(e) { console.error(e); }
+            if (hasAddresses && defaultPin.length === 6) {
+                calculateDelivery(defaultPin);
+            } else {
+                deliveryCalculated = true; 
+            }
         };
 
         function showAddressList() {
-            try {
-                document.getElementById('address-compact-view').style.display = "none";
-                document.getElementById('address-list-view').style.display = "block";
-                if(document.getElementById('add-options-view')) document.getElementById('add-options-view').style.display = "none";
-                document.getElementById('manual-form-view').style.display = "none";
-            } catch(e) { console.error(e); }
+            if(document.getElementById('all-compact-views')) document.getElementById('all-compact-views').style.display = "none";
+            if(document.getElementById('address-list-view')) document.getElementById('address-list-view').style.display = "block";
+            if(document.getElementById('add-options-view')) document.getElementById('add-options-view').style.display = "none";
+            if(document.getElementById('manual-form-view')) document.getElementById('manual-form-view').style.display = "none";
         }
 
         function showAddOptions() {
-            try {
-                document.getElementById('address-list-view').style.display = "none";
-                document.getElementById('add-options-view').style.display = "block";
-                document.getElementById('manual-form-view').style.display = "none";
-            } catch(e) { console.error(e); }
+            if(document.getElementById('address-list-view')) document.getElementById('address-list-view').style.display = "none";
+            if(document.getElementById('add-options-view')) document.getElementById('add-options-view').style.display = "block";
+            if(document.getElementById('manual-form-view')) document.getElementById('manual-form-view').style.display = "none";
         }
 
         function showManualForm() {
-            try {
-                if(document.getElementById('add-options-view')) document.getElementById('add-options-view').style.display = "none";
-                document.getElementById('manual-form-view').style.display = "block";
-                if(document.getElementById('newAddrRadio')) document.getElementById('newAddrRadio').checked = true;
-                deliveryCalculated = false;
-            } catch(e) { console.error(e); }
+            if(document.getElementById('add-options-view')) document.getElementById('add-options-view').style.display = "none";
+            if(document.getElementById('manual-form-view')) document.getElementById('manual-form-view').style.display = "block";
+            if(document.getElementById('newAddrRadio')) document.getElementById('newAddrRadio').checked = true;
+            deliveryCalculated = false;
         }
 
-        function selectSavedAddress(element) {
-            try {
-                document.querySelectorAll('.address-box').forEach(function(box) { box.classList.remove('selected'); });
-                element.classList.add('selected');
-                if(element.querySelector('input')) element.querySelector('input').checked = true;
-                
-                var pin = element.getAttribute('data-pincode') || "";
-                var name = element.getAttribute('data-name') || "";
-                var address = element.getAttribute('data-address') || "";
-                var phone = element.getAttribute('data-phone') || "";
-                
-                var displayHtml = "<strong>" + name + "</strong><br>" + address + "<br><div style='margin-top: 5px; font-size: 13px; font-weight: bold; color: #555;'>PIN: " + pin + " | Ph: " + phone + "</div>";
-                if(document.getElementById('selected-address-display')) document.getElementById('selected-address-display').innerHTML = displayHtml;
-                
-                document.getElementById('address-list-view').style.display = "none";
-                document.getElementById('address-compact-view').style.display = "block";
-                
-                if(pin.length === 6) calculateDelivery(pin);
-            } catch(e) { console.error(e); }
+        // 🔴 New Smooth Selection Logic
+        function selectAddress(index, pincode, element) {
+            document.querySelectorAll('.address-box').forEach(function(box) { box.classList.remove('selected'); });
+            element.classList.add('selected');
+            element.querySelector('input').checked = true;
+
+            document.getElementById('address-list-view').style.display = "none";
+            document.querySelectorAll('[id^="compact-view-"]').forEach(function(view) { view.style.display = "none"; });
+            
+            document.getElementById('all-compact-views').style.display = "block";
+            document.getElementById('compact-view-' + index).style.display = "block";
+
+            if (pincode && pincode.length === 6) {
+                calculateDelivery(pincode);
+            }
         }
 
-        // 📍 লোকেশন কোড সম্পূর্ণ আলাদা এবং সুরক্ষিত (ব্যর্থ হলেও বাটন আটকাবে না)
+        // 📍 Safe Auto Detect Location
         function autoDetectLocation() {
-            try {
-                var btn = document.getElementById('action-btn');
-                if(btn) btn.inn
+            var btn = document.getElementById('action-btn');
+            if(btn) btn.innerText = "Locating...";
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    var lat = position.coords.latitude;
+                    var lon = position.coords.longitude;
+                    
+                    fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lon, {
+                        headers: { 'Accept-Language': 'en' }
+                    })
+                    .then(function(res) { return res.json(); })
+                    .then(function(data) {
+                        var addressStr = data.display_name || '';
+                        var pin = (data.address && data.address.postcode) ? data.address.
