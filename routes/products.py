@@ -44,22 +44,20 @@ def send_verification_to_discord(product_data, WBM_P_ID):
         print("Discord Error:", e)
 
 # ==========================================================
-# 👕 প্রোডাক্ট পেজ এবং সেলার আপলোড/এডিট রাউট
+# 👕 ২. প্রোডাক্টের ডিটেইলস পেজ
 # ==========================================================
-
-# ২. প্রোডাক্টের ডিটেইলস পেজ
 @products_bp.route('/product/<WBM_P_ID>')
 def product_details(WBM_P_ID):
+    user = session.get('user')
     col = Database.get_collection("products")
     db_users = Database.get_collection("users")
     
-    # 🔴 SMART LOGIC for fetching
     query = {"_id": ObjectId(WBM_P_ID)} if len(WBM_P_ID) == 24 else {"WBM_P_ID": WBM_P_ID}
     product = col.find_one(query) if col is not None else None
     
     if not product: return "Product not found!", 404
     
-    # db_users is not None ব্যবহার করা হয়েছে
+    # সেলার পিনকোড বের করা
     seller_id = str(product.get('seller_id', ''))
     seller_info = db_users.find_one({"WBM_U_ID": seller_id}) if seller_id and db_users is not None else None
     
@@ -68,45 +66,71 @@ def product_details(WBM_P_ID):
     elif seller_info and seller_info.get('application_data') and seller_info['application_data'].get('pincode'):
         product['seller_pincode'] = seller_info['application_data'].get('pincode')
     else:
-        product['seller_pincode'] = "713128" # ফলব্যাক পিনকোড
+        product['seller_pincode'] = "713128"
     
     seller_products = []
     if 'seller_id' in product:
         seller_products = Database.get_products_by_seller(product['seller_id'])
+
+    # 🔴 NEW: চেক করা হচ্ছে ইউজার আগে রেটিং দিয়েছে কি না
+    has_rated = False
+    if user and product.get('reviews'):
+        for r in product['reviews']:
+            if r.get('user_id') == str(user['id']) and r.get('rating') is not None:
+                has_rated = True
+                break
         
-    return render_template('product.html', product=product, seller_products=seller_products)
+    return render_template('product.html', product=product, seller_products=seller_products, has_rated=has_rated)
 
 # ==========================================================
-# ⭐ নতুন রুট: কাস্টমার রিভিউ সাবমিট করার জন্য
+# ⭐ ৩. অ্যাডভান্সড রিভিউ সাবমিট (ফটো/ভিডিও সহ)
 # ==========================================================
+from datetime import datetime
+
 @products_bp.route('/submit_review/<WBM_P_ID>', methods=['POST'])
 def submit_review(WBM_P_ID):
     user = session.get('user')
-    if not user:
-        return redirect('/account') # ইউজার লগইন না থাকলে রিভিউ দিতে পারবে না
+    if not user: return redirect('/account')
         
     rating = request.form.get('rating')
-    comment = request.form.get('comment')
-    
-    if not rating or not comment:
-        return redirect(f'/product/{WBM_P_ID}')
-    
-    # ইউজারের নাম বের করা (যদি 'name' না থাকে তবে 'username' ব্যবহার করবে)
-    reviewer_name = user.get('name') or user.get('username', 'Verified Buyer')
-    
-    new_review = {
-        "user_name": reviewer_name,
-        "rating": int(rating),
-        "comment": comment,
-        "date": datetime.now().strftime("%d %b, %Y")
-    }
+    comment = request.form.get('comment', '')
     
     col = Database.get_collection("products")
     query = {"_id": ObjectId(WBM_P_ID)} if len(WBM_P_ID) == 24 else {"WBM_P_ID": WBM_P_ID}
+    product = col.find_one(query)
     
-    # ডাটাবেসে রিভিউয়ের লিস্টে নতুন রিভিউটি পুশ (Push) করা হচ্ছে
+    # চেক করা হচ্ছে আগে রেটিং দেওয়া আছে কি না
+    has_rated = False
+    if product and 'reviews' in product:
+        for r in product['reviews']:
+            if r.get('user_id') == str(user['id']) and r.get('rating') is not None:
+                has_rated = True
+                break
+
+    # 🔴 ছবি/ভিডিও আপলোড হ্যান্ডেলিং
+    media_urls = []
+    if 'review_media' in request.files:
+        files = request.files.getlist('review_media')
+        upload_dir = os.path.join('static', 'uploads')
+        os.makedirs(upload_dir, exist_ok=True)
+        for file in files:
+            if file and file.filename:
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(upload_dir, filename))
+                media_urls.append('static/uploads/' + filename)
+
+    reviewer_name = user.get('name') or user.get('username', 'Verified Buyer')
+    
+    new_review = {
+        "user_id": str(user['id']),
+        "user_name": reviewer_name,
+        "rating": int(rating) if rating and not has_rated else None, # আগে রেটিং দিলে নতুন রেটিং সেভ হবে না
+        "comment": comment,
+        "media": media_urls, # ছবি/ভিডিও সেভ করা হচ্ছে
+        "date": datetime.now().strftime("%d %b, %Y")
+    }
+    
     col.update_one(query, {"$push": {"reviews": new_review}})
-    
     return redirect(f'/product/{WBM_P_ID}')
     
 
