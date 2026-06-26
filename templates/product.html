@@ -8,52 +8,45 @@
         :root { --primary: #cc0000; --bg: #f1f3f6; --text-dark: #212121; --muted: #878787; --success: #388e3c; }
         body { font-family: Roboto, 'Segoe UI', Helvetica, Arial, sans-serif; background: var(--bg); margin: 0; padding-bottom: 80px; color: var(--text-dark); }
         
-        /* Top Bar */
         .top-bar { padding: 15px; background: white; display: flex; align-items: center; gap: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
         .back-btn { text-decoration: none; color: var(--text-dark); font-size: 22px; font-weight: bold; }
         
-        /* Image Slider & Badge */
         .media-wrapper { position: relative; background: #fff; border-bottom: 1px solid #eee;}
         .media-scroller { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none; }
         .media-scroller::-webkit-scrollbar { display: none; }
         .media-item { flex: 0 0 100%; width: 100%; aspect-ratio: 3/4; object-fit: cover; scroll-snap-align: start; background: #f9f9f9; }
 
-        /* Product Details Card */
         .card { background: white; padding: 15px; margin-bottom: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         h1 { margin: 0 0 5px 0; font-size: 16px; font-weight: 500; color: var(--text-dark); line-height: 1.4; display: flex; align-items: center; flex-wrap: wrap; gap: 8px;}
         
-        /* Price Section */
         .price-section { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
-        .discount-pct { color: var(--success); font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+        .discount-pct { color: var(--success); font-size: 20px; font-weight: 800; }
         .old-price { color: var(--muted); text-decoration: line-through; font-size: 16px; }
         .current-price { color: var(--text-dark); font-size: 28px; font-weight: bold; }
         
-        /* Size Selection */
         .section-title { font-weight: bold; font-size: 15px; margin-bottom: 15px; color: var(--text-dark); }
         .size-container { display: flex; gap: 10px; flex-wrap: wrap; }
-        .size-btn { padding: 10px 15px; border: 1px solid #ccc; border-radius: 6px; background: white; cursor: pointer; font-size: 14px; font-weight: 500; min-width: 45px; text-align: center; }
+        .size-btn { padding: 10px 15px; border: 1px solid #ccc; border-radius: 6px; background: white; cursor: pointer; font-size: 14px; font-weight: 500; }
         .size-btn.selected { border-color: var(--primary); color: var(--primary); background: #fff5f5; border-width: 2px; padding: 9px 14px; }
         
-        /* Delivery Box */
         .delivery-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 15px; margin-bottom: 12px; }
         .delivery-row { display: flex; gap: 15px; margin-bottom: 15px; font-size: 14px; color: #333; align-items: flex-start; }
-        .icon { font-size: 18px; color: var(--muted); }
-        .link-text { color: var(--primary); font-weight: bold; font-size: 13px; text-decoration: none; cursor: pointer; }
+        .manual-pin-box { display: flex; gap: 8px; margin-top: 8px; }
+        .pin-input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; width: 120px; outline: none; }
+        .pin-btn { background: var(--primary); color: white; border: none; padding: 8px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 12px; }
 
-        /* Trust Badges */
         .trust-badges { display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #eee; margin-top: 15px; text-align: center; }
         .trust-item { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 30%; }
         .trust-icon { width: 35px; height: 35px; background: #f1f3f6; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 18px; color: var(--primary); }
-        .trust-text { font-size: 11px; color: #555; font-weight: 500; line-height: 1.3; text-align: center;}
+        .trust-text { font-size: 11px; color: #555; font-weight: 500; line-height: 1.3; }
 
-        /* Real Ratings & Reviews */
         .review-card { border: 1px solid #eee; border-radius: 8px; padding: 12px; margin-bottom: 10px; background: #fafafa;}
-        .review-form { border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px; }
-        .form-control { width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: inherit; font-size: 13px; margin-bottom: 10px; outline: none;}
+        .review-media { display: flex; gap: 8px; overflow-x: auto; margin-top: 10px; padding-bottom: 5px; }
+        .review-media img, .review-media video { height: 80px; width: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd; }
+        .form-control { width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; margin-bottom: 10px; }
         
-        /* Bottom Actions */
         .action-btns { display: flex; position: fixed; bottom: 0; left: 0; width: 100%; background: white; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000;}
-        .btn { flex: 1; padding: 16px; border: none; font-weight: bold; text-align: center; cursor: pointer; font-size: 15px; text-transform: uppercase; transition: 0.2s; }
+        .btn { flex: 1; padding: 16px; border: none; font-weight: bold; cursor: pointer; font-size: 15px; text-transform: uppercase; }
         .add-cart { background: white; color: var(--primary); border-top: 1px solid #eee; }
         .buy-now { background: var(--primary); color: white; border-top: 1px solid var(--primary); }
     </style>
@@ -62,47 +55,40 @@
 
     <div class="top-bar">
         <a href="javascript:history.back()" class="back-btn">←</a>
-        <div style="width: 100%; border-radius: 4px; padding: 8px 12px; font-size: 14px; color: #888;">
-            🔍 Search for products
-        </div>
+        <div style="width: 100%; border-radius: 4px; padding: 8px 12px; font-size: 14px; color: #888;">🔍 Search for products</div>
     </div>
 
     <div class="media-wrapper">
         <div class="media-scroller">
             {% if product.images %}
                 {% for img in product.images %}
-                    <img src="{% if 'http' in img %}{{ img }}{% else %}/{{ img }}{% endif %}" class="media-item" alt="Product Image">
+                    <img src="{% if 'http' in img %}{{ img }}{% else %}/{{ img }}{% endif %}" class="media-item">
                 {% endfor %}
             {% elif product.image %}
-                <img src="{% if product.image and 'http' in product.image %}{{ product.image }}{% else %}/{{ product.image }}{% endif %}" class="media-item" alt="Product Image" onerror="this.src='https://via.placeholder.com/400';">
+                <img src="{% if product.image and 'http' in product.image %}{{ product.image }}{% else %}/{{ product.image }}{% endif %}" class="media-item">
             {% endif %}
-
             {% if product.video %}
-                <video src="{% if 'http' in product.video %}{{ product.video }}{% else %}/{{ product.video }}{% endif %}" class="media-item" controls preload="metadata" poster="{% if product.image and 'http' in product.image %}{{ product.image }}{% else %}/{{ product.image }}{% endif %}"></video>
+                <video src="{% if 'http' in product.video %}{{ product.video }}{% else %}/{{ product.video }}{% endif %}" class="media-item" controls></video>
             {% endif %}
         </div>
         
-        {% if product.reviews and product.reviews|length > 0 %}
-            {% set total_rating = 0 %}
-            {% for r in product.reviews %}
-                {% set total_rating = total_rating + r.rating|int %}
-            {% endfor %}
-            {% set avg_rating = (total_rating / product.reviews|length) | round(1) %}
-            
-            <div style="position: absolute; bottom: 15px; left: 15px; background: rgba(255,255,255,0.9); padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; display: flex; align-items: center; gap: 4px; border: 1px solid #eee; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                {{ avg_rating }} <span style="color: var(--success); font-size: 10px;">★</span> | {{ product.reviews|length }}
-            </div>
+        {% if product.reviews %}
+            {% set rated_reviews = product.reviews|selectattr("rating", "number")|list %}
+            {% if rated_reviews|length > 0 %}
+                {% set total_rating = 0 %}
+                {% for r in rated_reviews %}
+                    {% set total_rating = total_rating + r.rating|int %}
+                {% endfor %}
+                {% set avg_rating = (total_rating / rated_reviews|length) | round(1) %}
+                <div style="position: absolute; bottom: 15px; left: 15px; background: rgba(255,255,255,0.9); padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; border: 1px solid #eee;">
+                    {{ avg_rating }} <span style="color: var(--success); font-size: 10px;">★</span> | {{ rated_reviews|length }}
+                </div>
+            {% endif %}
         {% endif %}
     </div>
     
     <div class="card" style="margin-top: 0; border-radius: 0;">
-        <h1>
-            <span style="font-weight: bold; color: var(--muted); margin-right: 5px;">{{ product.store_name | default('Wear By Me') }}</span>
-            {{ product.name }}
-        </h1>
-        
-        <div style="font-size: 11px; color: var(--muted); margin-bottom: 10px;">ID: {{ product.WBM_P_ID | default(product._id) }}</div>
-
+        <h1><span style="font-weight: bold; color: var(--muted); margin-right: 5px;">{{ product.store_name | default('Wear By Me') }}</span>{{ product.name }}</h1>
         <div class="price-section">
             {% if product.mrp and product.mrp|float > product.price|float %}
                 {% set discount = ((product.mrp|float - product.price|float) / product.mrp|float * 100) | round | int %}
@@ -126,57 +112,42 @@
 
     <div class="card">
         <div class="delivery-header">Delivery details</div>
-        
         <div class="delivery-row">
             <span class="icon">📍</span>
             <div style="flex-grow: 1;">
-                <div style="font-weight: bold; margin-bottom: 3px;" id="loc-pin">Detecting Location...</div>
-                <div style="font-size: 12px; color: var(--muted);" id="loc-address">Please wait while we check delivery availability.</div>
+                <div style="font-weight: bold; margin-bottom: 3px;" id="loc-pin">Check Delivery Options</div>
+                <div class="manual-pin-box">
+                    <input type="text" id="manual-pincode" class="pin-input" placeholder="Enter Pincode" maxlength="6">
+                    <button class="pin-btn" onclick="checkManualDelivery()">Check</button>
+                </div>
+                <div style="font-size: 11px; color: var(--muted); margin-top: 6px;">Or <span style="color: var(--primary); font-weight: bold; cursor: pointer;" onclick="requestLocation()">Auto-detect Location</span></div>
             </div>
-            <span class="link-text" onclick="requestLocation()">Retry</span>
         </div>
 
         <div class="delivery-row" style="border-top: 1px solid #eee; padding-top: 15px;">
             <span class="icon">🚚</span>
             <div>
-                <div style="font-weight: bold; color: var(--text-dark);" id="delivery-status">Calculating Charge...</div>
+                <div style="font-weight: bold; color: var(--text-dark);" id="delivery-status">Enter pincode to check charge</div>
                 <div style="font-size: 12px; color: var(--muted); margin-top: 3px;">Order now to get it fast</div>
             </div>
         </div>
 
         <div class="trust-badges">
-            {% if product.policies and product.policies.return_eligible %}
+            {% if product.return_policy %}
             <div class="trust-item">
                 <div class="trust-icon">🔄</div>
-                <div class="trust-text">7-Day<br>Return</div>
+                <div class="trust-text">{{ product.return_policy }}</div>
             </div>
             {% endif %}
-            
-            {% if product.policies and product.policies.replace_eligible %}
-            <div class="trust-item">
-                <div class="trust-icon">🔁</div>
-                <div class="trust-text">7-Day<br>Replacement</div>
-            </div>
-            {% endif %}
-
             <div class="trust-item">
                 <div class="trust-icon">💵</div>
                 <div class="trust-text">Cash on<br>Delivery</div>
             </div>
-            
             <div class="trust-item">
                 <div class="trust-icon">🛡️</div>
                 <div class="trust-text">Secure<br>Payment</div>
             </div>
         </div>
-    </div>
-
-    <div class="card">
-        <div class="section-title">Product Details</div>
-        <div style="white-space: pre-wrap; line-height: 1.6; font-size: 13px; color: #444;">{{ product.description | default('High quality product.') }}</div>
-        {% if product.details %}
-            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; font-size: 13px; color: #555;">{{ product.details }}</div>
-        {% endif %}
     </div>
 
     <div class="card" style="margin-bottom: 20px;">
@@ -186,23 +157,42 @@
             {% for review in product.reviews %}
             <div class="review-card">
                 <div style="display: flex; gap: 10px; margin-bottom: 8px; align-items: center;">
+                    {% if review.rating %}
                     <span style="background: {% if review.rating|int >= 3 %}var(--success){% else %}var(--primary){% endif %}; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold;">
                         {{ review.rating }} ★
                     </span>
-                    <span style="font-weight: bold; font-size: 13px;">{{ review.user_name | default('Verified Buyer') }}</span>
+                    {% else %}
+                    <span style="background: #6c757d; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold;">💬 Comment</span>
+                    {% endif %}
+                    <span style="font-weight: bold; font-size: 13px;">{{ review.user_name }}</span>
                 </div>
                 <p style="font-size: 13px; color: #444; margin: 0 0 8px 0; line-height: 1.4;">{{ review.comment }}</p>
-                <div style="font-size: 11px; color: var(--muted);">{{ review.date }}</div>
+                
+                {% if review.media %}
+                <div class="review-media">
+                    {% for m in review.media %}
+                        {% if m.endswith('.mp4') or m.endswith('.mov') %}
+                            <video src="/{{ m }}" controls preload="metadata"></video>
+                        {% else %}
+                            <img src="/{{ m }}" alt="Review Photo">
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <div style="font-size: 11px; color: var(--muted); margin-top: 8px;">{{ review.date }}</div>
             </div>
             {% endfor %}
         {% else %}
-            <p style="font-size: 13px; color: var(--muted);">No reviews yet. Be the first to review this product!</p>
+            <p style="font-size: 13px; color: var(--muted);">No reviews yet. Be the first to review!</p>
         {% endif %}
 
-        <div class="review-form">
+        <div style="border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px;">
             <div style="font-weight: bold; font-size: 14px; margin-bottom: 10px;">Write a Review</div>
             
-            <form action="/submit_review/{{ product.WBM_P_ID | default(product._id) }}" method="POST">
+            <form action="/submit_review/{{ product.WBM_P_ID | default(product._id) }}" method="POST" enctype="multipart/form-data">
+                
+                {% if not has_rated %}
                 <label style="font-size: 12px; font-weight: bold; color: #555;">Rate this product:</label>
                 <select name="rating" class="form-control" required>
                     <option value="" disabled selected>Select Rating</option>
@@ -212,10 +202,16 @@
                     <option value="2">2 ★ - Bad</option>
                     <option value="1">1 ★ - Very Bad</option>
                 </select>
+                {% else %}
+                <div style="color: var(--success); font-size:12px; margin-bottom:10px; font-weight: bold;">✅ You already rated this product. You can add more comments & media below.</div>
+                {% endif %}
                 
-                <textarea name="comment" rows="3" class="form-control" placeholder="Share your experience (quality, fit, etc.)..." required></textarea>
+                <textarea name="comment" rows="3" class="form-control" placeholder="Share your experience..." required></textarea>
                 
-                <button type="submit" style="background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 13px; width: 100%;">Submit Review</button>
+                <label style="font-size: 12px; font-weight: bold; color: #555;">Upload Photos/Videos (Optional):</label>
+                <input type="file" name="review_media" multiple accept="image/*,video/*" class="form-control" style="padding: 5px;">
+                
+                <button type="submit" style="background: var(--primary); color: white; border: none; padding: 10px; border-radius: 4px; font-weight: bold; width: 100%; cursor: pointer;">Submit Review</button>
             </form>
         </div>
     </div>
@@ -232,77 +228,52 @@
         const hasSizes = {% if product.sizes %}true{% else %}false{% endif %};
         const sellerPin = document.getElementById('backend-data').getAttribute('data-seller-pin');
 
-        // Size Selection
         function selectSize(size, btnElement) {
             selectedSize = size;
-            let buttons = document.querySelectorAll('.size-btn');
-            buttons.forEach(btn => btn.classList.remove('selected'));
+            document.querySelectorAll('.size-btn').forEach(btn => btn.classList.remove('selected'));
             btnElement.classList.add('selected');
         }
 
-        // Action Logic
         function handleAction(actionType) {
-            if (hasSizes && selectedSize === '') {
-                alert("Please select a size before proceeding.");
-                return;
-            }
+            if (hasSizes && selectedSize === '') { alert("Please select a size."); return; }
             let pId = '{{ product.WBM_P_ID if product.WBM_P_ID else product._id }}';
             let url = actionType === 'cart' ? '/add_to_cart/' + pId : '/checkout/' + pId;
-            if (hasSizes) {
-                url += '?size=' + selectedSize;
-            }
+            if (hasSizes) url += '?size=' + selectedSize;
             window.location.href = url;
         }
 
-        // 📍 পেজ লোড হওয়ার সাথে সাথেই অটোমেটিক লোকেশন ডিটেক্ট শুরু হবে
-        window.onload = function() {
-            requestLocation();
-        };
+        function checkManualDelivery() {
+            let pin = document.getElementById('manual-pincode').value;
+            if (pin.length === 6 && !isNaN(pin)) calculateChargeAPI(pin);
+            else alert('Please enter a valid 6-digit pincode.');
+        }
 
-        // 📍 অটো লোকেশন ক্যালকুলেশন
         function requestLocation() {
-            let pinDisplay = document.getElementById('loc-pin');
-            let addressDisplay = document.getElementById('loc-address');
-            let statusDisplay = document.getElementById('delivery-status');
-
-            pinDisplay.innerText = "Locating...";
-            addressDisplay.innerText = "Fetching your current location...";
-            statusDisplay.innerText = "Calculating Charge...";
-
             if (navigator.geolocation) {
+                document.getElementById('delivery-status').innerText = "Locating...";
                 navigator.geolocation.getCurrentPosition(
                     function(position) {
                         let lat = position.coords.latitude;
                         let lon = position.coords.longitude;
-                        
                         fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
                         .then(res => res.json())
                         .then(data => {
                             let userPincode = data.address.postcode || '';
-                            let area = data.address.suburb || data.address.city_district || data.address.city || 'Your Location';
-                            
                             if(userPincode) {
-                                pinDisplay.innerText = "Deliver to: " + userPincode;
-                                addressDisplay.innerText = area;
+                                document.getElementById('manual-pincode').value = userPincode;
                                 calculateChargeAPI(userPincode);
-                            } else {
-                                fallbackLocationUI();
-                            }
-                        }).catch(() => fallbackLocationUI());
+                            } else alert("Could not detect exact pincode. Please enter manually.");
+                        }).catch(() => alert("Error detecting location."));
                     }, 
-                    function(error) {
-                        fallbackLocationUI();
-                    }, 
+                    function(error) { alert("Location access denied. Please enter manually."); }, 
                     { timeout: 5000 }
                 );
-            } else {
-                fallbackLocationUI();
-            }
+            } else alert("Location not supported.");
         }
 
-        // 🚚 API কল করে চার্জ বের করা
         function calculateChargeAPI(userPincode) {
             let statusDisplay = document.getElementById('delivery-status');
+            statusDisplay.innerText = "Calculating Charge...";
             
             fetch('/calculate_delivery', {
                 method: 'POST',
@@ -311,26 +282,15 @@
             })
             .then(res => res.json())
             .then(data => {
-                let charge = data.charge;
-                
-                if(charge === 0) {
+                document.getElementById('loc-pin').innerText = "Deliver to: " + userPincode;
+                if(data.charge === 0) {
                     statusDisplay.innerText = "Free Delivery Available!";
                     statusDisplay.style.color = "var(--success)";
                 } else {
-                    statusDisplay.innerText = "Delivery Charge: ₹" + charge;
+                    statusDisplay.innerText = "Delivery Charge: ₹" + data.charge;
                     statusDisplay.style.color = "var(--text-dark)";
                 }
-            }).catch(() => {
-                statusDisplay.innerText = "Standard Delivery Charges Apply";
-                statusDisplay.style.color = "var(--text-dark)";
-            });
-        }
-
-        function fallbackLocationUI() {
-            document.getElementById('loc-pin').innerText = "Location access denied";
-            document.getElementById('loc-address').innerText = "We will calculate delivery at checkout based on your address.";
-            document.getElementById('delivery-status').innerText = "Standard Delivery";
-            document.getElementById('delivery-status').style.color = "var(--text-dark)";
+            }).catch(() => statusDisplay.innerText = "Standard Delivery Charges Apply");
         }
     </script>
 </body>
