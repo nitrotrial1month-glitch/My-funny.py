@@ -295,4 +295,151 @@
                     .then(function(res) { return res.json(); })
                     .then(function(data) {
                         var addressStr = data.display_name || '';
-                        var pin = (data.address && data.address.postcode) ? data.address.
+                        var pin = (data.address && data.address.postcode) ? data.address.postcode : '';
+                        
+                        if(document.getElementById('newAddress')) document.getElementById('newAddress').value = addressStr;
+                        if(document.getElementById('newPincode')) document.getElementById('newPincode').value = pin;
+                        
+                        showManualForm(); 
+                        if(btn) btn.innerText = "Continue";
+                        if(pin && pin.length === 6) calculateDelivery(pin);
+                    }).catch(function(err) {
+                        alert("Could not load address automatically. Please enter manually.");
+                        showManualForm();
+                        if(btn) btn.innerText = "Continue";
+                    });
+                }, function(error) {
+                    alert("Location access denied or unavailable. Please fill manually.");
+                    showManualForm();
+                    if(btn) btn.innerText = "Continue";
+                }, { timeout: 8000 });
+            } else {
+                alert("Location not supported by browser.");
+                showManualForm();
+                if(btn) btn.innerText = "Continue";
+            }
+        }
+
+        // 🚚 Delivery Calc
+        function calculateDelivery(userPincode) {
+            if(!userPincode || userPincode.length !== 6) return;
+            if(document.getElementById('delivery-charge')) document.getElementById('delivery-charge').innerText = "Calculating...";
+            
+            fetch('/calculate_delivery', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pincode: userPincode, seller_pincode: sellerPincode })
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                var dCharge = data.charge || 0;
+                finalAmountForUPI = basePrice + dCharge;
+
+                if (document.getElementById('delivery-charge')) {
+                    document.getElementById('delivery-charge').innerText = dCharge === 0 ? "FREE" : "₹" + dCharge;
+                }
+
+                if(document.getElementById('final-total')) document.getElementById('final-total').innerText = "₹" + finalAmountForUPI;
+                if(document.getElementById('payment-total')) document.getElementById('payment-total').innerText = "₹" + finalAmountForUPI;
+                if(document.getElementById('bottom-total')) document.getElementById('bottom-total').innerText = "₹" + finalAmountForUPI;
+                
+                var upiLink = "upi://pay?pa=" + upiId + "&pn=Wear%20By%20Me&am=" + finalAmountForUPI + "&cu=INR";
+                if(document.getElementById('gpay-link')) document.getElementById('gpay-link').href = upiLink;
+                if(document.getElementById('phonepe-link')) document.getElementById('phonepe-link').href = upiLink;
+                if(document.getElementById('paytm-link')) document.getElementById('paytm-link').href = upiLink;
+                
+                deliveryCalculated = true;
+            })
+            .catch(function(err) {
+                if(document.getElementById('delivery-charge')) document.getElementById('delivery-charge').innerText = "₹50 (Default)";
+                finalAmountForUPI = basePrice + 50;
+                if(document.getElementById('final-total')) document.getElementById('final-total').innerText = "₹" + finalAmountForUPI;
+                deliveryCalculated = true;
+            });
+        }
+
+        // 💳 Payment Option
+        function selectPaymentMode(mode) {
+            if(document.getElementById('opt-online')) document.getElementById('opt-online').classList.remove('active');
+            if(document.getElementById('opt-cod')) document.getElementById('opt-cod').classList.remove('active');
+            
+            if(mode === 'Online') {
+                if(document.getElementById('opt-online')) {
+                    document.getElementById('opt-online').classList.add('active');
+                    document.getElementById('opt-online').querySelector('input').checked = true;
+                }
+            } else {
+                if(document.getElementById('opt-cod')) {
+                    document.getElementById('opt-cod').classList.add('active');
+                    document.getElementById('opt-cod').querySelector('input').checked = true;
+                }
+            }
+        }
+
+        // ➡️ Stepper Flow
+        function nextStep() {
+            if (currentStep === 1) {
+                var isNewForm = document.getElementById('newAddrRadio') ? document.getElementById('newAddrRadio').checked : false;
+                
+                if (!hasAddresses || isNewForm) {
+                    var name = document.getElementById('newName') ? document.getElementById('newName').value : '';
+                    var phone = document.getElementById('newPhone') ? document.getElementById('newPhone').value : '';
+                    var pin = document.getElementById('newPincode') ? document.getElementById('newPincode').value : '';
+                    var addr = document.getElementById('newAddress') ? document.getElementById('newAddress').value : '';
+                    
+                    if(!name || phone.length !== 10 || pin.length !== 6 || !addr) {
+                        alert("Please fill all details correctly (10-digit Phone, 6-digit PIN).");
+                        return;
+                    }
+                }
+                if (!deliveryCalculated) {
+                    alert("Please wait for delivery calculation...");
+                    return;
+                }
+                currentStep = 2;
+            } 
+            else if (currentStep === 2) {
+                currentStep = 3;
+            }
+            else if (currentStep === 3) {
+                var isOnline = document.querySelector('input[name="payment_method"]:checked').value === "Online";
+                if(isOnline) {
+                    var utr = document.getElementById('utr_input') ? document.getElementById('utr_input').value : '';
+                    if(utr.length !== 12) {
+                        alert("Please enter a valid 12-digit UTR/Reference number from your UPI app.");
+                        return;
+                    }
+                }
+                if(document.getElementById('action-btn')) document.getElementById('action-btn').innerHTML = "Processing...";
+                document.getElementById('checkoutForm').submit();
+                return;
+            }
+            updateUI();
+        }
+
+        function updateUI() {
+            document.querySelectorAll('.section').forEach(function(sec) { sec.classList.remove('active'); });
+            document.querySelectorAll('.step').forEach(function(st) { st.classList.remove('active'); });
+
+            var btn = document.getElementById('action-btn');
+
+            if (currentStep === 1) {
+                if(document.getElementById('step-address')) document.getElementById('step-address').classList.add('active');
+                if(document.getElementById('indicator-address')) document.getElementById('indicator-address').classList.add('active');
+                if(btn) btn.innerText = "Continue";
+            } else if (currentStep === 2) {
+                if(document.getElementById('step-summary')) document.getElementById('step-summary').classList.add('active');
+                if(document.getElementById('indicator-address')) document.getElementById('indicator-address').classList.add('active');
+                if(document.getElementById('indicator-summary')) document.getElementById('indicator-summary').classList.add('active');
+                if(btn) btn.innerText = "Continue";
+            } else if (currentStep === 3) {
+                if(document.getElementById('step-payment')) document.getElementById('step-payment').classList.add('active');
+                if(document.getElementById('indicator-address')) document.getElementById('indicator-address').classList.add('active');
+                if(document.getElementById('indicator-summary')) document.getElementById('indicator-summary').classList.add('active');
+                if(document.getElementById('indicator-payment')) document.getElementById('indicator-payment').classList.add('active');
+                if(btn) btn.innerText = "Verify & Place Order";
+            }
+        }
+    </script>
+</body>
+</html>
