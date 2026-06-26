@@ -20,10 +20,7 @@
 
         /* Product Details Card */
         .card { background: white; padding: 15px; margin-bottom: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-        
         h1 { margin: 0 0 5px 0; font-size: 16px; font-weight: 500; color: var(--text-dark); line-height: 1.4; display: flex; align-items: center; flex-wrap: wrap; gap: 8px;}
-        
-        .wbm-insure-badge { background-color: rgba(255, 255, 255, 0.95); color: var(--primary); font-size: 12px; font-style: italic; font-weight: 900; padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; border: 1px solid #eee; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         
         /* Price Section */
         .price-section { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
@@ -47,12 +44,16 @@
         .trust-badges { display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #eee; margin-top: 15px; text-align: center; }
         .trust-item { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 30%; }
         .trust-icon { width: 35px; height: 35px; background: #f1f3f6; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 18px; color: var(--primary); }
-        .trust-text { font-size: 11px; color: #555; font-weight: 500; line-height: 1.3; }
+        .trust-text { font-size: 11px; color: #555; font-weight: 500; line-height: 1.3; text-align: center;}
+
+        /* Real Ratings & Reviews */
+        .review-card { border: 1px solid #eee; border-radius: 8px; padding: 12px; margin-bottom: 10px; background: #fafafa;}
+        .review-form { border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px; }
+        .form-control { width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: inherit; font-size: 13px; margin-bottom: 10px; outline: none;}
         
         /* Bottom Actions */
         .action-btns { display: flex; position: fixed; bottom: 0; left: 0; width: 100%; background: white; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000;}
         .btn { flex: 1; padding: 16px; border: none; font-weight: bold; text-align: center; cursor: pointer; font-size: 15px; text-transform: uppercase; transition: 0.2s; }
-        .btn:active { opacity: 0.8; }
         .add-cart { background: white; color: var(--primary); border-top: 1px solid #eee; }
         .buy-now { background: var(--primary); color: white; border-top: 1px solid var(--primary); }
     </style>
@@ -81,10 +82,16 @@
             {% endif %}
         </div>
         
-        {% if product.rating %}
-        <div style="position: absolute; bottom: 15px; left: 15px; background: rgba(255,255,255,0.9); padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; display: flex; align-items: center; gap: 4px; border: 1px solid #eee;">
-            {{ product.rating }} <span style="color: var(--success); font-size: 10px;">★</span>
-        </div>
+        {% if product.reviews and product.reviews|length > 0 %}
+            {% set total_rating = 0 %}
+            {% for r in product.reviews %}
+                {% set total_rating = total_rating + r.rating|int %}
+            {% endfor %}
+            {% set avg_rating = (total_rating / product.reviews|length) | round(1) %}
+            
+            <div style="position: absolute; bottom: 15px; left: 15px; background: rgba(255,255,255,0.9); padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; display: flex; align-items: center; gap: 4px; border: 1px solid #eee; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                {{ avg_rating }} <span style="color: var(--success); font-size: 10px;">★</span> | {{ product.reviews|length }}
+            </div>
         {% endif %}
     </div>
     
@@ -126,40 +133,91 @@
                 <div style="font-weight: bold; margin-bottom: 3px;" id="loc-pin">Detecting Location...</div>
                 <div style="font-size: 12px; color: var(--muted);" id="loc-address">Please wait while we check delivery availability.</div>
             </div>
-            <span class="link-text" onclick="requestLocation()">Change</span>
+            <span class="link-text" onclick="requestLocation()">Retry</span>
         </div>
 
         <div class="delivery-row" style="border-top: 1px solid #eee; padding-top: 15px;">
             <span class="icon">🚚</span>
             <div>
-                <div style="font-weight: bold; color: var(--success);" id="delivery-status">Calculating Charge...</div>
+                <div style="font-weight: bold; color: var(--text-dark);" id="delivery-status">Calculating Charge...</div>
                 <div style="font-size: 12px; color: var(--muted); margin-top: 3px;">Order now to get it fast</div>
             </div>
         </div>
 
         <div class="trust-badges">
+            {% if product.policies and product.policies.return_eligible %}
             <div class="trust-item">
                 <div class="trust-icon">🔄</div>
                 <div class="trust-text">7-Day<br>Return</div>
             </div>
+            {% endif %}
+            
+            {% if product.policies and product.policies.replace_eligible %}
+            <div class="trust-item">
+                <div class="trust-icon">🔁</div>
+                <div class="trust-text">7-Day<br>Replacement</div>
+            </div>
+            {% endif %}
+
             <div class="trust-item">
                 <div class="trust-icon">💵</div>
                 <div class="trust-text">Cash on<br>Delivery</div>
             </div>
+            
             <div class="trust-item">
                 <div class="trust-icon">🛡️</div>
-                <div class="trust-text">100% Secure<br>Payment</div>
+                <div class="trust-text">Secure<br>Payment</div>
             </div>
         </div>
     </div>
 
-    <div class="card" style="margin-bottom: 20px;">
+    <div class="card">
         <div class="section-title">Product Details</div>
-        <div style="white-space: pre-wrap; line-height: 1.6; font-size: 13px; color: #444;">{{ product.description | default('High quality product from Wear By Me.') }}</div>
-        
+        <div style="white-space: pre-wrap; line-height: 1.6; font-size: 13px; color: #444;">{{ product.description | default('High quality product.') }}</div>
         {% if product.details %}
             <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; font-size: 13px; color: #555;">{{ product.details }}</div>
         {% endif %}
+    </div>
+
+    <div class="card" style="margin-bottom: 20px;">
+        <div class="section-title">Ratings & Reviews</div>
+        
+        {% if product.reviews and product.reviews|length > 0 %}
+            {% for review in product.reviews %}
+            <div class="review-card">
+                <div style="display: flex; gap: 10px; margin-bottom: 8px; align-items: center;">
+                    <span style="background: {% if review.rating|int >= 3 %}var(--success){% else %}var(--primary){% endif %}; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold;">
+                        {{ review.rating }} ★
+                    </span>
+                    <span style="font-weight: bold; font-size: 13px;">{{ review.user_name | default('Verified Buyer') }}</span>
+                </div>
+                <p style="font-size: 13px; color: #444; margin: 0 0 8px 0; line-height: 1.4;">{{ review.comment }}</p>
+                <div style="font-size: 11px; color: var(--muted);">{{ review.date }}</div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p style="font-size: 13px; color: var(--muted);">No reviews yet. Be the first to review this product!</p>
+        {% endif %}
+
+        <div class="review-form">
+            <div style="font-weight: bold; font-size: 14px; margin-bottom: 10px;">Write a Review</div>
+            
+            <form action="/submit_review/{{ product.WBM_P_ID | default(product._id) }}" method="POST">
+                <label style="font-size: 12px; font-weight: bold; color: #555;">Rate this product:</label>
+                <select name="rating" class="form-control" required>
+                    <option value="" disabled selected>Select Rating</option>
+                    <option value="5">5 ★ - Excellent</option>
+                    <option value="4">4 ★ - Very Good</option>
+                    <option value="3">3 ★ - Good</option>
+                    <option value="2">2 ★ - Bad</option>
+                    <option value="1">1 ★ - Very Bad</option>
+                </select>
+                
+                <textarea name="comment" rows="3" class="form-control" placeholder="Share your experience (quality, fit, etc.)..." required></textarea>
+                
+                <button type="submit" style="background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 13px; width: 100%;">Submit Review</button>
+            </form>
+        </div>
     </div>
 
     <div class="action-btns">
@@ -174,7 +232,7 @@
         const hasSizes = {% if product.sizes %}true{% else %}false{% endif %};
         const sellerPin = document.getElementById('backend-data').getAttribute('data-seller-pin');
 
-        // Size Selection Logic
+        // Size Selection
         function selectSize(size, btnElement) {
             selectedSize = size;
             let buttons = document.querySelectorAll('.size-btn');
@@ -182,7 +240,7 @@
             btnElement.classList.add('selected');
         }
 
-        // Action Logic (Add to cart / Buy Now)
+        // Action Logic
         function handleAction(actionType) {
             if (hasSizes && selectedSize === '') {
                 alert("Please select a size before proceeding.");
@@ -196,11 +254,12 @@
             window.location.href = url;
         }
 
-        // Auto Delivery Calculation Logic
+        // 📍 পেজ লোড হওয়ার সাথে সাথেই অটোমেটিক লোকেশন ডিটেক্ট শুরু হবে
         window.onload = function() {
             requestLocation();
         };
 
+        // 📍 অটো লোকেশন ক্যালকুলেশন
         function requestLocation() {
             let pinDisplay = document.getElementById('loc-pin');
             let addressDisplay = document.getElementById('loc-address');
@@ -225,27 +284,7 @@
                             if(userPincode) {
                                 pinDisplay.innerText = "Deliver to: " + userPincode;
                                 addressDisplay.innerText = area;
-                                
-                                // Fetch charge from backend API
-                                fetch('/calculate_delivery', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ pincode: userPincode, seller_pincode: sellerPin })
-                                })
-                                .then(res => res.json())
-                                .then(data => {
-                                    let charge = data.charge;
-                                    if(charge === 0) {
-                                        statusDisplay.innerText = "Free Delivery Available!";
-                                        statusDisplay.style.color = "var(--success)";
-                                    } else {
-                                        statusDisplay.innerText = "Delivery Charge: ₹" + charge;
-                                        statusDisplay.style.color = "var(--text-dark)";
-                                    }
-                                }).catch(() => {
-                                    statusDisplay.innerText = "Standard Delivery Charges Apply";
-                                    statusDisplay.style.color = "var(--text-dark)";
-                                });
+                                calculateChargeAPI(userPincode);
                             } else {
                                 fallbackLocationUI();
                             }
@@ -259,6 +298,32 @@
             } else {
                 fallbackLocationUI();
             }
+        }
+
+        // 🚚 API কল করে চার্জ বের করা
+        function calculateChargeAPI(userPincode) {
+            let statusDisplay = document.getElementById('delivery-status');
+            
+            fetch('/calculate_delivery', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pincode: userPincode, seller_pincode: sellerPin })
+            })
+            .then(res => res.json())
+            .then(data => {
+                let charge = data.charge;
+                
+                if(charge === 0) {
+                    statusDisplay.innerText = "Free Delivery Available!";
+                    statusDisplay.style.color = "var(--success)";
+                } else {
+                    statusDisplay.innerText = "Delivery Charge: ₹" + charge;
+                    statusDisplay.style.color = "var(--text-dark)";
+                }
+            }).catch(() => {
+                statusDisplay.innerText = "Standard Delivery Charges Apply";
+                statusDisplay.style.color = "var(--text-dark)";
+            });
         }
 
         function fallbackLocationUI() {
