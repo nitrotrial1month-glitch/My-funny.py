@@ -7,21 +7,18 @@ import random
 import math
 import pgeocode
 
-# ১. Blueprint তৈরি করা হলো
 checkout_bp = Blueprint('checkout', __name__)
 
 # ==========================================================
 # 🚚 DYNAMIC DISTANCE-BASED DELIVERY CALCULATION
 # ==========================================================
 def get_delivery_charge(user_pincode, seller_pincode):
-    # যদি পিনকোড না থাকে বা ভুল থাকে
     if not user_pincode or len(str(user_pincode)) != 6:
         return 50 
     
     if not seller_pincode or len(str(seller_pincode)) != 6:
         seller_pincode = "713128" 
 
-    # 🔴 FIX: যদি কাস্টমার এবং সেলারের পিনকোড একই হয়, তাহলে কোনো ক্যালকুলেশন ছাড়াই ফ্রি ডেলিভারি
     if str(user_pincode) == str(seller_pincode):
         return 0
 
@@ -29,13 +26,11 @@ def get_delivery_charge(user_pincode, seller_pincode):
         dist_calculator = pgeocode.GeoDistance('IN')
         distance_km = dist_calculator.query_postal_code(str(user_pincode), str(seller_pincode))
         
-        # যদি pgeocode দূরত্ব না পায় (যেমন নতুন পিনকোড)
         if math.isnan(distance_km):
             return 60
             
         distance_km = float(distance_km)
         
-        # দূরত্ব অনুযায়ী ডেলিভারি চার্জ
         if distance_km <= 15: return 0    
         elif distance_km <= 100: return 40   
         elif distance_km <= 500: return 70   
@@ -43,7 +38,7 @@ def get_delivery_charge(user_pincode, seller_pincode):
             
     except Exception as e:
         print("Delivery Calc Error:", e)
-        return 50 # ফলব্যাক চার্জ
+        return 50 
 
 @checkout_bp.route('/calculate_delivery', methods=['POST'])
 def calculate_delivery():
@@ -59,7 +54,6 @@ def calculate_delivery():
 # 🛒 চেকআউট এবং অর্ডারের রাউটগুলো
 # ==========================================================
 
-# ২. কার্ট থেকে চেকআউট পেজ
 @checkout_bp.route('/checkout')
 def checkout_cart():
     user = session.get('user')
@@ -78,9 +72,9 @@ def checkout_cart():
             default_pincode = add.get('pincode', '')
             break
             
-    # সেলারের পিনকোড খোঁজা
+    # 🔴 FIX: seller_id এর বদলে WBM_U_ID ব্যবহার করা হচ্ছে
     for item in cart_items:
-        seller_id = str(item.get('seller_id', ''))
+        seller_id = str(item.get('WBM_U_ID', item.get('seller_id', ''))) 
         seller_info = db_users.find_one({"WBM_U_ID": seller_id}) if seller_id else None
         if seller_info and seller_info.get('pincode'):
             item['seller_pincode'] = seller_info.get('pincode')
@@ -91,7 +85,7 @@ def checkout_cart():
     
     return render_template('checkout.html', items=cart_items, total_price=total, is_direct=False, saved_addresses=saved_addresses, user_default_pincode=default_pincode)
 
-# ৩. ডাইরেক্ট চেকআউট (Buy Now) পেজ
+
 @checkout_bp.route('/checkout/<WBM_P_ID>')
 def checkout_direct(WBM_P_ID):
     user = session.get('user')
@@ -123,7 +117,8 @@ def checkout_direct(WBM_P_ID):
             default_pincode = add.get('pincode', '')
             break
             
-    seller_id = str(product.get('seller_id', ''))
+    # 🔴 FIX: seller_id এর বদলে WBM_U_ID ব্যবহার করা হচ্ছে
+    seller_id = str(product.get('WBM_U_ID', product.get('seller_id', '')))
     seller_info = db_users.find_one({"WBM_U_ID": seller_id}) if seller_id else None
     if seller_info and seller_info.get('pincode'):
         product['seller_pincode'] = seller_info.get('pincode')
@@ -134,7 +129,7 @@ def checkout_direct(WBM_P_ID):
     
     return render_template('checkout.html', items=[product], total_price=total, is_direct=True, direct_product_id=str(WBM_P_ID), saved_addresses=saved_addresses, user_default_pincode=default_pincode)
 
-# ৪. অর্ডার প্রসেস করা (অর্ডার সাবমিট বাটনে ক্লিক করলে)
+
 @checkout_bp.route('/process_checkout', methods=['POST'])
 def process_checkout():
     user = session.get('user')
@@ -146,7 +141,6 @@ def process_checkout():
     address_selection = request.form.get('address_selection')
     size = request.form.get('size') or request.args.get('size') or 'Regular'
     
-    # 🔴 FIX: ফ্রন্টএন্ড থেকে পাঠানো ডাইনামিক প্রাইস ধরা হচ্ছে (Qty সহ)
     frontend_total_str = request.form.get('frontend_total', '0')
     try:
         frontend_total = float(frontend_total_str)
@@ -159,7 +153,6 @@ def process_checkout():
     
     final_name, final_phone, final_address, final_pincode = "", "", "", ""
     
-    # অ্যাড্রেস লজিক
     if address_selection == 'new':
         final_name = request.form.get('name')
         final_phone = request.form.get('phone')
@@ -191,11 +184,8 @@ def process_checkout():
             return "Invalid Address Selection", 400
 
     col_orders = Database.get_collection("orders")
-    
-    # প্রফেশনাল অর্ডার আইডি
     wbm_order_id = f"WBM-{datetime.now().strftime('%y%m%d')}-{random.randint(1000, 9999)}"
     
-    # স্ট্যাটাস লজিক
     if payment_method == "Online" and utr_number:
         initial_status = "Pending Verification" 
     elif payment_method == "COD":
@@ -216,37 +206,34 @@ def process_checkout():
         if not product:
             product = col.find_one({"WBM_P_ID": WBM_P_ID})
             
-        seller_id = str(product.get('seller_id', ''))
+        # 🔴 FIX: seller_id এর বদলে WBM_U_ID ব্যবহার করা হচ্ছে
+        seller_id = str(product.get('WBM_U_ID', product.get('seller_id', '')))
         
-        # 🔴 QTY 추출 (Extracting Qty from form data)
-        # Assuming only 1 item in direct checkout, index is 0
         qty_str = request.form.get('item_qty_0', '1')
         try:
             qty = int(qty_str)
         except ValueError:
             qty = 1
 
-        # Use frontend calculated total if available, else calculate backend
         if frontend_total > 0:
             final_total = frontend_total
         else:
             seller_info = db_users.find_one({"WBM_U_ID": seller_id}) if seller_id else None
             seller_pincode = seller_info.get('pincode', '713128') if seller_info else '713128'
             delivery_charge = get_delivery_charge(final_pincode, seller_pincode)
-            # Add platform fee and multiply by qty
             final_total = (float(product['price']) * qty) + 9 + delivery_charge
 
-        product['ordered_qty'] = qty # Save ordered quantity
+        product['ordered_qty'] = qty 
 
         new_order = {
             "WBM_O_ID": wbm_order_id,
             "user_id": str(user['id']),
-            "seller_id": seller_id,
+            "seller_id": seller_id, # ডাটাবেসে সেলার আইডিতে WBM_U_ID সেভ হচ্ছে
             "store_name": product.get('store_name', 'Wear By Me'),
             "product_name": product.get('name', 'Item'),
             "product_image": product.get('image', ''),
             "size": size,
-            "quantity": qty, # Save top level quantity
+            "quantity": qty, 
             "name": final_name,
             "address": f"{final_address}, PIN: {final_pincode}",
             "phone": final_phone,
@@ -263,9 +250,9 @@ def process_checkout():
     # কার্ট চেকআউট সেভ
     else:
         items = Database.get_user_cart(user['id'])
-        first_seller_id = str(items[0].get('seller_id', '')) if items else ''
+        # 🔴 FIX: seller_id এর বদলে WBM_U_ID ব্যবহার করা হচ্ছে
+        first_seller_id = str(items[0].get('WBM_U_ID', items[0].get('seller_id', ''))) if items else ''
         
-        # 🔴 QTY 추출 (Extracting Qty for each item in cart)
         total_items_qty = 0
         for i, item in enumerate(items):
             qty_str = request.form.get(f'item_qty_{i}', '1')
@@ -276,7 +263,6 @@ def process_checkout():
             item['ordered_qty'] = qty
             total_items_qty += qty
 
-        # Use frontend calculated total if available, else calculate backend
         if frontend_total > 0:
             final_total = frontend_total
         else:
@@ -284,7 +270,7 @@ def process_checkout():
             first_seller_pincode = first_seller_info.get('pincode', '713128') if first_seller_info else '713128'
             delivery_charge = get_delivery_charge(final_pincode, first_seller_pincode)
             items_total = sum(float(item['price']) * item['ordered_qty'] for item in items)
-            final_total = items_total + 9 + delivery_charge # Included platform fee
+            final_total = items_total + 9 + delivery_charge 
         
         first_product_name = items[0].get('name', 'Multiple Items') if items else 'Items'
         first_product_image = items[0].get('image', '') if items else ''
@@ -292,11 +278,11 @@ def process_checkout():
         new_order = {
             "WBM_O_ID": wbm_order_id,
             "user_id": str(user['id']),
-            "seller_id": first_seller_id,
+            "seller_id": first_seller_id, # ডাটাবেসে সেলার আইডিতে WBM_U_ID সেভ হচ্ছে
             "product_name": f"{first_product_name} & more",
             "product_image": first_product_image,
             "size": size,
-            "quantity": total_items_qty, # Total quantity of all items
+            "quantity": total_items_qty, 
             "name": final_name,
             "address": f"{final_address}, PIN: {final_pincode}",
             "phone": final_phone,
@@ -311,7 +297,6 @@ def process_checkout():
         col_orders.insert_one(new_order)
         Database.clear_user_cart(user['id'])
         
-    # সরাসরি সাকসেস পেজে রিডাইরেক্ট
     return redirect(f'/order_success/{wbm_order_id}')
 
 
@@ -319,7 +304,6 @@ def process_checkout():
 # 📍 অ্যাড্রেস ম্যানেজমেন্ট রাউটস
 # ==========================================================
 
-# ৫. সেভ করা অ্যাড্রেস পেজ
 @checkout_bp.route('/saved_addresses', methods=['GET', 'POST'])
 def saved_addresses():
     user = session.get('user')
@@ -355,7 +339,7 @@ def saved_addresses():
         
     return render_template('saved_addresses.html', addresses=addresses)
 
-# ৬. ডিফল্ট অ্যাড্রেস সেট করার রাউট
+
 @checkout_bp.route('/set_default_address/<int:index>', methods=['POST'])
 def set_default_address(index):
     user = session.get('user')
@@ -379,7 +363,6 @@ def set_default_address(index):
 # 💳 অর্ডার সাকসেস রাউট
 # ==========================================================
 
-# ৭. অর্ডার সাকসেস পেজ
 @checkout_bp.route('/order_success/<wbm_order_id>')
 def order_success(wbm_order_id):
     col_orders = Database.get_collection("orders")
