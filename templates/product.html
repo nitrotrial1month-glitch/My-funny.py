@@ -40,7 +40,6 @@
         .review-card { border: 1px solid #eee; border-radius: 8px; padding: 12px; margin-bottom: 10px; background: #fafafa;}
         .review-media { display: flex; gap: 8px; overflow-x: auto; margin-top: 10px; padding-bottom: 5px; }
         .review-media img, .review-media video { height: 80px; width: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd; }
-        .form-control { width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; margin-bottom: 10px; }
         
         .action-btns { display: flex; position: fixed; bottom: 0; left: 0; width: 100%; background: white; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000;}
         .btn { flex: 1; padding: 16px; border: none; font-weight: bold; cursor: pointer; font-size: 15px; text-transform: uppercase; }
@@ -178,35 +177,8 @@
             </div>
             {% endfor %}
         {% else %}
-            <p style="font-size: 13px; color: var(--muted);">No reviews yet. Be the first to review!</p>
+            <p style="font-size: 13px; color: var(--muted);">No reviews yet. Buy this product to be the first to review!</p>
         {% endif %}
-
-        <div style="border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px;">
-            <div style="font-weight: bold; font-size: 14px; margin-bottom: 10px;">Write a Review</div>
-            
-            <form action="/submit_review/{{ product.WBM_P_ID | default(product._id) }}" method="POST" enctype="multipart/form-data">
-                {% if not has_rated %}
-                <label style="font-size: 12px; font-weight: bold; color: #555;">Rate this product:</label>
-                <select name="rating" class="form-control" required>
-                    <option value="" disabled selected>Select Rating</option>
-                    <option value="5">5 ★ - Excellent</option>
-                    <option value="4">4 ★ - Very Good</option>
-                    <option value="3">3 ★ - Good</option>
-                    <option value="2">2 ★ - Bad</option>
-                    <option value="1">1 ★ - Very Bad</option>
-                </select>
-                {% else %}
-                <div style="color: var(--success); font-size:12px; margin-bottom:10px; font-weight: bold;">✅ You already rated this product. You can add more comments & media below.</div>
-                {% endif %}
-                
-                <textarea name="comment" rows="3" class="form-control" placeholder="Share your experience..." required></textarea>
-                
-                <label style="font-size: 12px; font-weight: bold; color: #555;">Upload Photos/Videos (Optional):</label>
-                <input type="file" name="review_media" multiple accept="image/*,video/*" class="form-control" style="padding: 5px;">
-                
-                <button type="submit" style="background: var(--primary); color: white; border: none; padding: 10px; border-radius: 4px; font-weight: bold; width: 100%; cursor: pointer;">Submit Review</button>
-            </form>
-        </div>
     </div>
 
     <div class="action-btns">
@@ -221,7 +193,6 @@
         const hasSizes = {% if product.sizes %}true{% else %}false{% endif %};
         const sellerPin = document.getElementById('backend-data').getAttribute('data-seller-pin');
         
-        // 🔴 ব্যাকএন্ড থেকে আসা ইউজারের সেভ করা পিনকোড
         const savedPincode = "{{ user_saved_pincode | default('') }}"; 
 
         function selectSize(size, btnElement) {
@@ -238,21 +209,17 @@
             window.location.href = url;
         }
 
-        // 🔴 পেজ লোড হওয়ার সাথে সাথেই স্মার্ট চেক
         window.onload = function() {
             if (savedPincode !== '') {
-                // ইউজারের সেভ করা অ্যাড্রেস থাকলে
                 document.getElementById('loc-address').innerText = "Using your saved address for delivery.";
                 calculateChargeAPI(savedPincode, true);
             } else {
-                // সেভ করা অ্যাড্রেস না থাকলে
                 document.getElementById('loc-pin').innerText = "No Saved Address Found";
                 document.getElementById('loc-address').innerHTML = "<span style='color: var(--primary); font-weight: bold;'>Please save an address in your profile, or use Auto-detect.</span>";
                 document.getElementById('delivery-status').innerText = "Click Auto-detect to check charge";
             }
         };
 
-        // কাস্টমার চাইলে জিপিএস দিয়েও চেক করতে পারে
         function requestLocation() {
             if (navigator.geolocation) {
                 document.getElementById('delivery-status').innerText = "Locating...";
@@ -286,7 +253,6 @@
             }
         }
 
-        // 🚚 API কল করে চার্জ বের করা
         function calculateChargeAPI(userPincode, isSavedAddress) {
             let statusDisplay = document.getElementById('delivery-status');
             statusDisplay.innerText = "Calculating Charge...";
