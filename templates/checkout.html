@@ -6,11 +6,10 @@
     <title>Checkout | Wear By Me</title>
     <link rel="icon" type="image/png" href="/static/1000249582.png">
     <style>
-        :root { --fk-blue: #2874f0; --fk-yellow: #ffc200; --fk-green: #388e3c; --bg: #f1f3f6; --surface: #ffffff; --text: #212121; --muted: #878787; --border: #f0f0f0; }
+        :root { --fk-blue: #2874f0; --fk-yellow: #ffc200; --fk-green: #388e3c; --bg: #f1f3f6; --surface: #ffffff; --text: #212121; --muted: #878787; --border: #e0e0e0; }
         body { font-family: Roboto, 'Segoe UI', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 0; padding-bottom: 90px; }
         
-        /* Flipkart Style Header & Stepper */
-        .header { background: var(--fk-blue); padding: 15px; display: flex; align-items: center; gap: 15px; color: white; position: sticky; top: 0; z-index: 100; }
+        .header { background: var(--fk-blue); padding: 15px; display: flex; align-items: center; gap: 15px; color: white; position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .back-btn { font-size: 20px; text-decoration: none; color: white; font-weight: bold; }
         .stepper { display: flex; justify-content: space-between; padding: 15px 30px; background: var(--surface); box-shadow: 0 2px 4px rgba(0,0,0,0.08); font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 10px;}
         .step { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 33%; position: relative; }
@@ -29,35 +28,27 @@
         .card-title { font-size: 16px; font-weight: 500; color: var(--text); margin: 0;}
         .change-btn { background: transparent; color: var(--fk-blue); border: 1px solid var(--border); padding: 6px 16px; border-radius: 4px; font-size: 13px; font-weight: 500; cursor: pointer; }
 
-        /* Address UI */
         .address-box { border: 1px solid var(--border); padding: 15px; border-radius: 4px; margin-bottom: 10px; display: flex; gap: 12px; align-items: flex-start; cursor: pointer; background: #fafafa; }
         .address-box.selected { border-color: var(--fk-blue); background: #f4f8ff; }
         .form-control { width: 100%; padding: 12px; border: 1px solid #d4d5d9; border-radius: 4px; margin-bottom: 12px; box-sizing: border-box; font-family: inherit; font-size: 14px; outline: none;}
         .form-control:focus { border-color: var(--fk-blue); }
 
-        /* Custom Modal (Bottom Sheet) */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; opacity: 0; transition: 0.3s; }
-        .modal-overlay.show { display: block; opacity: 1; }
-        .bottom-sheet { position: fixed; bottom: -100%; left: 0; width: 100%; background: var(--surface); border-radius: 16px 16px 0 0; z-index: 1001; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); padding: 24px; box-sizing: border-box; box-shadow: 0 -4px 10px rgba(0,0,0,0.1); }
-        .bottom-sheet.open { bottom: 0; }
-        .sheet-btn { width: 100%; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 15px; margin-bottom: 12px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; }
-        .btn-loc { background: var(--fk-blue); color: white; border: none; }
-        .btn-man { background: white; color: var(--fk-blue); border: 1px solid var(--fk-blue); }
+        .location-btn { width: 100%; background: #e6f6ec; color: var(--fk-green); border: 1px solid #bbf7d0; padding: 14px; border-radius: 4px; font-weight: bold; font-size: 14px; margin-bottom: 15px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .divider { display: flex; align-items: center; text-align: center; margin-bottom: 15px; color: #aaa; font-size: 12px; }
+        .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid #e0e0e0; }
+        .divider span { padding: 0 10px; }
 
-        /* Qty & Order Summary */
         .product-row { display: flex; gap: 15px; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
-        .product-img { width: 70px; height: 90px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); }
+        .product-img { width: 70px; height: 90px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); background: #f9f9f9; }
         .qty-box { display: flex; align-items: center; margin-top: 8px; border: 1px solid #ccc; width: fit-content; border-radius: 2px; overflow: hidden; }
         .qty-box span { padding: 4px 10px; font-size: 13px; background: #f9f9f9; color: #333; }
         .qty-select { border: none; padding: 4px 8px; font-size: 13px; outline: none; border-left: 1px solid #ccc; font-weight: bold; background: white; }
         
-        .price-details-box { border-top: 1px dashed #e0e0e0; padding-top: 15px; }
         .bill-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; color: #333; }
         .bill-total { display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; border-top: 1px dashed #e0e0e0; padding-top: 15px; margin-top: 5px; color: var(--text); }
         .green-text { color: var(--fk-green); font-weight: 500; }
         .savings-tag { background: #e8f5e9; color: var(--fk-green); padding: 8px; text-align: center; border-radius: 4px; font-weight: bold; font-size: 13px; margin-top: 10px; }
 
-        /* Payment Accordion */
         .payment-option { border: 1px solid var(--border); border-radius: 4px; margin-bottom: 0; border-bottom: none; }
         .payment-option:last-child { border-bottom: 1px solid var(--border); }
         .payment-header { padding: 16px; display: flex; align-items: center; gap: 12px; font-weight: 500; font-size: 14px; background: var(--surface); cursor: pointer; }
@@ -65,9 +56,13 @@
         .payment-option.active .payment-body { display: block; }
         .payment-option.active { background: #f4f8ff; border-left: 3px solid var(--fk-blue); }
 
-        .utr-input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; text-align: center; letter-spacing: 2px; font-weight: bold; margin-top: 10px; box-sizing: border-box;}
+        /* Pure CSS App Buttons (No broken images) */
+        .app-btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .app-btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 10px; border-radius: 4px; font-weight: bold; text-decoration: none; font-size: 13px; border: 1px solid var(--border); background: white; color: #333; box-shadow: 0 1px 2px rgba(0,0,0,0.05);}
         
-        /* Bottom Bar */
+        .utr-box { background: #fff9e6; border: 1px dashed #ffc200; padding: 15px; border-radius: 4px; text-align: center; }
+        .utr-input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 15px; text-align: center; letter-spacing: 2px; font-weight: bold; margin-top: 10px; box-sizing: border-box;}
+        
         .bottom-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--surface); padding: 12px 15px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; z-index: 100; border-top: 1px solid #eee; }
         .btn-continue { background: #fb641b; color: white; padding: 12px 35px; border-radius: 2px; font-weight: bold; border: none; font-size: 15px; cursor: pointer; }
     </style>
@@ -92,7 +87,7 @@
 
         <div class="stepper">
             <div class="step active" id="indicator-address"><div class="step-circle">1</div>Address</div>
-            <div class="step" id="indicator-summary"><div class="step-circle">2</div>Order Summary</div>
+            <div class="step" id="indicator-summary"><div class="step-circle">2</div>Summary</div>
             <div class="step" id="indicator-payment"><div class="step-circle">3</div>Payment</div>
         </div>
 
@@ -130,50 +125,32 @@
                         </label>
                         {% endfor %}
                         <div style="border-top: 1px solid #f0f0f0; margin-top: 15px; padding-top: 15px;">
-                            <button type="button" style="width: 100%; background: white; color: var(--fk-blue); border: 1px solid var(--border); padding: 12px; font-weight: 500; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05);" onclick="openLocationModal()">
-                                <span style="font-size: 18px;">+</span> Add a new address
+                            <button type="button" style="width: 100%; background: white; color: var(--fk-blue); border: 1px solid var(--border); padding: 12px; font-weight: 500; font-size: 14px; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="showManualForm()">
+                                <span style="font-size: 18px; margin-right:8px;">+</span> Add a new address
                             </button>
                         </div>
                     </div>
-                {% else %}
-                    <div id="manual-form-view" style="display:block;">
-                        <h3 class="card-title" style="margin-bottom: 15px;">Add Delivery Address</h3>
-                        <input type="radio" name="address_selection" value="new" id="newAddrRadio" style="display:none;" checked>
-                        <input type="text" id="newName" name="name" class="form-control" placeholder="Full Name (Required)">
-                        <input type="tel" id="newPhone" name="phone" class="form-control" placeholder="10-digit Phone Number" pattern="[0-9]{10}">
-                        <input type="text" id="newPincode" name="new_pincode" class="form-control" placeholder="6-digit Pincode" onkeyup="if(this.value.length === 6) calculateDelivery(this.value)">
-                        <textarea id="newAddress" name="address" class="form-control" rows="3" placeholder="House No., Building Name, Road, Area"></textarea>
-                        <div style="font-size: 12px; color: var(--fk-green); font-weight: bold; margin-top: 5px;">✓ This address will be saved securely.</div>
-                    </div>
                 {% endif %}
 
-                <div id="manual-form-view" style="display:none; margin-top:15px; border-top: 1px dashed var(--border); padding-top: 15px;">
-                    <h3 class="card-title" style="margin-bottom: 15px;">Add New Address</h3>
-                    <input type="radio" name="address_selection" value="new" id="newAddrRadio" style="display:none;">
-                    <input type="text" id="newName" name="name" class="form-control" placeholder="Full Name">
+                <div id="manual-form-view" style="{% if saved_addresses %}display:none; margin-top:15px; border-top: 1px dashed var(--border); padding-top: 15px;{% else %}display:block;{% endif %}">
+                    <h3 class="card-title" style="margin-bottom: 15px;">Add Delivery Address</h3>
+                    
+                    <button type="button" class="location-btn" id="loc-btn" onclick="autoDetectLocation()">
+                        📍 Use my current location
+                    </button>
+                    <div class="divider"><span>OR ENTER MANUALLY</span></div>
+
+                    <input type="radio" name="address_selection" value="new" id="newAddrRadio" style="display:none;" {% if not saved_addresses %}checked{% endif %}>
+                    <input type="text" id="newName" name="name" class="form-control" placeholder="Full Name (Required)">
                     <input type="tel" id="newPhone" name="phone" class="form-control" placeholder="10-digit Phone Number" pattern="[0-9]{10}">
                     <input type="text" id="newPincode" name="new_pincode" class="form-control" placeholder="6-digit Pincode" onkeyup="if(this.value.length === 6) calculateDelivery(this.value)">
-                    <textarea id="newAddress" name="address" class="form-control" rows="3" placeholder="House No., Building Name, Area, City"></textarea>
+                    <textarea id="newAddress" name="address" class="form-control" rows="3" placeholder="House No., Building Name, Road, Area"></textarea>
+                    
+                    <div style="font-size: 12px; color: var(--fk-green); font-weight: bold; margin-top: 5px;">✓ This address will be saved securely.</div>
                 </div>
-            </div>
-        </div>
 
-        <div class="modal-overlay" id="locModalOverlay" onclick="closeLocationModal()"></div>
-        <div class="bottom-sheet" id="locBottomSheet">
-            <div style="text-align: center; margin-bottom: 20px;">
-                <div style="width: 40px; height: 4px; background: #ddd; border-radius: 2px; margin: 0 auto 15px auto;"></div>
-                <div style="font-size: 24px; margin-bottom: 10px;">📍</div>
-                <h3 style="margin: 0 0 5px 0; font-size: 18px;">Where do you want us to deliver?</h3>
-                <p style="margin: 0; font-size: 13px; color: var(--muted);">This will help with the right map location</p>
             </div>
-            <button type="button" class="sheet-btn btn-loc" onclick="autoDetectLocation()">
-                🎯 Use my current location
-            </button>
-            <button type="button" class="sheet-btn btn-man" onclick="showManualFormFromModal()">
-                ✍️ Add address manually
-            </button>
         </div>
-                <!-- ================= STEP 2: ORDER SUMMARY ================= -->
         <div id="step-summary" class="section">
             <div class="card">
                 <div class="card-header" style="border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 15px;">
@@ -183,12 +160,12 @@
                 <div id="product-list">
                     {% for item in items %}
                     <div class="product-row" data-base-price="{{ item.price }}">
-                        <img src="/{{ item.image }}" class="product-img" onerror="this.style.display='none'">
+                        <img src="{{ '/' + item.image if item.image and not item.image.startswith('/') else item.image }}" class="product-img" onerror="this.src='https://via.placeholder.com/70x90?text=No+Image';">
+                        
                         <div style="flex-grow: 1;">
                             <div style="font-size:14px; font-weight: 500; color: #212121; margin-bottom: 4px;">{{ item.name|truncate(40, True) }}</div>
                             <div style="font-size:12px; color: var(--muted); margin-bottom: 8px;">Size: {{ item.selected_size | default('Regular') }}</div>
                             
-                            <!-- Dummy Rating like Flipkart -->
                             <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 8px;">
                                 <span style="background: var(--fk-green); color: white; padding: 2px 5px; border-radius: 3px; font-size: 10px; font-weight: bold;">4.1 ★</span>
                                 <span style="font-size: 12px; color: var(--muted);">(2,143)</span>
@@ -200,7 +177,6 @@
                                 <span style="font-size:16px; font-weight: 500; color: var(--text);">₹{{ item.price }}</span>
                             </div>
                             
-                            <!-- 🔴 QTY Selector -->
                             <div class="qty-box">
                                 <span>Qty:</span>
                                 <select class="qty-select" name="item_qty_{{ loop.index0 }}" onchange="updatePricesDynamic()">
@@ -245,7 +221,6 @@
             </div>
         </div>
 
-        <!-- ================= STEP 3: PAYMENT ================= -->
         <div id="step-payment" class="section">
             <div class="card" style="background: #f4f8ff; border: 1px solid #d6e4ff; display: flex; justify-content: space-between; align-items: center;">
                 <div style="font-size: 14px; font-weight: 500;">Total Amount</div>
@@ -255,33 +230,42 @@
             <div style="font-size: 12px; color: #878787; text-align: right; margin-bottom: 10px; font-weight: 500;">🔒 100% Secure Payments</div>
 
             <div style="background: var(--surface); border-top: 1px solid #e0e0e0;">
-                <!-- ONLINE PAYMENT -->
+                
                 <div class="payment-option active" id="opt-online" onclick="selectPaymentMode('Online')">
                     <div class="payment-header">
                         <input type="radio" name="payment_method" value="Online" checked style="accent-color:var(--fk-blue); width: 16px; height: 16px;"> 
                         <span style="display: flex; flex-direction: column;">
                             <span>UPI (Online Payment)</span>
-                            <span style="font-size: 11px; color: var(--fk-green); font-weight: 400; margin-top: 2px;">Save upto ₹35 • 4 offers available</span>
+                            <span style="font-size: 11px; color: var(--fk-green); font-weight: 400; margin-top: 2px;">Save upto ₹35 • Multiple offers available</span>
                         </span>
                     </div>
                     <div class="payment-body">
-                        <div style="font-weight: 500; margin-bottom: 12px; color: #333;">Pay by any UPI app:</div>
                         
-                        <a href="#" id="gpay-link" class="upi-btn" style="border-color: #ea4335; color: #ea4335;">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg" width="30"> Pay with Google Pay
-                        </a>
-                        <a href="#" id="phonepe-link" class="upi-btn" style="border-color: #5f259f; color: #5f259f;">
-                            <img src="https://download.logo.wine/logo/PhonePe/PhonePe-Logo.wine.png" width="40" style="margin:-10px 0;"> Pay with PhonePe
-                        </a>
+                        <div style="font-weight: 500; margin-bottom: 12px; color: #333;">Option 1: Pay using App on this phone</div>
+                        <div class="app-btn-grid">
+                            <a href="#" id="gpay-link" class="app-btn"><span style="color:#ea4335; font-size:16px;">G</span>Pay</a>
+                            <a href="#" id="phonepe-link" class="app-btn"><span style="color:#5f259f; font-size:16px;">पे</span> PhonePe</a>
+                            <a href="#" id="paytm-link" class="app-btn"><span style="color:#00b9f1; font-size:16px;">Pay</span>tm</a>
+                            <a href="#" id="slice-link" class="app-btn"><span style="color:#ff3366; font-size:16px;">S</span>lice</a>
+                            <a href="#" id="amazon-link" class="app-btn" style="grid-column: span 2;"><span style="color:#ff9900; font-size:16px;">a</span> Amazon Pay</a>
+                        </div>
                         
-                        <div style="background: #fff9e6; border: 1px dashed #ffc200; padding: 12px; border-radius: 4px; margin-top: 15px; text-align: center;">
-                            <div style="font-size: 12px; color: #555; line-height: 1.4;">⚠️ After payment is complete in your app, please enter the <strong>12-digit UTR No.</strong> below to confirm.</div>
-                            <input type="text" name="utr_number" id="utr_input" class="utr-input" placeholder="Enter 12-digit UTR" maxlength="12" pattern="\d{12}">
+                        <div style="font-weight: 500; margin-top: 20px; margin-bottom: 10px; color: #333;">Option 2: Pay from another phone</div>
+                        <div style="background: white; border: 1px solid #ddd; padding: 12px; border-radius: 4px;">
+                            <p style="margin: 0 0 8px 0; font-size: 12px; color: #555;">Send <strong id="copy-amount-display">₹{{ total_price }}</strong> to our UPI ID:</p>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="text" id="store-upi-id" value="9046348427@fam" readonly style="flex-grow: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; background: #f9f9f9; color: #333; font-weight: bold; font-size: 13px;">
+                                <button type="button" onclick="copyStoreUPI()" style="background: var(--fk-blue); color: white; border: none; padding: 0 15px; border-radius: 4px; font-weight: bold; cursor: pointer;">Copy</button>
+                            </div>
+                        </div>
+
+                        <div class="utr-box" style="margin-top: 20px;">
+                            <div style="font-size: 12px; color: #555; line-height: 1.4;">⚠️ After payment is complete via any method above, please enter the <strong>12-digit UTR No.</strong> to confirm your order.</div>
+                            <input type="text" name="utr_number" id="utr_input" class="utr-input" placeholder="Enter 12-digit UTR / Ref No." maxlength="12" pattern="\d{12}">
                         </div>
                     </div>
                 </div>
 
-                <!-- DUMMY CARD PAYMENT (For Flipkart feel) -->
                 <div class="payment-option" id="opt-card" onclick="selectPaymentMode('Card')">
                     <div class="payment-header">
                         <input type="radio" name="payment_method" value="Card" style="accent-color:var(--fk-blue); width: 16px; height: 16px;" disabled> 
@@ -292,24 +276,22 @@
                     </div>
                 </div>
 
-                <!-- COD PAYMENT -->
                 <div class="payment-option" id="opt-cod" onclick="selectPaymentMode('COD')">
                     <div class="payment-header">
                         <input type="radio" name="payment_method" value="COD" style="accent-color:var(--fk-blue); width: 16px; height: 16px;"> 
-                        <span>Cash on Delivery</span>
+                        <span>Cash on Delivery (COD)</span>
                     </div>
                     <div class="payment-body">
                         <div style="background: #f9f9f9; padding: 12px; border-radius: 4px; font-size: 12px; color: #555; line-height: 1.5; border: 1px solid #eee;">
-                            Due to handling costs, a nominal fee of ₹10 will be charged for orders placed using this option. Avoid this fee by paying online now.
+                            Due to handling costs, a nominal fee of ₹10 will be charged for orders placed using this option. Avoid this fee by paying online via UPI.
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div style="height: 20px;"></div> <!-- Spacer -->
+        <div style="height: 20px;"></div>
 
-        <!-- ================= BOTTOM ACTION BAR ================= -->
         <div class="bottom-bar">
             <div>
                 <div style="font-size: 12px; color: #878787; font-weight: 500; text-decoration: line-through;" id="bottom-strikethrough">₹0</div>
@@ -330,12 +312,11 @@
 
         var currentStep = 1;
         var deliveryCalculated = false;
-        var currentDeliveryCharge = 50; // Default fallback
+        var currentDeliveryCharge = 50; 
         var platformFee = 9;
 
-        // On Load
         window.onload = function() {
-            updatePricesDynamic(); // Initial calculation
+            updatePricesDynamic(); 
             if (hasAddresses && defaultPin.length === 6) {
                 calculateDelivery(defaultPin);
             } else {
@@ -343,7 +324,7 @@
             }
         };
 
-        // 🔴 QTY Change & Dynamic Pricing Logic
+        // 🔴 QTY Change & Dynamic Pricing
         function updatePricesDynamic() {
             var totalItemPrice = 0;
             var totalItemsCount = 0;
@@ -356,13 +337,12 @@
                 
                 totalItemPrice += (basePrice * qty);
                 totalItemsCount += qty;
-                totalFakeMRP += (basePrice * 2.85 * qty); // Flipkart style dummy MRP
+                totalFakeMRP += (basePrice * 2.85 * qty); 
             });
 
             var finalAmount = totalItemPrice + platformFee + currentDeliveryCharge;
             var savings = totalFakeMRP - totalItemPrice;
 
-            // Update DOM Elements
             if(document.getElementById('total-items-count')) document.getElementById('total-items-count').innerText = totalItemsCount;
             if(document.getElementById('items-price-display')) document.getElementById('items-price-display').innerText = "₹" + totalItemPrice.toFixed(0);
             
@@ -370,23 +350,19 @@
             if(document.getElementById('payment-total-display')) document.getElementById('payment-total-display').innerText = "₹" + finalAmount.toFixed(0);
             if(document.getElementById('bottom-total-display')) document.getElementById('bottom-total-display').innerText = "₹" + finalAmount.toFixed(0);
             if(document.getElementById('bottom-strikethrough')) document.getElementById('bottom-strikethrough').innerText = "₹" + totalFakeMRP.toFixed(0);
-            
+            if(document.getElementById('copy-amount-display')) document.getElementById('copy-amount-display').innerText = "₹" + finalAmount.toFixed(0);
             if(document.getElementById('savings-display')) document.getElementById('savings-display').innerText = "You will save ₹" + savings.toFixed(0) + " on this order";
-
-            // Update Backend Form Input
             if(document.getElementById('frontend_total_input')) document.getElementById('frontend_total_input').value = finalAmount.toFixed(0);
 
-            // Update UPI Links
+            // Update All UPI Links dynamically
             var upiLink = "upi://pay?pa=" + upiId + "&pn=Wear%20By%20Me&am=" + finalAmount.toFixed(0) + "&cu=INR";
-            if(document.getElementById('gpay-link')) document.getElementById('gpay-link').href = upiLink;
-            if(document.getElementById('phonepe-link')) document.getElementById('phonepe-link').href = upiLink;
+            document.querySelectorAll('.app-btn').forEach(function(btn) { btn.href = upiLink; });
         }
 
         // --- Address UI ---
         function showAddressList() {
             if(document.getElementById('all-compact-views')) document.getElementById('all-compact-views').style.display = "none";
             if(document.getElementById('address-list-view')) document.getElementById('address-list-view').style.display = "block";
-            if(document.getElementById('add-options-view')) document.getElementById('add-options-view').style.display = "none";
             if(document.getElementById('manual-form-view')) document.getElementById('manual-form-view').style.display = "none";
         }
 
@@ -403,32 +379,17 @@
             if (pincode && pincode.length === 6) calculateDelivery(pincode);
         }
 
-        // 🔴 Custom Modal Logic
-        function openLocationModal() {
-            document.getElementById('locModalOverlay').classList.add('show');
-            document.getElementById('locBottomSheet').classList.add('open');
-        }
-        
-        function closeLocationModal() {
-            document.getElementById('locModalOverlay').classList.remove('show');
-            document.getElementById('locBottomSheet').classList.remove('open');
+        function showManualForm() {
+            if(document.getElementById('address-list-view')) document.getElementById('address-list-view').style.display = "none";
+            if(document.getElementById('all-compact-views')) document.getElementById('all-compact-views').style.display = "none";
+            if(document.getElementById('manual-form-view')) document.getElementById('manual-form-view').style.display = "block";
+            if(document.getElementById('newAddrRadio')) document.getElementById('newAddrRadio').checked = true;
+            deliveryCalculated = false;
         }
 
-        function showAddOptions() { openLocationModal(); }
-
-        function showManualFormFromModal() {
-            closeLocationModal();
-            setTimeout(function() {
-                if(document.getElementById('address-list-view')) document.getElementById('address-list-view').style.display = "none";
-                if(document.getElementById('all-compact-views')) document.getElementById('all-compact-views').style.display = "none";
-                if(document.getElementById('manual-form-view')) document.getElementById('manual-form-view').style.display = "block";
-                if(document.getElementById('newAddrRadio')) document.getElementById('newAddrRadio').checked = true;
-                deliveryCalculated = false;
-            }, 300);
-        }
-
+        // 📍 Auto Detect Location
         function autoDetectLocation() {
-            var btn = document.querySelector('.btn-loc');
+            var btn = document.getElementById('loc-btn');
             if(btn) btn.innerHTML = "Locating... Please wait";
 
             if (navigator.geolocation) {
@@ -445,25 +406,22 @@
                         if(document.getElementById('newAddress')) document.getElementById('newAddress').value = addressStr;
                         if(document.getElementById('newPincode')) document.getElementById('newPincode').value = pin;
                         
-                        if(btn) btn.innerHTML = "🎯 Use my current location";
-                        showManualFormFromModal(); 
+                        if(btn) btn.innerHTML = "📍 Use my current location";
                         if(pin && pin.length === 6) calculateDelivery(pin);
                     }).catch(function(err) {
                         alert("Could not load address automatically. Please enter manually.");
-                        if(btn) btn.innerHTML = "🎯 Use my current location";
-                        showManualFormFromModal();
+                        if(btn) btn.innerHTML = "📍 Use my current location";
                     });
                 }, function(error) {
                     alert("Location access denied or unavailable. Please fill manually.");
-                    if(btn) btn.innerHTML = "🎯 Use my current location";
-                    showManualFormFromModal();
+                    if(btn) btn.innerHTML = "📍 Use my current location";
                 }, { timeout: 8000 });
             } else {
                 alert("Location not supported by browser.");
-                showManualFormFromModal();
             }
         }
 
+        // 🚚 Delivery Calc
         function calculateDelivery(userPincode) {
             if(!userPincode || userPincode.length !== 6) return;
             if(document.getElementById('delivery-charge-display')) document.getElementById('delivery-charge-display').innerText = "Calculating...";
@@ -485,7 +443,7 @@
                 deliveryCalculated = true;
             })
             .catch(function(err) {
-                currentDeliveryCharge = 50; // Fallback
+                currentDeliveryCharge = 50; 
                 if(document.getElementById('delivery-charge-display')) {
                     document.getElementById('delivery-charge-display').innerText = "₹50";
                     document.getElementById('delivery-charge-display').className = "";
@@ -495,8 +453,9 @@
             });
         }
 
+        // 💳 Payment Option
         function selectPaymentMode(mode) {
-            if(mode === 'Card') return; // Disabled
+            if(mode === 'Card') return; 
             document.querySelectorAll('.payment-option').forEach(function(opt) { opt.classList.remove('active'); });
             
             if(mode === 'Online') {
@@ -511,7 +470,17 @@
                 }
             }
         }
-      
+
+        // 📋 Copy UPI ID
+        function copyStoreUPI() {
+            var copyText = document.getElementById("store-upi-id");
+            copyText.select();
+            copyText.setSelectionRange(0, 99999); 
+            document.execCommand("copy");
+            alert("UPI ID Copied: " + copyText.value + "\nNow paste it in any UPI app to pay.");
+        }
+
+        // ➡️ Stepper Flow
         function nextStep() {
             if (currentStep === 1) {
                 var isNewForm = document.getElementById('newAddrRadio') ? document.getElementById('newAddrRadio').checked : false;
