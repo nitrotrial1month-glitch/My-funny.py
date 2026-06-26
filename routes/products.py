@@ -1,6 +1,6 @@
 import os
 import requests
-import random # 🔴 NEW: For generating WBM_P_ID
+import random
 from flask import Blueprint, render_template, redirect, session, request
 from werkzeug.utils import secure_filename
 from bson import ObjectId
@@ -28,31 +28,46 @@ def send_verification_to_discord(product_data, WBM_P_ID):
         "fields": [
             {"name": "Product Name", "value": product_data.get('name', 'N/A'), "inline": True},
             {"name": "Price", "value": f"₹{product_data.get('price', '0')}", "inline": True},
-            {"name": "Seller", "value": f"<@{product_data.get('seller_id', '')}>", "inline": False}
+            {"name": "Seller ID", "value": f"{product_data.get('seller_id', '')}", "inline": False}
         ],
         "footer": {"text": f"ID: {WBM_P_ID}"}
     }
     
-    res = requests.post(f"https://discord.com/api/v10/channels/{VERIFICATION_CHANNEL_ID}/messages", json={"embeds": [embed]}, headers=headers)
-    
-    if res.status_code == 200:
-        msg_id = res.json()['id']
-        requests.put(f"https://discord.com/api/v10/channels/{VERIFICATION_CHANNEL_ID}/messages/{msg_id}/reactions/%E2%9C%85/@me", headers=headers)
-        requests.put(f"https://discord.com/api/v10/channels/{VERIFICATION_CHANNEL_ID}/messages/{msg_id}/reactions/%E2%9D%8C/@me", headers=headers)
+    try:
+        res = requests.post(f"https://discord.com/api/v10/channels/{VERIFICATION_CHANNEL_ID}/messages", json={"embeds": [embed]}, headers=headers)
+        if res.status_code == 200:
+            msg_id = res.json()['id']
+            requests.put(f"https://discord.com/api/v10/channels/{VERIFICATION_CHANNEL_ID}/messages/{msg_id}/reactions/%E2%9C%85/@me", headers=headers)
+            requests.put(f"https://discord.com/api/v10/channels/{VERIFICATION_CHANNEL_ID}/messages/{msg_id}/reactions/%E2%9D%8C/@me", headers=headers)
+    except Exception as e:
+        print("Discord Error:", e)
 
 # ==========================================================
 # 👕 প্রোডাক্ট পেজ এবং সেলার আপলোড/এডিট রাউট
 # ==========================================================
 
-# ২. প্রোডাক্টের ডিটেইলস পেজ
+# ২. প্রোডাক্টের ডিটেইলস পেজ (🔴 UPDATED: সেলার পিনকোড পাঠানো হচ্ছে ডেলিভারি ক্যালকুলেশনের জন্য)
 @products_bp.route('/product/<WBM_P_ID>')
 def product_details(WBM_P_ID):
     col = Database.get_collection("products")
+    db_users = Database.get_collection("users")
+    
     # 🔴 SMART LOGIC for fetching
     query = {"_id": ObjectId(WBM_P_ID)} if len(WBM_P_ID) == 24 else {"WBM_P_ID": WBM_P_ID}
     product = col.find_one(query) if col is not None else None
     
     if not product: return "Product not found!", 404
+    
+    # 🔴 সেলারের পিনকোড খোঁজা হচ্ছে (প্রোডাক্ট পেজে ডেলিভারি চার্জ দেখানোর জন্য)
+    seller_id = str(product.get('seller_id', ''))
+    seller_info = db_users.find_one({"WBM_U_ID": seller_id}) if seller_id and db_users else None
+    
+    if seller_info and seller_info.get('pincode'):
+        product['seller_pincode'] = seller_info.get('pincode')
+    elif seller_info and seller_info.get('application_data') and seller_info['application_data'].get('pincode'):
+        product['seller_pincode'] = seller_info['application_data'].get('pincode')
+    else:
+        product['seller_pincode'] = "713128" # ফলব্যাক পিনকোড
     
     seller_products = []
     if 'seller_id' in product:
@@ -85,7 +100,6 @@ def upload_product():
     if seller_upi:
         db_users = Database.get_collection("users")
         if db_users is not None:
-            # 🔴 UPDATE: WBM_U_ID
             db_users.update_one({"WBM_U_ID": str(user.get('id'))}, {"$set": {"upi_id": seller_upi}})
 
     raw_orig = request.form.get('original_price', '0')
@@ -214,4 +228,4 @@ def delete_seller_product(WBM_P_ID):
     col.delete_one(query)
     
     return redirect('/seller-dashboard')
-                                
+    
