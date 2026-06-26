@@ -5,42 +5,75 @@ import uuid
 from datetime import datetime
 import random
 import math
-import pgeocode
+import requests
 
 checkout_bp = Blueprint('checkout', __name__)
 
 # ==========================================================
-# 🚚 DYNAMIC DISTANCE-BASED DELIVERY CALCULATION (For Product Page API)
+# 🚀 1. PURE MATH DISTANCE CALCULATION (0.0001s Speed)
+# ==========================================================
+def calculate_straight_distance(lat1, lon1, lat2, lon2):
+    # Haversine সূত্র (পৃথিবীর বক্রতা অনুযায়ী সোজা দূরত্ব মাপে)
+    R = 6371.0 # পৃথিবীর ব্যাসার্ধ (কিলোমিটার)
+    lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
+    
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+    
+    a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+    c = 2 * math.asin(math.sqrt(a))
+    
+    return R * c
+
+# ==========================================================
+# 🚀 2. LIGHTNING FAST PINCODE API (Zippopotam)
+# ==========================================================
+def get_lat_lon(pincode):
+    try:
+        res = requests.get(f"https://api.zippopotam.us/IN/{pincode}", timeout=1.5).json()
+        lat = float(res['places'][0]['latitude'])
+        lon = float(res['places'][0]['longitude'])
+        return lat, lon
+    except:
+        return None, None
+
+# ==========================================================
+# 🚚 3. DYNAMIC SUPERFAST DELIVERY CALCULATION
 # ==========================================================
 def get_delivery_charge(user_pincode, seller_pincode):
-    if not user_pincode or len(str(user_pincode)) != 6:
-        return 50 
-    
-    if not seller_pincode or len(str(seller_pincode)) != 6:
-        seller_pincode = "713128" 
+    if not user_pincode or len(str(user_pincode)) != 6: return 50
+    if not seller_pincode or len(str(seller_pincode)) != 6: seller_pincode = "713128"
+    if str(user_pincode) == str(seller_pincode): return 0
 
-    if str(user_pincode) == str(seller_pincode):
-        return 0
+    user_lat, user_lon = get_lat_lon(user_pincode)
+    seller_lat, seller_lon = get_lat_lon(seller_pincode)
 
+    if user_lat is None or seller_lat is None:
+        return 60 # সার্ভার ডাউন বা ইনভ্যালিড পিনকোড
+
+    distance_km = None
+
+    # OSRM দিয়ে আসল ড্রাইভিং দূরত্ব মাপা (Timeout: 1.5s)
     try:
-        dist_calculator = pgeocode.GeoDistance('IN')
-        distance_km = dist_calculator.query_postal_code(str(user_pincode), str(seller_pincode))
-        
-        if math.isnan(distance_km):
-            return 60
-            
-        distance_km = float(distance_km)
-        
-        if distance_km <= 15: return 0    
-        elif distance_km <= 100: return 40   
-        elif distance_km <= 500: return 70   
-        else: return 100  
-            
-    except Exception as e:
-        print("Delivery Calc Error:", e)
-        return 50 
+        osrm_url = f"http://router.project-osrm.org/route/v1/driving/{user_lon},{user_lat};{seller_lon},{seller_lat}?overview=false"
+        res = requests.get(osrm_url, timeout=1.5).json()
+        if res.get('code') == 'Ok':
+            distance_km = res['routes'][0]['distance'] / 1000
+    except Exception:
+        pass # OSRM স্লো হলে সাইলেন্টলি ম্যাথ-এ শিফট করবে
 
-# এই API টি এখন প্রোডাক্ট পেজ থেকে পিনকোড চেক করার জন্য কল করা যাবে
+    # OSRM ফেইল করলে সুপারফাস্ট ম্যাথ ক্যালকুলেশন
+    if distance_km is None:
+        straight_dist = calculate_straight_distance(user_lat, user_lon, seller_lat, seller_lon)
+        distance_km = straight_dist * 1.20 # ২০% এক্সট্রা (রাস্তার কার্ভের জন্য)
+
+    # চার্জ হিসাব
+    if distance_km <= 15: return 0    
+    elif distance_km <= 100: return 40   
+    elif distance_km <= 500: return 70   
+    else: return 100
+
+# API Route for Product Page AJAX
 @checkout_bp.route('/calculate_delivery', methods=['POST'])
 def calculate_delivery():
     data = request.get_json()
@@ -75,7 +108,7 @@ def checkout_cart():
             
     for item in cart_items:
         seller_id = str(item.get('WBM_U_ID', item.get('seller_id', ''))) 
-        seller_info = db_users.find_one({"WBM_U_ID": seller_id}) if seller_id else None
+        seller_info = db_users.find_one({"WBM_U_ID": seller_id}) if seller_id and db_users is not None else None
         if seller_info and seller_info.get('pincode'):
             item['seller_pincode'] = seller_info.get('pincode')
         else:
@@ -118,7 +151,7 @@ def checkout_direct(WBM_P_ID):
             break
             
     seller_id = str(product.get('WBM_U_ID', product.get('seller_id', '')))
-    seller_info = db_users.find_one({"WBM_U_ID": seller_id}) if seller_id else None
+    seller_info = db_users.find_one({"WBM_U_ID": seller_id}) if seller_id and db_users is not None else None
     if seller_info and seller_info.get('pincode'):
         product['seller_pincode'] = seller_info.get('pincode')
     else:
@@ -140,7 +173,6 @@ def process_checkout():
     address_selection = request.form.get('address_selection')
     size = request.form.get('size') or request.args.get('size') or 'Regular'
     
-    # 🔴 FIX: এখন শুধুমাত্র ফ্রন্টএন্ড থেকে আসা প্রি-ক্যালকুলেটেড টোটাল ব্যবহার করা হবে
     frontend_total_str = request.form.get('frontend_total', '0')
     try:
         frontend_total = float(frontend_total_str)
@@ -214,11 +246,10 @@ def process_checkout():
         except ValueError:
             qty = 1
 
-        # 🔴 FIX: আর কোনো ব্যাকএন্ড লোকেশন ক্যালকুলেশন নেই
         if frontend_total > 0:
             final_total = frontend_total
         else:
-            final_total = (float(product['price']) * qty) + 9  # শুধু প্রোডাক্টের দাম ও প্ল্যাটফর্ম ফি
+            final_total = (float(product['price']) * qty) + 9 
 
         product['ordered_qty'] = qty 
 
@@ -259,12 +290,11 @@ def process_checkout():
             item['ordered_qty'] = qty
             total_items_qty += qty
 
-        # 🔴 FIX: আর কোনো ব্যাকএন্ড লোকেশন ক্যালকুলেশন নেই
         if frontend_total > 0:
             final_total = frontend_total
         else:
             items_total = sum(float(item['price']) * item['ordered_qty'] for item in items)
-            final_total = items_total + 9  # শুধু প্রোডাক্টের দাম ও প্ল্যাটফর্ম ফি
+            final_total = items_total + 9 
         
         first_product_name = items[0].get('name', 'Multiple Items') if items else 'Items'
         first_product_image = items[0].get('image', '') if items else ''
@@ -363,4 +393,3 @@ def order_success(wbm_order_id):
     order = col_orders.find_one({"WBM_O_ID": wbm_order_id})
     if not order: return "Order not found", 404
     return render_template('order_success.html', order=order, order_id=wbm_order_id)
-        
