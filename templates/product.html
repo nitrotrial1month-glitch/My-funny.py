@@ -31,9 +31,6 @@
         
         .delivery-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 15px; margin-bottom: 12px; }
         .delivery-row { display: flex; gap: 15px; margin-bottom: 15px; font-size: 14px; color: #333; align-items: flex-start; }
-        .manual-pin-box { display: flex; gap: 8px; margin-top: 8px; }
-        .pin-input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; width: 120px; outline: none; }
-        .pin-btn { background: var(--primary); color: white; border: none; padding: 8px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 12px; }
 
         .trust-badges { display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #eee; margin-top: 15px; text-align: center; }
         .trust-item { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 30%; }
@@ -73,14 +70,11 @@
         </div>
         
         {% if product.reviews %}
-            {% set rated_reviews = product.reviews|selectattr("rating", "number")|list %}
+            {% set rated_reviews = product.reviews | selectattr('rating') | list %}
             {% if rated_reviews|length > 0 %}
-                {% set total_rating = 0 %}
-                {% for r in rated_reviews %}
-                    {% set total_rating = total_rating + r.rating|int %}
-                {% endfor %}
+                {% set total_rating = rated_reviews | map(attribute='rating') | map('int') | sum %}
                 {% set avg_rating = (total_rating / rated_reviews|length) | round(1) %}
-                <div style="position: absolute; bottom: 15px; left: 15px; background: rgba(255,255,255,0.9); padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; border: 1px solid #eee;">
+                <div style="position: absolute; bottom: 15px; left: 15px; background: rgba(255,255,255,0.9); padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; border: 1px solid #eee; display: flex; align-items: center; gap: 4px;">
                     {{ avg_rating }} <span style="color: var(--success); font-size: 10px;">★</span> | {{ rated_reviews|length }}
                 </div>
             {% endif %}
@@ -116,18 +110,18 @@
             <span class="icon">📍</span>
             <div style="flex-grow: 1;">
                 <div style="font-weight: bold; margin-bottom: 3px;" id="loc-pin">Check Delivery Options</div>
-                <div class="manual-pin-box">
-                    <input type="text" id="manual-pincode" class="pin-input" placeholder="Enter Pincode" maxlength="6">
-                    <button class="pin-btn" onclick="checkManualDelivery()">Check</button>
-                </div>
-                <div style="font-size: 11px; color: var(--muted); margin-top: 6px;">Or <span style="color: var(--primary); font-weight: bold; cursor: pointer;" onclick="requestLocation()">Auto-detect Location</span></div>
+                <div style="font-size: 12px; color: var(--muted); margin-bottom: 10px;" id="loc-address">Please wait...</div>
+                
+                <button onclick="requestLocation()" style="background: white; color: var(--primary); border: 1px solid var(--primary); padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 5px;">
+                    🎯 Auto-detect Location
+                </button>
             </div>
         </div>
 
         <div class="delivery-row" style="border-top: 1px solid #eee; padding-top: 15px;">
             <span class="icon">🚚</span>
             <div>
-                <div style="font-weight: bold; color: var(--text-dark);" id="delivery-status">Enter pincode to check charge</div>
+                <div style="font-weight: bold; color: var(--text-dark);" id="delivery-status">Please check location for charge</div>
                 <div style="font-size: 12px; color: var(--muted); margin-top: 3px;">Order now to get it fast</div>
             </div>
         </div>
@@ -191,7 +185,6 @@
             <div style="font-weight: bold; font-size: 14px; margin-bottom: 10px;">Write a Review</div>
             
             <form action="/submit_review/{{ product.WBM_P_ID | default(product._id) }}" method="POST" enctype="multipart/form-data">
-                
                 {% if not has_rated %}
                 <label style="font-size: 12px; font-weight: bold; color: #555;">Rate this product:</label>
                 <select name="rating" class="form-control" required>
@@ -227,6 +220,9 @@
         let selectedSize = '';
         const hasSizes = {% if product.sizes %}true{% else %}false{% endif %};
         const sellerPin = document.getElementById('backend-data').getAttribute('data-seller-pin');
+        
+        // 🔴 ব্যাকএন্ড থেকে আসা ইউজারের সেভ করা পিনকোড
+        const savedPincode = "{{ user_saved_pincode | default('') }}"; 
 
         function selectSize(size, btnElement) {
             selectedSize = size;
@@ -242,12 +238,21 @@
             window.location.href = url;
         }
 
-        function checkManualDelivery() {
-            let pin = document.getElementById('manual-pincode').value;
-            if (pin.length === 6 && !isNaN(pin)) calculateChargeAPI(pin);
-            else alert('Please enter a valid 6-digit pincode.');
-        }
+        // 🔴 পেজ লোড হওয়ার সাথে সাথেই স্মার্ট চেক
+        window.onload = function() {
+            if (savedPincode !== '') {
+                // ইউজারের সেভ করা অ্যাড্রেস থাকলে
+                document.getElementById('loc-address').innerText = "Using your saved address for delivery.";
+                calculateChargeAPI(savedPincode, true);
+            } else {
+                // সেভ করা অ্যাড্রেস না থাকলে
+                document.getElementById('loc-pin').innerText = "No Saved Address Found";
+                document.getElementById('loc-address').innerHTML = "<span style='color: var(--primary); font-weight: bold;'>Please save an address in your profile, or use Auto-detect.</span>";
+                document.getElementById('delivery-status').innerText = "Click Auto-detect to check charge";
+            }
+        };
 
+        // কাস্টমার চাইলে জিপিএস দিয়েও চেক করতে পারে
         function requestLocation() {
             if (navigator.geolocation) {
                 document.getElementById('delivery-status').innerText = "Locating...";
@@ -260,18 +265,29 @@
                         .then(data => {
                             let userPincode = data.address.postcode || '';
                             if(userPincode) {
-                                document.getElementById('manual-pincode').value = userPincode;
-                                calculateChargeAPI(userPincode);
-                            } else alert("Could not detect exact pincode. Please enter manually.");
-                        }).catch(() => alert("Error detecting location."));
+                                calculateChargeAPI(userPincode, false);
+                            } else {
+                                alert("Could not detect exact pincode. Please update your profile address.");
+                                document.getElementById('delivery-status').innerText = "Click Auto-detect to check charge";
+                            }
+                        }).catch(() => {
+                            alert("Error detecting location.");
+                            document.getElementById('delivery-status').innerText = "Click Auto-detect to check charge";
+                        });
                     }, 
-                    function(error) { alert("Location access denied. Please enter manually."); }, 
+                    function(error) { 
+                        alert("Location access denied. Please allow location or update your profile address.");
+                        document.getElementById('delivery-status').innerText = "Click Auto-detect to check charge";
+                    }, 
                     { timeout: 5000 }
                 );
-            } else alert("Location not supported.");
+            } else {
+                alert("Location not supported.");
+            }
         }
 
-        function calculateChargeAPI(userPincode) {
+        // 🚚 API কল করে চার্জ বের করা
+        function calculateChargeAPI(userPincode, isSavedAddress) {
             let statusDisplay = document.getElementById('delivery-status');
             statusDisplay.innerText = "Calculating Charge...";
             
@@ -282,7 +298,13 @@
             })
             .then(res => res.json())
             .then(data => {
-                document.getElementById('loc-pin').innerText = "Deliver to: " + userPincode;
+                if (isSavedAddress) {
+                    document.getElementById('loc-pin').innerText = "Deliver to Saved Address: " + userPincode;
+                } else {
+                    document.getElementById('loc-pin').innerText = "Deliver to: " + userPincode;
+                    document.getElementById('loc-address').innerText = "Location detected successfully.";
+                }
+                
                 if(data.charge === 0) {
                     statusDisplay.innerText = "Free Delivery Available!";
                     statusDisplay.style.color = "var(--success)";
