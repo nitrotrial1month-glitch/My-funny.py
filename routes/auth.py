@@ -29,7 +29,6 @@ def get_current_user():
     
     col = Database.get_collection("users")
     if col is not None:
-        # 🔴 UPDATE: WBM_U_ID দিয়ে ইউজারকে খোঁজা হচ্ছে
         db_user = col.find_one({"WBM_U_ID": user_session.get('id')})
         if db_user:
             return db_user
@@ -56,7 +55,7 @@ def role_required(*allowed_roles):
                 return f(*args, **kwargs)
                 
             if user_role not in allowed_roles:
-                abort(403, description="Access Denied: You do not have permission to view this page.")
+                abort(403, description="Access Denied: You do not have permission.")
                 
             return f(*args, **kwargs)
         return decorated_function
@@ -66,7 +65,6 @@ def role_required(*allowed_roles):
 # ==========================================
 # 🔴 লগইন এবং কলব্যাক রুট
 # ==========================================
-
 @auth_bp.route('/login/discord')
 def login_discord():
     auth_url = f"{AUTHORIZATION_BASE_URL}?client_id={DISCORD_CLIENT_ID}&redirect_uri={DISCORD_REDIRECT_URI}&response_type=code&scope=identify%20email"
@@ -108,7 +106,6 @@ def discord_callback():
             db_user = col.find_one({"discord_id": discord_id})
         
         if not db_user:
-            # 🔴 NEW: WBM_U_ID জেনারেট লজিক (উদাঃ 67893WBM728)
             random_id = f"{random.randint(10000, 99999)}WBM{random.randint(100, 999)}"
             initial_role = "owner" if email == "kstomh05@gmail.com" else "user"
             
@@ -141,7 +138,6 @@ def discord_callback():
 
     return redirect('/')
 
-
 @auth_bp.route('/account')
 def account_page():
     user_data = get_current_user()
@@ -149,162 +145,36 @@ def account_page():
         return render_template('login.html') 
     return render_template('account.html', current_user=user_data)
 
-
 @auth_bp.route('/logout')
 def logout():
     session.pop('user', None)
     return redirect('/')
-
-
-# ==========================================
-# 🆕 Panel Routing & Dashboard Routes
-# ==========================================
 
 @auth_bp.route('/dashboards')
 @login_required
 def smart_dashboard_redirect():
     user = get_current_user()
     role = user.get("role")
-    
-    if role == "owner":
-        return redirect('/owner-dashboard')
-    elif role == "seller":
-        return redirect('/seller-dashboard')
-    elif role == "delivery":
-        return redirect('/delivery-dashboard')
-    else:
-        return redirect('/account')
+    if role == "owner": return redirect('/owner-dashboard')
+    elif role == "seller": return redirect('/seller-dashboard')
+    elif role == "delivery": return redirect('/delivery-dashboard')
+    else: return redirect('/account')
 
-
-@auth_bp.route('/owner-dashboard')
-@role_required('owner')
-def owner_dashboard():
-    user = get_current_user()
-    
-    db_users = Database.get_collection("users")
-    db_orders = Database.get_collection("orders")
-    db_products = Database.get_collection("products")
-    
-    total_users = db_users.count_documents({}) if db_users is not None else 0
-    total_orders = db_orders.count_documents({}) if db_orders is not None else 0
-    total_products = db_products.count_documents({}) if db_products is not None else 0
-    
-    pending_products = list(db_products.find({"status": "Pending"})) if db_products is not None else []
-    insure_requests = list(db_products.find({"inwear_insure": "Pending Approval"})) if db_products is not None else []
-    latest_orders = list(db_orders.find({}).sort("_id", -1).limit(20)) if db_orders is not None else []
-    
-    pending_sellers = list(db_users.find({"role": "pending_seller"})) if db_users is not None else []
-    pending_deliveries = list(db_users.find({"role": "pending_delivery"})) if db_users is not None else []
-
-    return render_template('owner_dashboard.html', 
-                           current_user=user,
-                           total_users=total_users, 
-                           total_orders=total_orders,
-                           total_products=total_products,
-                           pending_products=pending_products,
-                           insure_requests=insure_requests, 
-                           orders=latest_orders,
-                           pending_sellers=pending_sellers,
-                           pending_deliveries=pending_deliveries)
-
-
-@auth_bp.route('/seller-dashboard')
-@role_required('seller', 'owner')
-def seller_dashboard():
-    user = get_current_user()
-    user_id = user.get('WBM_U_ID')
-    
-    col = Database.get_collection("products")
-    seller_products = list(col.find({"seller_id": str(user_id)})) if col is not None else []
-    
-    return render_template('seller_dashboard.html', current_user=user, products=seller_products)
-
-
+# ==========================================
+# 🚚 Delivery Routes (Kept in Auth for now)
+# ==========================================
 @auth_bp.route('/delivery-dashboard')
 @role_required('delivery', 'owner')
 def delivery_dashboard():
     user = get_current_user()
     col = Database.get_collection("orders")
     active_orders = list(col.find({"status": "Confirmed"}).sort("_id", -1)) if col is not None else []
-    
     return render_template('delivery_dashboard.html', current_user=user, orders=active_orders)
-
-
-# ==========================================
-# 📝 Form Rendering
-# ==========================================
-
-@auth_bp.route('/apply-seller')
-@login_required
-def apply_seller():
-    return render_template('apply-seller.html')
 
 @auth_bp.route('/apply-delivery')
 @login_required
 def apply_delivery():
     return render_template('apply-delivery.html')
-
-
-# ==========================================
-# 🚀 Form Submission Handlers
-# ==========================================
-
-@auth_bp.route('/submit-seller-application', methods=['POST'])
-@login_required
-def submit_seller_application():
-    try:
-        user = session.get('user')
-        col = Database.get_collection("users")
-        
-        store_name = request.form.get('store_name')
-        phone = request.form.get('phone_number')
-        address = request.form.get('address')
-        upi_id = request.form.get('upi_id')
-        bank_account = request.form.get('bank_account', '')
-        ifsc_code = request.form.get('ifsc_code', '')
-        id_type = request.form.get('id_type')
-        id_number = request.form.get('id_number')
-        
-        kyc_file = request.files.get('id_document')
-        profile_file = request.files.get('user_profile_photo')
-        license_file = request.files.get('trade_license')
-        
-        kyc_filename = secure_filename(kyc_file.filename) if kyc_file and kyc_file.filename else ""
-        profile_filename = secure_filename(profile_file.filename) if profile_file and profile_file.filename else ""
-        license_filename = secure_filename(license_file.filename) if license_file and license_file.filename else ""
-        
-        if kyc_file and kyc_file.filename: 
-            kyc_file.save(os.path.join(UPLOAD_FOLDER, kyc_filename))
-        if profile_file and profile_file.filename: 
-            profile_file.save(os.path.join(UPLOAD_FOLDER, profile_filename))
-        if license_file and license_file.filename: 
-            license_file.save(os.path.join(UPLOAD_FOLDER, license_filename))
-        
-        if col is not None:
-            col.update_one({"WBM_U_ID": user['id']}, {"$set": {
-                "role": "pending_seller",
-                "application_data": {
-                    "store_name": store_name,
-                    "phone": phone,
-                    "address": address,
-                    "upi_id": upi_id,
-                    "bank_account": bank_account,
-                    "ifsc_code": ifsc_code,
-                    "id_type": id_type,
-                    "id_number": id_number,
-                    "kyc_image": kyc_filename,
-                    "profile_image": profile_filename,
-                    "license_image": license_filename
-                }
-            }})
-        
-        session['user']['role'] = 'pending_seller'
-        session.modified = True
-        flash("Your Seller application is submitted and waiting for Admin approval.")
-        return redirect('/account')
-    except Exception as e:
-        return f"Submission Error: {str(e)}", 500
-
 
 @auth_bp.route('/submit-delivery-application', methods=['POST'])
 @login_required
@@ -330,28 +200,18 @@ def submit_delivery_application():
         profile_filename = secure_filename(profile_file.filename) if profile_file and profile_file.filename else ""
         dl_filename = secure_filename(dl_file.filename) if dl_file and dl_file.filename else ""
         
-        if kyc_file and kyc_file.filename: 
-            kyc_file.save(os.path.join(UPLOAD_FOLDER, kyc_filename))
-        if profile_file and profile_file.filename: 
-            profile_file.save(os.path.join(UPLOAD_FOLDER, profile_filename))
-        if dl_file and dl_file.filename: 
-            dl_file.save(os.path.join(UPLOAD_FOLDER, dl_filename))
+        if kyc_file and kyc_file.filename: kyc_file.save(os.path.join(UPLOAD_FOLDER, kyc_filename))
+        if profile_file and profile_file.filename: profile_file.save(os.path.join(UPLOAD_FOLDER, profile_filename))
+        if dl_file and dl_file.filename: dl_file.save(os.path.join(UPLOAD_FOLDER, dl_filename))
         
         if col is not None:
             col.update_one({"WBM_U_ID": user['id']}, {"$set": {
                 "role": "pending_delivery",
                 "application_data": {
-                    "full_name": full_name,
-                    "phone": phone,
-                    "area": delivery_area,
-                    "vehicle": vehicle_type,
-                    "upi_id": upi_id,
-                    "bank_account": bank_account,
-                    "id_type": id_type,
-                    "id_number": id_number,
-                    "kyc_image": kyc_filename,
-                    "profile_image": profile_filename,
-                    "dl_image": dl_filename
+                    "full_name": full_name, "phone": phone, "area": delivery_area,
+                    "vehicle": vehicle_type, "upi_id": upi_id, "bank_account": bank_account,
+                    "id_type": id_type, "id_number": id_number, "kyc_image": kyc_filename,
+                    "profile_image": profile_filename, "dl_image": dl_filename
                 }
             }})
         
@@ -361,35 +221,4 @@ def submit_delivery_application():
         return redirect('/account')
     except Exception as e:
         return f"Submission Error: {str(e)}", 500
-
-
-# ==========================================
-# ⚖️ Admin Approval / Rejection Routes (Updated for WBM_U_ID)
-# ==========================================
-
-@auth_bp.route('/admin/approve/<WBM_U_ID>')
-@role_required('owner')
-def approve_user(WBM_U_ID):
-    col = Database.get_collection("users")
-    if col is not None:
-        user = col.find_one({"WBM_U_ID": WBM_U_ID})
-        if user:
-            new_role = "seller" if user.get('role') == "pending_seller" else "delivery"
-            col.update_one({"WBM_U_ID": WBM_U_ID}, {"$set": {"role": new_role}})
-            flash(f"User {WBM_U_ID} approved as {new_role} successfully!")
-            
-    return redirect('/owner-dashboard')
-
-@auth_bp.route('/admin/reject/<WBM_U_ID>')
-@role_required('owner')
-def reject_user(WBM_U_ID):
-    col = Database.get_collection("users")
-    if col is not None:
-        col.update_one({"WBM_U_ID": WBM_U_ID}, {
-            "$set": {"role": "user"},
-            "$unset": {"application_data": ""}
-        })
-        flash(f"Application for {WBM_U_ID} Rejected and data cleared.")
         
-    return redirect('/owner-dashboard')
-    
