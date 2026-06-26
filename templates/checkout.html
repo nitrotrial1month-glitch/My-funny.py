@@ -62,13 +62,6 @@
 </head>
 <body>
 
-    <div id="app-data" style="display: none;"
-         data-total-price="{{ total_price }}" 
-         data-seller-pincode="{% if items %}{{ items[0].seller_pincode | default('713128', true) }}{% else %}713128{% endif %}"
-         data-has-addresses="{% if saved_addresses %}true{% else %}false{% endif %}"
-         data-default-pin="{% if user_default_pincode %}{{ user_default_pincode }}{% elif saved_addresses %}{{ saved_addresses[0].pincode | default('', true) }}{% else %}{% endif %}">
-    </div>
-
     <form action="/process_checkout" method="POST" id="checkoutForm">
         <input type="hidden" name="is_direct" value="{{ is_direct }}">
         {% if is_direct %}<input type="hidden" name="WBM_P_ID" value="{{ direct_product_id }}">{% endif %}
@@ -99,9 +92,9 @@
                             <button type="button" class="change-btn" onclick="showAddressList()">Change</button>
                         </div>
                         <div id="selected-address-display" style="font-size: 14px; color: #333; line-height: 1.5; padding: 12px; background: #fff5f5; border-radius: 6px; border: 1px solid #ffcccc;">
-                            <strong>{{ default_add.name | default('No Name Added', true) }}</strong><br>
-                            {{ default_add.address | default('Address details missing. Please add a new one.', true) }}<br>
-                            <div style="margin-top: 5px; font-size: 13px; font-weight: bold; color: #555;">PIN: {{ default_add.pincode | default('N/A', true) }} | Ph: {{ default_add.phone | default('N/A', true) }}</div>
+                            <strong>{{ default_add.name }}</strong><br>
+                            {{ default_add.address }}<br>
+                            <div style="margin-top: 5px; font-size: 13px; font-weight: bold; color: #555;">PIN: {{ default_add.pincode }} | Ph: {{ default_add.phone }}</div>
                         </div>
                     </div>
 
@@ -109,16 +102,16 @@
                         <h3 class="card-title" style="margin-bottom: 15px;">Select Delivery Address</h3>
                         {% for add in saved_addresses %}
                         <label class="address-box {% if add.is_default %}selected{% endif %}" 
-                               data-pincode="{{ add.pincode | default('', true) }}" 
-                               data-name="{{ add.name | default('Saved Address', true) }}" 
-                               data-address="{{ add.address | default('', true) | replace('\n', ' ') | replace('\r', '') }}" 
-                               data-phone="{{ add.phone | default('', true) }}" 
+                               data-pincode="{{ add.pincode }}" 
+                               data-name="{{ add.name }}" 
+                               data-address="{{ add.address | replace('\n', ' ') | replace('\r', '') }}" 
+                               data-phone="{{ add.phone }}" 
                                onclick="selectSavedAddress(this)">
                             <input type="radio" name="address_selection" value="{{ loop.index0 }}" style="accent-color: #cc0000;" {% if add.is_default %}checked{% endif %}>
                             <div>
-                                <div style="font-weight:bold;">{{ add.name | default('Saved Address', true) }}</div>
-                                <div style="font-size:13px; margin: 4px 0; color: #555;">{{ add.address | default('No details', true) }}</div>
-                                <div style="font-size:12px; font-weight:bold; color: #333;">PIN: {{ add.pincode | default('N/A', true) }} | Ph: {{ add.phone | default('N/A', true) }}</div>
+                                <div style="font-weight:bold;">{{ add.name }}</div>
+                                <div style="font-size:13px; margin: 4px 0; color: #555;">{{ add.address }}</div>
+                                <div style="font-size:12px; font-weight:bold; color: #333;">PIN: {{ add.pincode }} | Ph: {{ add.phone }}</div>
                             </div>
                         </label>
                         {% endfor %}
@@ -150,7 +143,7 @@
                 <h3 style="font-size: 14px; margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px;">Order Summary</h3>
                 {% for item in items %}
                 <div class="product-row">
-                    <img src="/{{ item.image }}" class="product-img" onerror="this.src='/static/1000249582.png'">
+                    <img src="/{{ item.image }}" class="product-img" onerror="this.style.display='none'">
                     <div>
                         <div style="font-size:14px; font-weight: bold;">{{ item.name|truncate(35, True) }}</div>
                         <div style="font-size:14px; font-weight: bold; margin-top: 4px; color: var(--primary);">₹{{ item.price }}</div>
@@ -227,65 +220,71 @@
     </form>
 
     <script>
-        const appData = document.getElementById('app-data');
-        const basePrice = parseFloat(appData.getAttribute('data-total-price')) || 0;
-        const sellerPincode = appData.getAttribute('data-seller-pincode') || "713128";
-        const upiId = "9046348427@fam"; 
-        
-        let currentStep = 1;
-        let deliveryCalculated = false;
-        let finalAmountForUPI = basePrice;
+        // 1. Initial Data Setup (Safe from HTML breaking syntax)
+        var basePrice = parseFloat("{{ total_price | default(0) }}");
+        var sellerPincode = "{% if items %}{{ items[0].seller_pincode | default('713128') }}{% else %}713128{% endif %}";
+        var upiId = "9046348427@fam"; 
+        var hasAddresses = {% if saved_addresses %}true{% else %}false{% endif %};
+        var defaultPin = "{% if user_default_pincode %}{{ user_default_pincode }}{% elif saved_addresses %}{{ saved_addresses[0].pincode }}{% else %}{% endif %}";
 
-        document.addEventListener("DOMContentLoaded", () => {
-            const hasAddresses = appData.getAttribute('data-has-addresses') === "true";
-            if (hasAddresses) {
-                const defaultPin = appData.getAttribute('data-default-pin');
-                if(defaultPin && defaultPin.trim() !== "" && defaultPin !== "None") {
-                    calculateDelivery(defaultPin);
-                }
+        var currentStep = 1;
+        var deliveryCalculated = false;
+        var finalAmountForUPI = basePrice;
+
+        // 2. On Load Execution
+        window.onload = function() {
+            if (hasAddresses && defaultPin && defaultPin.length === 6) {
+                calculateDelivery(defaultPin);
             }
-        });
+        };
 
+        // 3. Address UI Functions
         function showAddressList() {
-            document.getElementById('address-compact-view').style.display = "none";
-            document.getElementById('address-list-view').style.display = "block";
+            if(document.getElementById('address-compact-view')) document.getElementById('address-compact-view').style.display = "none";
+            if(document.getElementById('address-list-view')) document.getElementById('address-list-view').style.display = "block";
             if(document.getElementById('add-options-view')) document.getElementById('add-options-view').style.display = "none";
-            document.getElementById('manual-form-view').style.display = "none";
+            if(document.getElementById('manual-form-view')) document.getElementById('manual-form-view').style.display = "none";
         }
 
         function showAddOptions() {
-            document.getElementById('address-list-view').style.display = "none";
-            document.getElementById('add-options-view').style.display = "block";
-            document.getElementById('manual-form-view').style.display = "none";
+            if(document.getElementById('address-list-view')) document.getElementById('address-list-view').style.display = "none";
+            if(document.getElementById('add-options-view')) document.getElementById('add-options-view').style.display = "block";
+            if(document.getElementById('manual-form-view')) document.getElementById('manual-form-view').style.display = "none";
         }
 
         function showManualForm() {
             if(document.getElementById('add-options-view')) document.getElementById('add-options-view').style.display = "none";
-            document.getElementById('manual-form-view').style.display = "block";
-            document.getElementById('newAddrRadio').checked = true;
+            if(document.getElementById('manual-form-view')) document.getElementById('manual-form-view').style.display = "block";
+            if(document.getElementById('newAddrRadio')) document.getElementById('newAddrRadio').checked = true;
             deliveryCalculated = false;
         }
 
         function selectSavedAddress(element) {
-            document.querySelectorAll('.address-box').forEach(box => box.classList.remove('selected'));
+            document.querySelectorAll('.address-box').forEach(function(box) { box.classList.remove('selected'); });
             element.classList.add('selected');
-            element.querySelector('input').checked = true;
+            if(element.querySelector('input')) element.querySelector('input').checked = true;
             
-            const pin = element.getAttribute('data-pincode');
-            const name = element.getAttribute('data-name');
-            const address = element.getAttribute('data-address');
-            const phone = element.getAttribute('data-phone');
+            var pin = element.getAttribute('data-pincode') || "";
+            var name = element.getAttribute('data-name') || "";
+            var address = element.getAttribute('data-address') || "";
+            var phone = element.getAttribute('data-phone') || "";
             
-            document.getElementById('selected-address-display').innerHTML = `<strong>${name}</strong><br>${address}<br><div style="margin-top: 5px; font-size: 13px; font-weight: bold; color: #555;">PIN: ${pin} | Ph: ${phone}</div>`;
+            var displayHtml = "<strong>" + name + "</strong><br>" + address + "<br><div style='margin-top: 5px; font-size: 13px; font-weight: bold; color: #555;'>PIN: " + pin + " | Ph: " + phone + "</div>";
+            if(document.getElementById('selected-address-display')) document.getElementById('selected-address-display').innerHTML = displayHtml;
             
-            document.getElementById('address-list-view').style.display = "none";
-            document.getElementById('address-compact-view').style.display = "block";
+            if(document.getElementById('address-list-view')) document.getElementById('address-list-view').style.display = "none";
+            if(document.getElementById('address-compact-view')) document.getElementById('address-compact-view').style.display = "block";
             
-            if(pin && pin.trim() !== "") calculateDelivery(pin);
+            if(pin.length === 6) {
+                calculateDelivery(pin);
+            }
         }
 
+        // 4. Auto Detect Location (Made more resilient)
         function autoDetectLocation() {
-            document.getElementById('action-btn').innerText = "Locating...";
+            var btn = document.getElementById('action-btn');
+            if(btn) btn.innerText = "Locating...";
+
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(position => {
-              
+                navigator.geolocation.getCurrentPosition(function(position) {
+        
