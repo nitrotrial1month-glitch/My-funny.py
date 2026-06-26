@@ -5,82 +5,80 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>{{ product.name }} | Wear By Me</title>
     <style>
-        :root { --primary: #cc0000; --bg: #f4f6f9; --text-dark: #212121; }
-        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--bg); margin: 0; padding-bottom: 80px; color: var(--text-dark); }
+        :root { --primary: #cc0000; --bg: #f1f3f6; --text-dark: #212121; --muted: #878787; --success: #388e3c; }
+        body { font-family: Roboto, 'Segoe UI', Helvetica, Arial, sans-serif; background: var(--bg); margin: 0; padding-bottom: 80px; color: var(--text-dark); }
         
-        .top-bar { padding: 15px; background: white; display: flex; align-items: center; gap: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
-        .back-btn { text-decoration: none; color: var(--text-dark); font-size: 20px; font-weight: bold; }
+        /* Top Bar */
+        .top-bar { padding: 15px; background: white; display: flex; align-items: center; gap: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
+        .back-btn { text-decoration: none; color: var(--text-dark); font-size: 22px; font-weight: bold; }
         
-        .media-wrapper { position: relative; background: #fff; }
+        /* Image Slider & Badge */
+        .media-wrapper { position: relative; background: #fff; border-bottom: 1px solid #eee;}
         .media-scroller { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none; }
         .media-scroller::-webkit-scrollbar { display: none; }
         .media-item { flex: 0 0 100%; width: 100%; aspect-ratio: 3/4; object-fit: cover; scroll-snap-align: start; background: #f9f9f9; }
-        .scroll-hint { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); color: white; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: bold; pointer-events: none; }
         
-        .details-container { padding: 20px; background: white; margin-top: 5px; border-radius: 12px 12px 0 0; }
-        h2 { margin: 0 0 5px 0; font-size: 18px; color: var(--text-dark); line-height: 1.3; display: flex; align-items: center; flex-wrap: wrap; gap: 8px;}
-        
-        /* Wear By Me Custom Insure Badge CSS */
-        .wbm-insure-badge { 
-            background-color: rgba(255, 255, 255, 0.95); 
-            color: var(--primary); 
-            font-size: 12px; 
-            font-style: italic; 
-            font-weight: 900; 
-            padding: 3px 6px; 
-            border-radius: 4px; 
-            display: inline-flex; 
-            align-items: center; 
-            gap: 4px; 
-            border: 1px solid #eee;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            letter-spacing: 0.5px;
-        }
-        .insure-icon-svg {
-            width: 14px;
-            height: 14px;
-            margin-top: -1px;
-        }
+        .rating-badge-img { position: absolute; bottom: 15px; left: 15px; background: rgba(255,255,255,0.9); padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #eee; }
+        .rating-star { color: var(--success); font-size: 10px; }
 
-        .tags-container { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 15px 0; }
-        .tag { background: #ffe6e6; color: var(--primary); padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; }
-        .short-desc { color: #666; font-size: 13px; margin: 0 0 15px 0; line-height: 1.5; }
+        /* Product Details Card */
+        .card { background: white; padding: 15px; margin-bottom: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         
-        .price-section { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
-        .current-price { color: var(--text-dark); font-size: 24px; font-weight: bold; }
-        .old-price { color: #888; text-decoration: line-through; font-size: 16px; }
+        h1 { margin: 0 0 5px 0; font-size: 16px; font-weight: 500; color: var(--text-dark); line-height: 1.4; display: flex; align-items: center; flex-wrap: wrap; gap: 8px;}
         
-        /* Discount Percentage Badge CSS */
-        .discount-pct { color: #00a650; font-size: 15px; font-weight: 900; letter-spacing: 0.5px; }
+        .wbm-insure-badge { background-color: rgba(255, 255, 255, 0.95); color: var(--primary); font-size: 12px; font-style: italic; font-weight: 900; padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; border: 1px solid #eee; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         
-        .delivery-box { background: #fdfdfd; margin: 20px 0; border-radius: 8px; border: 1px dashed #ccc; padding: 15px; }
-        .delivery-box-title { font-size: 14px; font-weight: bold; color: var(--text-dark); margin-bottom: 5px; display: flex; align-items: center; gap: 6px; }
-        .delivery-msg { font-size: 13px; color: #555; line-height: 1.4; font-weight: 500;}
+        /* Price Section */
+        .price-section { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+        .discount-pct { color: var(--success); font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+        .old-price { color: var(--muted); text-decoration: line-through; font-size: 16px; }
+        .current-price { color: var(--text-dark); font-size: 28px; font-weight: bold; }
         
-        .section-label { font-weight: bold; margin-top: 20px; margin-bottom: 10px; display: block; color: #212121; font-size: 14px; border-bottom: 1px solid #eee; padding-bottom: 5px;}
-        .size-container { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
-        .size-btn { padding: 8px 16px; border: 1px solid #ddd; border-radius: 6px; background: white; cursor: pointer; font-size: 13px; font-weight: 500; transition: 0.2s; }
-        .size-btn.selected { border-color: var(--primary); color: var(--primary); background: #fff5f5; font-weight: bold; }
+        /* Size Selection */
+        .section-title { font-weight: bold; font-size: 15px; margin-bottom: 15px; color: var(--text-dark); }
+        .size-container { display: flex; gap: 10px; flex-wrap: wrap; }
+        .size-btn { padding: 10px 15px; border: 1px solid #ccc; border-radius: 6px; background: white; cursor: pointer; font-size: 14px; font-weight: 500; min-width: 45px; text-align: center; }
+        .size-btn.selected { border-color: var(--primary); color: var(--primary); background: #fff5f5; border-width: 2px; padding: 9px 14px; }
         
-        .full-details { white-space: pre-wrap; line-height: 1.6; font-size: 13px; color: #444; background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 10px; }
-        .policy-box { display: flex; gap: 15px; margin-top: 15px; background: #f5fdf7; padding: 12px; border-radius: 8px; border: 1px dashed #00a650; }
+        /* Delivery Box */
+        .delivery-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 15px; margin-bottom: 12px; }
+        .delivery-row { display: flex; gap: 15px; margin-bottom: 15px; font-size: 14px; color: #333; align-items: flex-start; }
+        .icon { font-size: 18px; color: var(--muted); }
+        .link-text { color: var(--primary); font-weight: bold; font-size: 13px; text-decoration: none; cursor: pointer; }
 
-        .action-btns { display: flex; gap: 10px; position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 10px 15px; box-sizing: border-box; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000;}
-        .btn { flex: 1; padding: 14px; border: none; border-radius: 6px; font-weight: bold; text-align: center; cursor: pointer; font-size: 15px; }
-        .add-cart { background: #ff9f00; color: white; }
-        .buy-now { background: var(--primary); color: white; }
+        /* Trust Badges */
+        .trust-badges { display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #eee; margin-top: 15px; text-align: center; }
+        .trust-item { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 30%; }
+        .trust-icon { width: 35px; height: 35px; background: #f1f3f6; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 18px; color: var(--primary); }
+        .trust-text { font-size: 11px; color: #555; font-weight: 500; line-height: 1.3; }
+
+        /* Ratings & Reviews */
+        .review-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .review-score { display: inline-flex; align-items: center; gap: 5px; font-size: 24px; font-weight: bold; }
+        .review-images { display: flex; gap: 10px; overflow-x: auto; margin-bottom: 15px; scrollbar-width: none; }
+        .review-images::-webkit-scrollbar { display: none; }
+        .review-images img { width: 80px; height: 80px; object-fit: cover; border-radius: 6px; }
+        .review-card { border: 1px solid #eee; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+        
+        /* Bottom Actions (Website Theme Matched) */
+        .action-btns { display: flex; position: fixed; bottom: 0; left: 0; width: 100%; background: white; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000;}
+        .btn { flex: 1; padding: 16px; border: none; font-weight: bold; text-align: center; cursor: pointer; font-size: 15px; text-transform: uppercase; transition: 0.2s; }
+        .btn:active { opacity: 0.8; }
+        .add-cart { background: white; color: var(--primary); border-top: 1px solid #eee; }
+        .buy-now { background: var(--primary); color: white; border-top: 1px solid var(--primary); }
     </style>
 </head>
 <body>
 
     <div class="top-bar">
         <a href="javascript:history.back()" class="back-btn">←</a>
-        <span style="font-weight: bold; font-size: 16px;">Product Details</span>
+        <div style="width: 100%; border-radius: 4px; padding: 8px 12px; font-size: 14px; color: #888;">
+            🔍 Search for products
+        </div>
     </div>
 
     <div class="media-wrapper">
         <div class="media-scroller">
-            <!-- Cloudinary Image Fixes -->
             {% if product.images %}
                 {% for img in product.images %}
                     <img src="{% if 'http' in img %}{{ img }}{% else %}/{{ img }}{% endif %}" class="media-item" alt="Product Image">
@@ -93,83 +91,138 @@
                 <video src="{% if 'http' in product.video %}{{ product.video }}{% else %}/{{ product.video }}{% endif %}" class="media-item" controls preload="metadata" poster="{% if product.image and 'http' in product.image %}{{ product.image }}{% else %}/{{ product.image }}{% endif %}"></video>
             {% endif %}
         </div>
-        
-        {% if (product.images and product.images|length > 1) or product.video %}
-            <div class="scroll-hint">Swipe to see more ➔</div>
-        {% endif %}
+        <div class="rating-badge-img">4.1 <span class="rating-star">★</span> | 12.4K+</div>
     </div>
     
-    <div class="details-container">
-        <!-- 🔴 UPDATE: Show WBM_P_ID under title -->
-        <div style="font-size: 11px; color: #888; margin-bottom: 5px; letter-spacing: 0.5px;">Product ID: {{ product.WBM_P_ID | default(product._id) }}</div>
-        
-        <h2>
+    <div class="card" style="margin-top: 0; border-radius: 0;">
+        <h1>
+            <span style="font-weight: bold; color: var(--muted); margin-right: 5px;">{{ product.store_name | default('Wear By Me') }}</span>
             {{ product.name }}
-            
-            <!-- Wear By Me Insure Badge -->
-            {% if product.inwear_insure == 'Verified' %}
-                <span class="wbm-insure-badge">
-                    <svg class="insure-icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="12" cy="12" r="12" fill="#cc0000"/>
-                        <path d="M6 8.5 L9 16.5 L12 11.5 L15 16.5 L18 8.5" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-                    </svg>
-                    Insure
-                </span>
-            {% endif %}
-        </h2>
-
-        {% if product.tags %}
-        <div class="tags-container">
-            {% for tag in product.tags %}
-                <span class="tag">{{ tag }}</span>
-            {% endfor %}
-        </div>
-        {% endif %}
+        </h1>
         
+        <div style="font-size: 11px; color: var(--muted); margin-bottom: 10px;">ID: {{ product.WBM_P_ID | default(product._id) }}</div>
+
         <div class="price-section">
-            <span class="current-price">₹{{ product.price }}</span>
             {% if product.mrp and product.mrp|float > product.price|float %}
-                <span class="old-price">₹{{ product.mrp }}</span>
-                <!-- Automatic Discount Percentage Calculation -->
                 {% set discount = ((product.mrp|float - product.price|float) / product.mrp|float * 100) | round | int %}
-                <span class="discount-pct">{{ discount }}% off</span>
+                <span class="discount-pct">↓{{ discount }}%</span>
+                <span class="old-price">₹{{ product.mrp }}</span>
             {% endif %}
+            <span class="current-price">₹{{ product.price }}</span>
         </div>
+    </div>
 
-        {% if product.details %}
-            <p class="short-desc">{{ product.details }}</p>
-        {% endif %}
-
-        {% if product.sizes %}
-        <span class="section-label">Select Size</span>
+    <!-- Size Selection -->
+    {% if product.sizes %}
+    <div class="card">
+        <div class="section-title" style="display: flex; justify-content: space-between;">
+            <span>Select Size</span>
+            <span class="link-text">Size Chart</span>
+        </div>
         <div class="size-container">
             {% for size in product.sizes %}
                 <button class="size-btn" onclick="selectSize('{{ size }}', this)">{{ size }}</button>
             {% endfor %}
         </div>
-        {% endif %}
+    </div>
+    {% endif %}
 
-        {% if product.description %}
-        <span class="section-label">Product Details</span>
-        <div class="full-details">{{ product.description }}</div>
-        {% endif %}
-
-        {% if product.return_policy %}
-        <div class="policy-box">
-            <div class="policy-item">✅ {{ product.return_policy }}</div>
+    <!-- Auto Delivery Calculator -->
+    <div class="card">
+        <div class="delivery-header">Delivery details</div>
+        
+        <div class="delivery-row">
+            <span class="icon">📍</span>
+            <div style="flex-grow: 1;">
+                <div style="font-weight: bold; margin-bottom: 3px;" id="loc-pin">Detecting Location...</div>
+                <div style="font-size: 12px; color: var(--muted);" id="loc-address">Please wait while we check delivery availability.</div>
+            </div>
+            <span class="link-text" onclick="requestLocation()">Change</span>
         </div>
+
+        <div class="delivery-row" style="border-top: 1px solid #eee; padding-top: 15px;">
+            <span class="icon">🚚</span>
+            <div>
+                <div style="font-weight: bold; color: var(--success);" id="delivery-status">Calculating Charge...</div>
+                <div style="font-size: 12px; color: var(--muted); margin-top: 3px;">Order now to get it fast</div>
+            </div>
+        </div>
+
+        <!-- Trust Badges -->
+        <div class="trust-badges">
+            <div class="trust-item">
+                <div class="trust-icon">🔄</div>
+                <div class="trust-text">7-Day<br>Return</div>
+            </div>
+            <div class="trust-item">
+                <div class="trust-icon">💵</div>
+                <div class="trust-text">Cash on<br>Delivery</div>
+            </div>
+            <div class="trust-item">
+                <div class="trust-icon">🛡️</div>
+                <div class="trust-text">100% Secure<br>Payment</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ratings & Reviews (UI Mockup) -->
+    <div class="card">
+        <div class="review-header">
+            <div style="font-weight: bold; font-size: 16px;">Ratings and reviews</div>
+            <span class="link-text">View All</span>
+        </div>
+        
+        <div class="review-score">
+            4.1 <span style="color: white; background: var(--success); padding: 2px 6px; border-radius: 4px; font-size: 14px;">★</span>
+            <span style="font-size: 13px; font-weight: normal; color: var(--muted); margin-left: 10px;">54.1K+ ratings</span>
+        </div>
+        
+        <div style="margin: 15px 0; display: flex; gap: 8px;">
+            <span style="border: 1px solid #ddd; padding: 4px 10px; border-radius: 12px; font-size: 12px;">Fabric Quality</span>
+            <span style="border: 1px solid #ddd; padding: 4px 10px; border-radius: 12px; font-size: 12px;">True to Size</span>
+        </div>
+
+        <div class="review-images">
+            <img src="https://via.placeholder.com/80/cccccc" alt="Review">
+            <img src="https://via.placeholder.com/80/dddddd" alt="Review">
+            <img src="https://via.placeholder.com/80/eeeeee" alt="Review">
+            <div style="width: 80px; height: 80px; background: #f0f0f0; border-radius: 6px; display: flex; justify-content: center; align-items: center; font-weight: bold; color: var(--muted);">+153</div>
+        </div>
+
+        <div class="review-card">
+            <div style="display: flex; gap: 10px; margin-bottom: 8px; align-items: center;">
+                <span style="background: var(--success); color: white; padding: 2px 5px; border-radius: 4px; font-size: 11px; font-weight: bold;">4 ★</span>
+                <span style="font-weight: bold; font-size: 13px;">Worth the price!</span>
+            </div>
+            <p style="font-size: 13px; color: #444; margin: 0 0 10px 0; line-height: 1.4;">Product quality is very good. Fabric is comfortable. Delivered on time.</p>
+            <div style="font-size: 11px; color: var(--muted);">Rahul Singh • Verified Buyer</div>
+        </div>
+    </div>
+
+    <!-- Product Details -->
+    <div class="card" style="margin-bottom: 20px;">
+        <div class="section-title">Product Details</div>
+        <div style="white-space: pre-wrap; line-height: 1.6; font-size: 13px; color: #444;">{{ product.description | default('High quality product from Wear By Me.') }}</div>
+        
+        {% if product.details %}
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; font-size: 13px; color: #555;">{{ product.details }}</div>
         {% endif %}
     </div>
 
     <div class="action-btns">
-        <button onclick="handleAction('cart')" class="btn add-cart">Add to Cart</button>
-        <button onclick="handleAction('checkout')" class="btn buy-now">Buy Now</button>
+        <button onclick="handleAction('cart')" class="btn add-cart">Add to cart</button>
+        <button onclick="handleAction('checkout')" class="btn buy-now">Buy at ₹{{ product.price }}</button>
     </div>
+
+    <!-- Hidden Backend Data -->
+    <div id="backend-data" data-seller-pin="{{ product.seller_pincode | default('713128') }}" style="display: none;"></div>
 
     <script>
         let selectedSize = '';
         const hasSizes = {% if product.sizes %}true{% else %}false{% endif %};
+        const sellerPin = document.getElementById('backend-data').getAttribute('data-seller-pin');
 
+        // Size Selection Logic
         function selectSize(size, btnElement) {
             selectedSize = size;
             let buttons = document.querySelectorAll('.size-btn');
@@ -177,19 +230,90 @@
             btnElement.classList.add('selected');
         }
 
+        // Action Logic (Add to cart / Buy Now)
         function handleAction(actionType) {
             if (hasSizes && selectedSize === '') {
                 alert("Please select a size before proceeding.");
                 return;
             }
-            
-            // 🔴 UPDATE: Use WBM_P_ID or fallback to _id
             let pId = '{{ product.WBM_P_ID if product.WBM_P_ID else product._id }}';
             let url = actionType === 'cart' ? '/add_to_cart/' + pId : '/checkout/' + pId;
             if (hasSizes) {
                 url += '?size=' + selectedSize;
             }
             window.location.href = url;
+        }
+
+        // Auto Delivery Calculation Logic
+        window.onload = function() {
+            requestLocation();
+        };
+
+        function requestLocation() {
+            let pinDisplay = document.getElementById('loc-pin');
+            let addressDisplay = document.getElementById('loc-address');
+            let statusDisplay = document.getElementById('delivery-status');
+
+            pinDisplay.innerText = "Locating...";
+            addressDisplay.innerText = "Fetching your current location...";
+            statusDisplay.innerText = "Calculating Charge...";
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        let lat = position.coords.latitude;
+                        let lon = position.coords.longitude;
+                        
+                        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            let userPincode = data.address.postcode || '';
+                            let area = data.address.suburb || data.address.city_district || data.address.city || 'Your Location';
+                            
+                            if(userPincode) {
+                                pinDisplay.innerText = "Deliver to: " + userPincode;
+                                addressDisplay.innerText = area;
+                                
+                                // Fetch charge from backend API
+                                fetch('/calculate_delivery', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ pincode: userPincode, seller_pincode: sellerPin })
+                                })
+                                .then(res => res.json())
+                                .then(data => {
+                                    let charge = data.charge;
+                                    if(charge === 0) {
+                                        statusDisplay.innerText = "Free Delivery Available!";
+                                        statusDisplay.style.color = "var(--success)";
+                                    } else {
+                                        statusDisplay.innerText = "Delivery Charge: ₹" + charge;
+                                        statusDisplay.style.color = "var(--text-dark)";
+                                    }
+                                }).catch(() => {
+                                    statusDisplay.innerText = "Standard Delivery Charges Apply";
+                                    statusDisplay.style.color = "var(--text-dark)";
+                                });
+                            } else {
+                                fallbackLocationUI();
+                            }
+                        }).catch(() => fallbackLocationUI());
+                    }, 
+                    function(error) {
+                        fallbackLocationUI();
+                    }, 
+                    { timeout: 5000 }
+                );
+            } else {
+                fallbackLocationUI();
+            }
+        }
+
+        function fallbackLocationUI() {
+            document.getElementById('loc-pin').innerText = "Location access denied";
+            document.getElementById('loc-address').innerText = "We will calculate delivery at checkout based on your address.";
+            document.getElementById('delivery-status').innerText = "Standard Delivery";
+            document.getElementById('delivery-status').style.color = "var(--text-dark)";
         }
     </script>
 </body>
