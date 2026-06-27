@@ -33,13 +33,36 @@
         .btn-submit { background: #ffc200; color: #212121; border: none; padding: 12px; width: 100%; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 15px; }
         .btn-location { background: #f4f8ff; color: var(--primary); border: 1px dashed var(--primary); padding: 12px; width: 100%; border-radius: 4px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 15px; font-size: 15px; }
         
-        /* Map Modal Styles (ফুল স্ক্রিন পপআপ) */
-        #mapModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 1000; flex-direction: column; }
-        .map-header { padding: 15px; background: var(--primary); color: white; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 16px; }
+        /* 🔴 ফিক্স করা Map Modal Styles */
+        #mapModal { 
+            display: none; 
+            position: fixed; 
+            top: 0; left: 0; right: 0; bottom: 0; /* ফুল স্ক্রিন ফিক্স */
+            background: white; 
+            z-index: 1000; 
+            flex-direction: column; 
+        }
+        .map-header { 
+            padding: 15px; 
+            background: var(--primary); 
+            color: white; 
+            display: flex; justify-content: space-between; align-items: center; 
+            font-weight: bold; font-size: 16px; 
+            z-index: 1002; 
+        }
         .close-map { cursor: pointer; font-size: 20px; }
-        #map { flex: 1; width: 100%; }
-        .map-footer { padding: 15px; background: white; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1001; }
-        .btn-confirm-loc { width: 100%; padding: 14px; background: #388e3c; color: white; border: none; border-radius: 4px; font-weight: bold; font-size: 16px; cursor: pointer; }
+        #map { 
+            height: 100%; /* ম্যাপের হাইট ফিক্স */
+            width: 100%; 
+            flex: 1; 
+            z-index: 1; 
+        }
+        .map-footer { 
+            padding: 15px; background: white; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1002; 
+        }
+        .btn-confirm-loc { 
+            width: 100%; padding: 14px; background: #388e3c; color: white; border: none; border-radius: 4px; font-weight: bold; font-size: 16px; cursor: pointer; 
+        }
     </style>
 </head>
 <body>
@@ -145,8 +168,9 @@
         function openMapModal() {
             document.getElementById('mapModal').style.display = 'flex';
             initMap();
-            // ম্যাপ ঠিকমতো রেন্ডার হওয়ার জন্য 
-            setTimeout(() => { map.invalidateSize(); }, 200);
+            
+            // 🔴 ফিক্স: ম্যাপ ঠিকমতো রেন্ডার হওয়ার জন্য ৪০০ মিলিসেকেন্ড সময় দেওয়া হলো
+            setTimeout(() => { map.invalidateSize(); }, 400);
 
             // অটো-লোকেশন ডিটেক্ট করার চেষ্টা করবে
             if (navigator.geolocation && !selectedLat) {
