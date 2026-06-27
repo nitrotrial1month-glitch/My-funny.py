@@ -33,14 +33,25 @@
         .btn-submit { background: #ffc200; color: #212121; border: none; padding: 12px; width: 100%; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 15px; }
         .btn-location { background: #f4f8ff; color: var(--primary); border: 1px dashed var(--primary); padding: 12px; width: 100%; border-radius: 4px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 15px; font-size: 15px; }
         
-        /* Map Modal Styles (100% Mobile Screen Fix) */
+        /* 🔴 BULLETPROOF FIX: display none এর বদলে ম্যাপকে স্ক্রিনের বামে সরিয়ে রাখা হলো */
         #mapModal { 
-            display: none; 
             position: fixed; 
-            top: 0; left: 0; width: 100vw; height: 100vh; 
+            top: 0; 
+            left: -100vw; /* স্ক্রিনের বাইরে গোপন থাকবে */
+            width: 100vw; 
+            height: 100vh; 
             background: white; 
             z-index: 1000; 
+            transition: left 0.3s ease-in-out; /* স্লাইডিং ইফেক্ট */
+            display: flex;
+            flex-direction: column;
         }
+        
+        /* বাটন ক্লিক করলে ম্যাপটি স্ক্রিনের ভেতরে চলে আসবে */
+        #mapModal.active { 
+            left: 0; 
+        }
+
         .map-header { 
             padding: 15px; 
             background: var(--primary); 
@@ -52,8 +63,8 @@
         .close-map { cursor: pointer; font-size: 20px; }
         #map { 
             width: 100%; 
-            height: calc(100vh - 125px); 
-            background: #e5e5e5; /* এই কালারটাই এতক্ষণ দেখছিলেন */
+            flex: 1;
+            background: #e5e5e5;
         }
         .map-footer { 
             padding: 10px; background: white; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); 
@@ -140,7 +151,23 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <script>
-        var map = null; 
+        // 🔴 পেজ লোড হওয়ার সাথে সাথেই ব্যাকগ্রাউন্ডে ম্যাপ তৈরি হয়ে থাকবে
+        var map = L.map('map').setView([23.5143, 87.7385], 14); 
+        
+        // সিউকার সিকিউরড Google Maps সার্ভার লিংক
+        L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+            maxZoom: 20,
+            attribution: '© Google Maps'
+        }).addTo(map);
+
+        // 🔴 লিফলেট মার্কার ফিক্স (মোবাইলে অনেক সময় আইকন ক্র্যাশ করা বন্ধ করবে)
+        delete L.Icon.Default.prototype._getIconUrl;
+        L.Icon.Default.mergeOptions({
+            iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+            iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+            shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+        });
+
         var currentMarker = null;
         var selectedLat = null, selectedLng = null;
 
@@ -151,51 +178,36 @@
             currentMarker = L.marker([lat, lng]).addTo(map);
         }
 
+        map.on('click', function(e) {
+            setMarker(e.latlng.lat, e.latlng.lng);
+        });
+
         function openMapModal() {
-            document.getElementById('mapModal').style.display = 'block';
+            // ম্যাপ স্লাইড করে চোখের সামনে আসবে
+            document.getElementById('mapModal').classList.add('active');
 
-            setTimeout(() => {
-                if (map !== null) {
-                    map.remove();
-                    document.getElementById('map').innerHTML = ""; 
-                    map = null;
-                }
+            // সাইজ একদম নিখুঁত করার জন্য রিফ্রেশ নির্দেশ
+            setTimeout(() => { map.invalidateSize(true); }, 100);
 
-                map = L.map('map').setView([23.5143, 87.7385], 14); 
-                
-                // 🔴 ১০০% সমাধান: HTTP এর জায়গায় HTTPS দেওয়া হয়েছে 🔴
-                L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-                    maxZoom: 20,
-                    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-                    attribution: '© Google Maps'
-                }).addTo(map);
-
-                map.invalidateSize(true);
-
-                map.on('click', function(e) {
-                    setMarker(e.latlng.lat, e.latlng.lng);
-                });
-
-                if (navigator.geolocation && !selectedLat) {
-                    navigator.geolocation.getCurrentPosition(
-                        (pos) => { 
-                            var lat = pos.coords.latitude;
-                            var lng = pos.coords.longitude;
-                            map.setView([lat, lng], 16);
-                            setMarker(lat, lng);
-                        },
-                        (err) => { 
-                            console.log("Geolocation error"); 
-                            map.invalidateSize(true);
-                        },
-                        { timeout: 10000 }
-                    );
-                }
-            }, 500); 
+            // জিপিএস লোকেশন নেওয়া
+            if (navigator.geolocation && !selectedLat) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => { 
+                        var lat = pos.coords.latitude;
+                        var lng = pos.coords.longitude;
+                        map.setView([lat, lng], 16);
+                        setMarker(lat, lng);
+                    },
+                    (err) => { 
+                        console.log("Geolocation error"); 
+                        map.invalidateSize(true);
+                    }
+                );
+            }
         }
 
         function closeMapModal() {
-            document.getElementById('mapModal').style.display = 'none';
+            document.getElementById('mapModal').classList.remove('active');
         }
 
         function confirmLocation() {
