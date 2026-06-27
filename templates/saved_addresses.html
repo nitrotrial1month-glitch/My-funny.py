@@ -33,14 +33,13 @@
         .btn-submit { background: #ffc200; color: #212121; border: none; padding: 12px; width: 100%; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 15px; }
         .btn-location { background: #f4f8ff; color: var(--primary); border: 1px dashed var(--primary); padding: 12px; width: 100%; border-radius: 4px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 15px; font-size: 15px; }
         
-        /* 🔴 ফিক্স করা Map Modal Styles */
+        /* 🔴 100% গ্যারান্টেড Map Modal Styles */
         #mapModal { 
             display: none; 
             position: fixed; 
-            top: 0; left: 0; right: 0; bottom: 0; /* ফুল স্ক্রিন ফিক্স */
+            top: 0; left: 0; width: 100vw; height: 100vh; 
             background: white; 
             z-index: 1000; 
-            flex-direction: column; 
         }
         .map-header { 
             padding: 15px; 
@@ -48,17 +47,17 @@
             color: white; 
             display: flex; justify-content: space-between; align-items: center; 
             font-weight: bold; font-size: 16px; 
-            z-index: 1002; 
+            height: 50px; box-sizing: border-box;
         }
         .close-map { cursor: pointer; font-size: 20px; }
         #map { 
-            height: 100%; /* ম্যাপের হাইট ফিক্স */
             width: 100%; 
-            flex: 1; 
-            z-index: 1; 
+            height: calc(100vh - 120px); /* স্ক্রিনের সাইজ অনুযায়ী ফিক্সড হাইট */
+            background: #e5e5e5;
         }
         .map-footer { 
-            padding: 15px; background: white; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1002; 
+            padding: 10px; background: white; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); 
+            height: 70px; box-sizing: border-box;
         }
         .btn-confirm-loc { 
             width: 100%; padding: 14px; background: #388e3c; color: white; border: none; border-radius: 4px; font-weight: bold; font-size: 16px; cursor: pointer; 
@@ -141,58 +140,60 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <script>
-        var map, currentMarker;
-        var selectedLat, selectedLng;
-
-        function initMap() {
-            if (!map) {
-                // ডিফল্ট লোকেশন: গুসকরা এরিয়া
-                map = L.map('map').setView([23.5143, 87.7385], 14); 
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OSM' }).addTo(map);
-
-                // ম্যাপে ক্লিক করলে মার্কার সরে যাবে
-                map.on('click', function(e) {
-                    setMarker(e.latlng.lat, e.latlng.lng);
-                });
-            }
-        }
+        var map = null; 
+        var currentMarker = null;
+        var selectedLat = null, selectedLng = null;
 
         function setMarker(lat, lng) {
             selectedLat = lat;
             selectedLng = lng;
             if (currentMarker) { map.removeLayer(currentMarker); }
             currentMarker = L.marker([lat, lng]).addTo(map);
-            map.setView([lat, lng]); 
         }
 
         function openMapModal() {
-    // ১. আগে মোডালটিকে স্ক্রিনে দৃশ্যমান করা হলো
-    document.getElementById('mapModal').style.display = 'flex';
-    
-    // ২. ব্রাউজারকে মোডালের সাইজ মাপার জন্য ৩০০ মিলিসেকেন্ড সময় দেওয়া হলো
-    setTimeout(() => {
-        // এরপর ম্যাপ ইনিশিয়ালাইজ করা হবে
-        initMap(); 
-        
-        // Leaflet-কে জোর করে তার সাইজ ঠিক করতে বাধ্য করা হলো
-        map.invalidateSize(true); 
+            // ১. মোডাল ওপেন করা হলো (display block করে)
+            document.getElementById('mapModal').style.display = 'block';
 
-        // অটো-লোকেশন ডিটেক্ট
-        if (navigator.geolocation && !selectedLat) {
-            navigator.geolocation.getCurrentPosition(
-                (pos) => { setMarker(pos.coords.latitude, pos.coords.longitude); },
-                (err) => { console.log("Geolocation error"); }
-            );
+            // ২. ২০০ মিলিসেকেন্ড পর ম্যাপ রেন্ডার হবে
+            setTimeout(() => {
+                // যদি আগে কোনো ম্যাপ তৈরি হয়ে থাকে, তবে সেটি পুরোপুরি ধ্বংস করে ফেলা হচ্ছে
+                if (map !== null) {
+                    map.remove();
+                    map = null;
+                }
+
+                // একদম নতুন করে ম্যাপ জেনারেট করা হচ্ছে
+                map = L.map('map').setView([23.5143, 87.7385], 14); 
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
+                    maxZoom: 19, 
+                    attribution: '© OSM' 
+                }).addTo(map);
+
+                // ম্যাপে ক্লিক ইভেন্ট
+                map.on('click', function(e) {
+                    setMarker(e.latlng.lat, e.latlng.lng);
+                });
+
+                // অটো-লোকেশন জিপিএস
+                if (navigator.geolocation && !selectedLat) {
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => { 
+                            var lat = pos.coords.latitude;
+                            var lng = pos.coords.longitude;
+                            map.setView([lat, lng], 16);
+                            setMarker(lat, lng);
+                        },
+                        (err) => { console.log("Geolocation error"); }
+                    );
+                }
+            }, 200);
         }
-    }, 500);
-        }
-        
 
         function closeMapModal() {
             document.getElementById('mapModal').style.display = 'none';
         }
 
-        // ম্যাপের নিচের কনফার্ম বাটনে ক্লিক করলে
         function confirmLocation() {
             if (!selectedLat || !selectedLng) {
                 alert("Please tap on the map to select a location first!");
@@ -201,22 +202,18 @@
 
             document.getElementById('map-loading-text').style.display = 'block';
 
-            // API থেকে অ্যাড্রেস ও পিনকোড আনা
             fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${selectedLat}&lon=${selectedLng}`)
                 .then(res => res.json())
                 .then(data => {
                     if(data && data.display_name) {
-                        // ফর্মের ফিল্ডগুলো ফিল করা
                         document.getElementById('addressField').value = data.display_name;
                         if(data.address && data.address.postcode) { 
                             document.getElementById('pincodeField').value = data.address.postcode; 
                         }
                         
-                        // ব্যাকএন্ডের জন্য লুকানো ইনপুট সেভ করা
                         document.getElementById('lat').value = selectedLat;
                         document.getElementById('lng').value = selectedLng;
 
-                        // সাকসেস মেসেজ দেখানো
                         const statusBox = document.getElementById('loc-status');
                         statusBox.innerText = "✔ Location successfully mapped!";
                         statusBox.style.display = "block";
