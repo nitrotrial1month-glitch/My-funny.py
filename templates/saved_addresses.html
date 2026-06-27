@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Saved Addresses | Wear By Me</title>
     
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
 
     <style>
         :root { --primary: #2874f0; --bg: #f1f3f6; --text: #212121; }
@@ -33,42 +33,37 @@
         .btn-submit { background: #ffc200; color: #212121; border: none; padding: 12px; width: 100%; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 15px; }
         .btn-location { background: #f4f8ff; color: var(--primary); border: 1px dashed var(--primary); padding: 12px; width: 100%; border-radius: 4px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 15px; font-size: 15px; }
         
-        /* 🔴 BULLETPROOF FIX: display none এর বদলে ম্যাপকে স্ক্রিনের বামে সরিয়ে রাখা হলো */
+        /* 🔴 100% Mobile Perfect Modal */
         #mapModal { 
+            display: none; /* Initially hidden */
             position: fixed; 
-            top: 0; 
-            left: -100vw; /* স্ক্রিনের বাইরে গোপন থাকবে */
-            width: 100vw; 
-            height: 100vh; 
+            top: 0; left: 0; right: 0; bottom: 0;
+            width: 100%; height: 100%;
             background: white; 
-            z-index: 1000; 
-            transition: left 0.3s ease-in-out; /* স্লাইডিং ইফেক্ট */
-            display: flex;
+            z-index: 9999; /* একদম সবার ওপরে থাকবে */
             flex-direction: column;
         }
-        
-        /* বাটন ক্লিক করলে ম্যাপটি স্ক্রিনের ভেতরে চলে আসবে */
-        #mapModal.active { 
-            left: 0; 
-        }
-
         .map-header { 
             padding: 15px; 
             background: var(--primary); 
             color: white; 
             display: flex; justify-content: space-between; align-items: center; 
             font-weight: bold; font-size: 16px; 
-            height: 55px; box-sizing: border-box;
+            flex-shrink: 0;
         }
         .close-map { cursor: pointer; font-size: 20px; }
+        
+        /* ম্যাপের জায়গা নিজে থেকেই ব্যালেন্স হয়ে যাবে */
         #map { 
+            flex-grow: 1; 
             width: 100%; 
-            flex: 1;
+            position: relative;
             background: #e5e5e5;
         }
+        
         .map-footer { 
-            padding: 10px; background: white; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); 
-            height: 70px; box-sizing: border-box;
+            padding: 15px; background: white; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); 
+            flex-shrink: 0;
         }
         .btn-confirm-loc { 
             width: 100%; padding: 14px; background: #388e3c; color: white; border: none; border-radius: 4px; font-weight: bold; font-size: 16px; cursor: pointer; 
@@ -148,66 +143,83 @@
         </div>
     </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
     
     <script>
-        // 🔴 পেজ লোড হওয়ার সাথে সাথেই ব্যাকগ্রাউন্ডে ম্যাপ তৈরি হয়ে থাকবে
-        var map = L.map('map').setView([23.5143, 87.7385], 14); 
-        
-        // সিউকার সিকিউরড Google Maps সার্ভার লিংক
-        L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-            maxZoom: 20,
-            attribution: '© Google Maps'
-        }).addTo(map);
+        let map = null; 
+        let currentMarker = null;
+        let selectedLat = null, selectedLng = null;
 
-        // 🔴 লিফলেট মার্কার ফিক্স (মোবাইলে অনেক সময় আইকন ক্র্যাশ করা বন্ধ করবে)
-        delete L.Icon.Default.prototype._getIconUrl;
-        L.Icon.Default.mergeOptions({
-            iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-            iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-            shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+        // 🔴 মার্কার ক্র্যাশ ফিক্স (ছবি না পেয়ে ম্যাপ যেন সাদা না হয়)
+        const customIcon = L.icon({
+            iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+            iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
         });
-
-        var currentMarker = null;
-        var selectedLat = null, selectedLng = null;
 
         function setMarker(lat, lng) {
             selectedLat = lat;
             selectedLng = lng;
             if (currentMarker) { map.removeLayer(currentMarker); }
-            currentMarker = L.marker([lat, lng]).addTo(map);
+            currentMarker = L.marker([lat, lng], {icon: customIcon}).addTo(map);
         }
 
-        map.on('click', function(e) {
-            setMarker(e.latlng.lat, e.latlng.lng);
-        });
-
         function openMapModal() {
-            // ম্যাপ স্লাইড করে চোখের সামনে আসবে
-            document.getElementById('mapModal').classList.add('active');
+            // ১. মোডালকে ফ্লেক্সবক্সে দৃশ্যমান করা হলো
+            document.getElementById('mapModal').style.display = 'flex';
 
-            // সাইজ একদম নিখুঁত করার জন্য রিফ্রেশ নির্দেশ
-            setTimeout(() => { map.invalidateSize(true); }, 100);
+            // ২. ব্রাউজারকে মোডাল রেন্ডার করার জন্য ৫০০ মিলিসেকেন্ড সময় দেওয়া হলো
+            setTimeout(() => {
+                const mapDiv = document.getElementById('map');
+                
+                // আগের কোনো ক্যাশে থাকলে তা সম্পূর্ণ মুছে দেওয়া হচ্ছে
+                if (map) {
+                    map.off();
+                    map.remove();
+                    map = null;
+                }
+                mapDiv.innerHTML = ''; // DOM ক্লিয়ার
+                
+                // নতুন ম্যাপ ইনিশিয়ালাইজেশন
+                map = L.map('map').setView([23.5143, 87.7385], 14); 
+                
+                // 🔴 Google Maps Tile Layer (Super Reliable URL)
+                L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                    maxZoom: 20,
+                    attribution: '© Google Maps'
+                }).addTo(map);
 
-            // জিপিএস লোকেশন নেওয়া
-            if (navigator.geolocation && !selectedLat) {
-                navigator.geolocation.getCurrentPosition(
-                    (pos) => { 
-                        var lat = pos.coords.latitude;
-                        var lng = pos.coords.longitude;
-                        map.setView([lat, lng], 16);
-                        setMarker(lat, lng);
-                    },
-                    (err) => { 
-                        console.log("Geolocation error"); 
-                        map.invalidateSize(true);
-                    }
-                );
-            }
+                // ম্যাপের সাইজ ফিক্স করা
+                map.invalidateSize(true);
+
+                // ম্যাপ ক্লিক ইভেন্ট
+                map.on('click', function(e) {
+                    setMarker(e.latlng.lat, e.latlng.lng);
+                });
+
+                // জিপিএস লোকেশন (এরর আসলেও ম্যাপের সাইজ ঠিক থাকবে)
+                if (navigator.geolocation && !selectedLat) {
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => { 
+                            map.setView([pos.coords.latitude, pos.coords.longitude], 16);
+                            setMarker(pos.coords.latitude, pos.coords.longitude);
+                        },
+                        (err) => { 
+                            console.log("Geolocation error: ", err); 
+                            map.invalidateSize(true);
+                        },
+                        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                    );
+                }
+            }, 500); 
         }
 
         function closeMapModal() {
-            document.getElementById('mapModal').classList.remove('active');
+            document.getElementById('mapModal').style.display = 'none';
         }
 
         function confirmLocation() {
