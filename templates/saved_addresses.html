@@ -52,8 +52,8 @@
         .close-map { cursor: pointer; font-size: 20px; }
         #map { 
             width: 100%; 
-            height: calc(100vh - 125px); /* Header + Footer বাদ দিয়ে ম্যাপের জায়গা */
-            background: #e5e5e5;
+            height: calc(100vh - 125px); 
+            background: #e5e5e5; /* এই কালারটাই এতক্ষণ দেখছিলেন */
         }
         .map-footer { 
             padding: 10px; background: white; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); 
@@ -152,37 +152,30 @@
         }
 
         function openMapModal() {
-            // ১. মোডাল আগে পেজে দৃশ্যমান করা হলো
             document.getElementById('mapModal').style.display = 'block';
 
-            // ২. ৫০০ মিলিসেকেন্ড পর ম্যাপ রেন্ডার হবে (যাতে ব্রাউজার সাইজ ঠিকঠাক ধরতে পারে)
             setTimeout(() => {
-                // যদি আগে কোনো ম্যাপ থেকে থাকে, সেটি ধ্বংস করে কন্টেইনার খালি করা হচ্ছে
                 if (map !== null) {
                     map.remove();
                     document.getElementById('map').innerHTML = ""; 
                     map = null;
                 }
 
-                // একদম নতুন ম্যাপ তৈরি
                 map = L.map('map').setView([23.5143, 87.7385], 14); 
                 
-                // 🔴 Google Maps Tile Layer 🔴
-                L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                // 🔴 ১০০% সমাধান: HTTP এর জায়গায় HTTPS দেওয়া হয়েছে 🔴
+                L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
                     maxZoom: 20,
                     subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
                     attribution: '© Google Maps'
                 }).addTo(map);
 
-                // ম্যাপের সাইজ জোর করে ফিক্স করা হলো
                 map.invalidateSize(true);
 
-                // ম্যাপে ক্লিক ইভেন্ট
                 map.on('click', function(e) {
                     setMarker(e.latlng.lat, e.latlng.lng);
                 });
 
-                // ৩. জিপিএস লোকেশন নেওয়া
                 if (navigator.geolocation && !selectedLat) {
                     navigator.geolocation.getCurrentPosition(
                         (pos) => { 
@@ -193,7 +186,6 @@
                         },
                         (err) => { 
                             console.log("Geolocation error"); 
-                            // এরর আসলেও ম্যাপের সাইজ ঠিক থাকবে
                             map.invalidateSize(true);
                         },
                         { timeout: 10000 }
