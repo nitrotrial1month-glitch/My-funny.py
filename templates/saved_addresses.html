@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Saved Addresses | Wear By Me</title>
     
+    <!-- Cloudflare থেকে Leaflet CSS (ফাস্ট লোডিং) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
 
     <style>
@@ -19,6 +20,7 @@
         .card { background: white; border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .card-title { font-size: 15px; font-weight: bold; margin-top: 0; margin-bottom: 15px; color: #878787; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 10px; }
         
+        /* Address Box Styles */
         .address-box { border: 1px solid #e0e0e0; border-radius: 6px; padding: 15px; margin-bottom: 10px; position: relative; }
         .address-box.default { border-color: var(--primary); background: #f4f8ff; }
         .badge { position: absolute; top: 15px; right: 15px; background: #f0f0f0; padding: 3px 8px; font-size: 10px; font-weight: bold; border-radius: 4px; color: #878787; }
@@ -33,37 +35,56 @@
         .btn-submit { background: #ffc200; color: #212121; border: none; padding: 12px; width: 100%; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 15px; }
         .btn-location { background: #f4f8ff; color: var(--primary); border: 1px dashed var(--primary); padding: 12px; width: 100%; border-radius: 4px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 15px; font-size: 15px; }
         
-        /* 🔴 100% Mobile Perfect Modal */
+        /* 🔴 Map Modal Styles 🔴 */
         #mapModal { 
-            display: none; /* Initially hidden */
+            display: none; 
             position: fixed; 
             top: 0; left: 0; right: 0; bottom: 0;
-            width: 100%; height: 100%;
+            width: 100vw; height: 100vh;
             background: white; 
-            z-index: 9999; /* একদম সবার ওপরে থাকবে */
+            z-index: 9999; 
             flex-direction: column;
         }
         .map-header { 
-            padding: 15px; 
-            background: var(--primary); 
-            color: white; 
-            display: flex; justify-content: space-between; align-items: center; 
-            font-weight: bold; font-size: 16px; 
-            flex-shrink: 0;
+            padding: 15px; background: var(--primary); color: white; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 16px; flex-shrink: 0;
         }
-        .close-map { cursor: pointer; font-size: 20px; }
+        .close-map { cursor: pointer; font-size: 20px; padding: 0 10px; }
         
-        /* ম্যাপের জায়গা নিজে থেকেই ব্যালেন্স হয়ে যাবে */
-        #map { 
+        #map-container {
             flex-grow: 1; 
             width: 100%; 
-            position: relative;
+            position: relative; 
+        }
+        
+        #map { 
+            width: 100%; 
+            height: 100%;
             background: #e5e5e5;
         }
         
+        /* GPS/Locate Me Button */
+        .locate-me-btn {
+            position: absolute;
+            bottom: 20px;
+            right: 15px;
+            width: 45px;
+            height: 45px;
+            background: white;
+            border: none;
+            border-radius: 12px;
+            z-index: 10000; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .locate-me-btn:active { background: #e0e0e0; }
+        .locate-me-btn svg { width: 22px; height: 22px; fill: #444444; }
+
         .map-footer { 
-            padding: 15px; background: white; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); 
-            flex-shrink: 0;
+            padding: 15px; background: white; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); flex-shrink: 0;
         }
         .btn-confirm-loc { 
             width: 100%; padding: 14px; background: #388e3c; color: white; border: none; border-radius: 4px; font-weight: bold; font-size: 16px; cursor: pointer; 
@@ -78,6 +99,8 @@
     </div>
 
     <div class="container">
+        
+        <!-- Add New Address Form -->
         <div class="card">
             <div class="card-title">+ Add New Address</div>
             
@@ -104,6 +127,7 @@
             </form>
         </div>
 
+        <!-- Saved Addresses List (Jinja2 Template) -->
         <div class="card">
             <div class="card-title">Your Addresses</div>
             {% if addresses %}
@@ -131,18 +155,31 @@
         </div>
     </div>
 
+    <!-- Map Modal -->
     <div id="mapModal">
         <div class="map-header">
             <span>Select Delivery Location</span>
             <span class="close-map" onclick="closeMapModal()">✖</span>
         </div>
-        <div id="map"></div>
+        
+        <div id="map-container">
+            <div id="map"></div>
+            
+            <!-- One Click Zoom GPS Button -->
+            <button class="locate-me-btn" onclick="zoomToMyLocation()" title="Go to my location">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/>
+                </svg>
+            </button>
+        </div>
+
         <div class="map-footer">
             <p id="map-loading-text" style="margin-top: 0; font-size: 12px; color: #555; text-align: center; display: none;">Fetching details...</p>
             <button class="btn-confirm-loc" onclick="confirmLocation()">Confirm Location</button>
         </div>
     </div>
 
+    <!-- Cloudflare থেকে Leaflet JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
     
     <script>
@@ -150,15 +187,11 @@
         let currentMarker = null;
         let selectedLat = null, selectedLng = null;
 
-        // 🔴 মার্কার ক্র্যাশ ফিক্স (ছবি না পেয়ে ম্যাপ যেন সাদা না হয়)
         const customIcon = L.icon({
             iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
             iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
             shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-            iconSize: [25, 41],
-            iconAnchor: [12, 41],
-            popupAnchor: [1, -34],
-            shadowSize: [41, 41]
+            iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
         });
 
         function setMarker(lat, lng) {
@@ -169,57 +202,61 @@
         }
 
         function openMapModal() {
-            // ১. মোডালকে ফ্লেক্সবক্সে দৃশ্যমান করা হলো
             document.getElementById('mapModal').style.display = 'flex';
 
-            // ২. ব্রাউজারকে মোডাল রেন্ডার করার জন্য ৫০০ মিলিসেকেন্ড সময় দেওয়া হলো
             setTimeout(() => {
                 const mapDiv = document.getElementById('map');
-                
-                // আগের কোনো ক্যাশে থাকলে তা সম্পূর্ণ মুছে দেওয়া হচ্ছে
                 if (map) {
                     map.off();
                     map.remove();
                     map = null;
                 }
-                mapDiv.innerHTML = ''; // DOM ক্লিয়ার
+                mapDiv.innerHTML = '';
                 
-                // নতুন ম্যাপ ইনিশিয়ালাইজেশন
                 map = L.map('map').setView([23.5143, 87.7385], 14); 
                 
-                // 🔴 Google Maps Tile Layer (Super Reliable URL)
                 L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-                    maxZoom: 20,
-                    attribution: '© Google Maps'
+                    maxZoom: 20, attribution: '© Google Maps'
                 }).addTo(map);
 
-                // ম্যাপের সাইজ ফিক্স করা
                 map.invalidateSize(true);
 
-                // ম্যাপ ক্লিক ইভেন্ট
                 map.on('click', function(e) {
                     setMarker(e.latlng.lat, e.latlng.lng);
                 });
 
-                // জিপিএস লোকেশন (এরর আসলেও ম্যাপের সাইজ ঠিক থাকবে)
-                if (navigator.geolocation && !selectedLat) {
-                    navigator.geolocation.getCurrentPosition(
-                        (pos) => { 
-                            map.setView([pos.coords.latitude, pos.coords.longitude], 16);
-                            setMarker(pos.coords.latitude, pos.coords.longitude);
-                        },
-                        (err) => { 
-                            console.log("Geolocation error: ", err); 
-                            map.invalidateSize(true);
-                        },
-                        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-                    );
-                }
-            }, 500); 
+                zoomToMyLocation();
+
+            }, 400); 
         }
 
         function closeMapModal() {
             document.getElementById('mapModal').style.display = 'none';
+        }
+
+        function zoomToMyLocation() {
+            if (navigator.geolocation) {
+                const svgIcon = document.querySelector('.locate-me-btn svg');
+                svgIcon.style.fill = '#2874f0';
+
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => { 
+                        var lat = pos.coords.latitude;
+                        var lng = pos.coords.longitude;
+                        
+                        map.setView([lat, lng], 17, { animate: true, duration: 1 });
+                        setMarker(lat, lng);
+                        
+                        setTimeout(() => { svgIcon.style.fill = '#444444'; }, 1000);
+                    },
+                    (err) => { 
+                        console.log("GPS Error"); 
+                        svgIcon.style.fill = '#444444';
+                        map.invalidateSize(true);
+                    },
+                    { enableHighAccuracy: true, timeout: 5000 }
+                );
+            }
         }
 
         function confirmLocation() {
@@ -250,7 +287,7 @@
                     }
                 })
                 .catch(err => {
-                    alert("Could not fetch address details. Please try again.");
+                    alert("Could not fetch address details.");
                 })
                 .finally(() => {
                     document.getElementById('map-loading-text').style.display = 'none';
