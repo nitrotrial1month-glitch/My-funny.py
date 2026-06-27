@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Map Location</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        body { margin: 0; padding: 0; }
+        /* মোবাইল স্ক্রিনের জন্য ম্যাপের সাইজ ঠিক করা */
+        #map { height: 100vh; width: 100%; }
+    </style>
+</head>
+<body>
+
+    <!-- ম্যাপ দেখানোর কন্টেইনার -->
+    <div id="map"></div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        // ১. ম্যাপ ইনিশিয়ালাইজ করা (ডিফল্ট লোকেশন এবং জুম লেভেল সেট করা)
+        var map = L.map('map').setView([23.5143, 87.7385], 13);
+
+        // ২. OpenStreetMap-এর টাইল যুক্ত করা
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        // ৩. ব্যাকএন্ড থেকে লোকেশন ডেটা নিয়ে আসা
+        fetch('/api/locations')
+            .then(response => response.json())
+            .then(data => {
+                // লুপ চালিয়ে প্রতিটি লোকেশনের জন্য ম্যাপে মার্কার বসানো
+                data.forEach(location => {
+                    var marker = L.marker([location.lat, location.lng]).addTo(map);
+                    
+                    // পপআপ টেক্সট সেট করা
+                    marker.bindPopup(`<b>${location.name}</b><br>এখানে আমাদের সার্ভিস পাওয়া যায়।`);
+                });
+            })
+            .catch(error => console.error('Error loading locations:', error));
+    </script>
+</body>
+</html>
+
