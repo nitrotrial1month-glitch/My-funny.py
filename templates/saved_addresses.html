@@ -166,9 +166,12 @@
 
                 // একদম নতুন ম্যাপ তৈরি
                 map = L.map('map').setView([23.5143, 87.7385], 14); 
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
-                    maxZoom: 19, 
-                    attribution: '© OSM' 
+                
+                // 🔴 Google Maps Tile Layer 🔴
+                L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                    maxZoom: 20,
+                    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+                    attribution: '© Google Maps'
                 }).addTo(map);
 
                 // ম্যাপের সাইজ জোর করে ফিক্স করা হলো
