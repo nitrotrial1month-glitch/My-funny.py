@@ -166,20 +166,27 @@
         }
 
         function openMapModal() {
-            document.getElementById('mapModal').style.display = 'flex';
-            initMap();
-            
-            // 🔴 ফিক্স: ম্যাপ ঠিকমতো রেন্ডার হওয়ার জন্য ৪০০ মিলিসেকেন্ড সময় দেওয়া হলো
-            setTimeout(() => { map.invalidateSize(); }, 400);
+    // ১. আগে মোডালটিকে স্ক্রিনে দৃশ্যমান করা হলো
+    document.getElementById('mapModal').style.display = 'flex';
+    
+    // ২. ব্রাউজারকে মোডালের সাইজ মাপার জন্য ৩০০ মিলিসেকেন্ড সময় দেওয়া হলো
+    setTimeout(() => {
+        // এরপর ম্যাপ ইনিশিয়ালাইজ করা হবে
+        initMap(); 
+        
+        // Leaflet-কে জোর করে তার সাইজ ঠিক করতে বাধ্য করা হলো
+        map.invalidateSize(true); 
 
-            // অটো-লোকেশন ডিটেক্ট করার চেষ্টা করবে
-            if (navigator.geolocation && !selectedLat) {
-                navigator.geolocation.getCurrentPosition(
-                    (pos) => { setMarker(pos.coords.latitude, pos.coords.longitude); },
-                    (err) => { console.log("Geolocation error"); }
-                );
-            }
+        // অটো-লোকেশন ডিটেক্ট
+        if (navigator.geolocation && !selectedLat) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => { setMarker(pos.coords.latitude, pos.coords.longitude); },
+                (err) => { console.log("Geolocation error"); }
+            );
         }
+    }, 300);
+        }
+        
 
         function closeMapModal() {
             document.getElementById('mapModal').style.display = 'none';
