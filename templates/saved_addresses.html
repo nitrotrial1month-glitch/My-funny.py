@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Saved Addresses | Wear By Me</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
     <style>
         :root { --primary: #2874f0; --bg: #f1f3f6; --text: #212121; }
         body { font-family: Roboto, sans-serif; background: var(--bg); margin: 0; padding: 0; color: var(--text); padding-bottom: 30px;}
@@ -28,7 +31,15 @@
         /* Form Styles */
         .form-control { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 12px; box-sizing: border-box; font-family: inherit; }
         .btn-submit { background: #ffc200; color: #212121; border: none; padding: 12px; width: 100%; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 15px; }
-        .btn-location { background: #f4f8ff; color: var(--primary); border: 1px dashed var(--primary); padding: 10px; width: 100%; border-radius: 4px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 12px; }
+        .btn-location { background: #f4f8ff; color: var(--primary); border: 1px dashed var(--primary); padding: 12px; width: 100%; border-radius: 4px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 15px; font-size: 15px; }
+        
+        /* Map Modal Styles (ফুল স্ক্রিন পপআপ) */
+        #mapModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 1000; flex-direction: column; }
+        .map-header { padding: 15px; background: var(--primary); color: white; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 16px; }
+        .close-map { cursor: pointer; font-size: 20px; }
+        #map { flex: 1; width: 100%; }
+        .map-footer { padding: 15px; background: white; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1001; }
+        .btn-confirm-loc { width: 100%; padding: 14px; background: #388e3c; color: white; border: none; border-radius: 4px; font-weight: bold; font-size: 16px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -39,23 +50,23 @@
     </div>
 
     <div class="container">
-        <!-- Add New Address -->
         <div class="card">
             <div class="card-title">+ Add New Address</div>
             
-            <button type="button" class="btn-location" onclick="detectLocation()">
-                <span>📍</span> Auto-Detect Location
+            <button type="button" class="btn-location" onclick="openMapModal()">
+                <span>📍</span> Use My Location / Map
             </button>
-            <p id="loc-status" style="font-size: 12px; color: #cc0000; text-align: center; margin-top: 0; display: none;"></p>
+            <p id="loc-status" style="font-size: 13px; color: #388e3c; text-align: center; margin-top: 0; display: none; font-weight: bold;"></p>
 
             <form action="/saved_addresses" method="POST">
                 <input type="text" name="name" class="form-control" placeholder="Full Name" required>
                 <input type="tel" name="phone" class="form-control" placeholder="10-digit Mobile Number" required pattern="[0-9]{10}">
                 
-                <!-- Pincode explicitly requested for Delivery Calculation -->
-                <input type="text" name="pincode" id="pincodeField" class="form-control" placeholder="6-digit Pincode (e.g. 713128)" required pattern="[0-9]{6}" style="border-color: #2874f0; background: #fafcff;">
-                
+                <input type="text" name="pincode" id="pincodeField" class="form-control" placeholder="6-digit Pincode" required pattern="[0-9]{6}" style="border-color: #2874f0; background: #fafcff;">
                 <textarea name="address" id="addressField" class="form-control" rows="3" placeholder="House No, Building, Area, City" required></textarea>
+                
+                <input type="hidden" name="lat" id="lat" value="">
+                <input type="hidden" name="lng" id="lng" value="">
                 
                 <label style="font-size: 13px; display: flex; align-items: center; gap: 8px; margin-bottom: 15px; font-weight: bold;">
                     <input type="checkbox" name="is_default" checked> Make this my default address
@@ -65,21 +76,19 @@
             </form>
         </div>
 
-        <!-- Saved Addresses List -->
         <div class="card">
             <div class="card-title">Your Addresses</div>
             {% if addresses %}
                 {% for add in addresses %}
                 <div class="address-box {% if add.is_default %}default{% endif %}">
-                    {% if add.is_default %}
-                        <div class="badge default">✔ DEFAULT</div>
-                    {% else %}
-                        <div class="badge">HOME</div>
-                    {% endif %}
-                    
+                    {% if add.is_default %}<div class="badge default">✔ DEFAULT</div>{% endif %}
                     <div class="add-name">{{ add.name }}</div>
                     <div class="add-phone">Ph: {{ add.phone }}</div>
                     <div class="add-text">{{ add.address }}<br><strong>PIN: {{ add.pincode }}</strong></div>
+                    
+                    {% if add.lat and add.lng %}
+                        <div style="font-size: 12px; color: #2874f0; margin-bottom: 10px;">📍 Location Pinned</div>
+                    {% endif %}
                     
                     {% if not add.is_default %}
                     <form action="/set_default_address/{{ loop.index0 }}" method="POST" style="margin: 0;">
@@ -94,30 +103,102 @@
         </div>
     </div>
 
-    <script>
-        // Geolocation Script
-        function detectLocation() {
-            const statusBox = document.getElementById('loc-status');
-            const addressField = document.getElementById('addressField');
-            const pincodeField = document.getElementById('pincodeField');
-            
-            if (!navigator.geolocation) { statusBox.innerText = "GPS not supported"; statusBox.style.display = "block"; return; }
-            statusBox.innerText = "Locating... Please wait."; statusBox.style.color = "#2874f0"; statusBox.style.display = "block";
+    <div id="mapModal">
+        <div class="map-header">
+            <span>Select Delivery Location</span>
+            <span class="close-map" onclick="closeMapModal()">✖</span>
+        </div>
+        <div id="map"></div>
+        <div class="map-footer">
+            <p id="map-loading-text" style="margin-top: 0; font-size: 12px; color: #555; text-align: center; display: none;">Fetching details...</p>
+            <button class="btn-confirm-loc" onclick="confirmLocation()">Confirm Location</button>
+        </div>
+    </div>
 
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`)
-                        .then(res => res.json())
-                        .then(data => {
-                            if(data && data.display_name) {
-                                addressField.value = data.display_name;
-                                if(data.address && data.address.postcode) { pincodeField.value = data.address.postcode; }
-                                statusBox.innerText = "Location detected!"; statusBox.style.color = "#388e3c";
-                            }
-                        });
-                },
-                (err) => { statusBox.innerText = "Location access denied!"; statusBox.style.color = "#cc0000"; }
-            );
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        var map, currentMarker;
+        var selectedLat, selectedLng;
+
+        function initMap() {
+            if (!map) {
+                // ডিফল্ট লোকেশন: গুসকরা এরিয়া
+                map = L.map('map').setView([23.5143, 87.7385], 14); 
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OSM' }).addTo(map);
+
+                // ম্যাপে ক্লিক করলে মার্কার সরে যাবে
+                map.on('click', function(e) {
+                    setMarker(e.latlng.lat, e.latlng.lng);
+                });
+            }
+        }
+
+        function setMarker(lat, lng) {
+            selectedLat = lat;
+            selectedLng = lng;
+            if (currentMarker) { map.removeLayer(currentMarker); }
+            currentMarker = L.marker([lat, lng]).addTo(map);
+            map.setView([lat, lng]); 
+        }
+
+        function openMapModal() {
+            document.getElementById('mapModal').style.display = 'flex';
+            initMap();
+            // ম্যাপ ঠিকমতো রেন্ডার হওয়ার জন্য 
+            setTimeout(() => { map.invalidateSize(); }, 200);
+
+            // অটো-লোকেশন ডিটেক্ট করার চেষ্টা করবে
+            if (navigator.geolocation && !selectedLat) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => { setMarker(pos.coords.latitude, pos.coords.longitude); },
+                    (err) => { console.log("Geolocation error"); }
+                );
+            }
+        }
+
+        function closeMapModal() {
+            document.getElementById('mapModal').style.display = 'none';
+        }
+
+        // ম্যাপের নিচের কনফার্ম বাটনে ক্লিক করলে
+        function confirmLocation() {
+            if (!selectedLat || !selectedLng) {
+                alert("Please tap on the map to select a location first!");
+                return;
+            }
+
+            document.getElementById('map-loading-text').style.display = 'block';
+
+            // API থেকে অ্যাড্রেস ও পিনকোড আনা
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${selectedLat}&lon=${selectedLng}`)
+                .then(res => res.json())
+                .then(data => {
+                    if(data && data.display_name) {
+                        // ফর্মের ফিল্ডগুলো ফিল করা
+                        document.getElementById('addressField').value = data.display_name;
+                        if(data.address && data.address.postcode) { 
+                            document.getElementById('pincodeField').value = data.address.postcode; 
+                        }
+                        
+                        // ব্যাকএন্ডের জন্য লুকানো ইনপুট সেভ করা
+                        document.getElementById('lat').value = selectedLat;
+                        document.getElementById('lng').value = selectedLng;
+
+                        // সাকসেস মেসেজ দেখানো
+                        const statusBox = document.getElementById('loc-status');
+                        statusBox.innerText = "✔ Location successfully mapped!";
+                        statusBox.style.display = "block";
+                        
+                        closeMapModal();
+                    }
+                })
+                .catch(err => {
+                    alert("Could not fetch address details. Please try again.");
+                })
+                .finally(() => {
+                    document.getElementById('map-loading-text').style.display = 'none';
+                });
         }
     </script>
 </body>
