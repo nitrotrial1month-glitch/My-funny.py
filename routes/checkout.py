@@ -323,18 +323,14 @@ def process_checkout():
         
     return redirect(f'/order_success/{wbm_order_id}')
 
-
-# ==========================================================
-# 📍 অ্যাড্রেস ম্যানেজমেন্ট রাউটস
-# ==========================================================
-
+# ৫. সেভ করা অ্যাড্রেস পেজ
 @checkout_bp.route('/saved_addresses', methods=['GET', 'POST'])
 def saved_addresses():
     user = session.get('user')
     if not user: return redirect('/account')
     
     db_users = Database.get_collection("users")
-    user_data = db_users.find_one({"WBM_U_ID": str(user['id'])}) if db_users is not None else {}
+    user_data = db_users.find_one({"discord_id": str(user['id'])}) if db_users is not None else {}
     addresses = user_data.get('addresses', [])
     
     if request.method == 'POST':
@@ -343,6 +339,10 @@ def saved_addresses():
         address = request.form.get('address')
         pincode = request.form.get('pincode')
         is_default = request.form.get('is_default') == 'on'
+        
+        # 🔴 নতুন যোগ করা হলো: ম্যাপ থেকে ল্যাটিচিউড ও লংগিচিউড নেওয়া
+        lat = request.form.get('lat')
+        lng = request.form.get('lng')
         
         if name and phone and address and pincode:
             if is_default:
@@ -355,11 +355,13 @@ def saved_addresses():
                 "phone": phone,
                 "address": address,
                 "pincode": pincode,
+                "lat": lat, # ডেটাবেসে সেভ করা হচ্ছে
+                "lng": lng, # ডেটাবেসে সেভ করা হচ্ছে
                 "is_default": is_default or len(addresses) == 0
             }
             addresses.append(new_add)
             if db_users is not None:
-                db_users.update_one({"WBM_U_ID": str(user['id'])}, {"$set": {"addresses": addresses}})
+                db_users.update_one({"discord_id": str(user['id'])}, {"$set": {"addresses": addresses}})
         return redirect('/saved_addresses')
         
     return render_template('saved_addresses.html', addresses=addresses)
