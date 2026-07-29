@@ -5,10 +5,10 @@ from easy_pil import Editor, load_image_async, Font, Canvas
 import os
 from io import BytesIO
 
-# আপনার Render বটের utils ফাইল থেকে ফাংশনগুলো ইমপোর্ট করা হলো
+# utils থেকে আপনার কনফিগ ফাংশনগুলো (আগের মতোই রাখা হয়েছে)
 from utils import load_config, save_config, get_theme_color
 
-# ================= 0. SMART MEDIA ENGINE =================
+# ================= 0. SMART MEDIA ENGINE (নতুন ফাংশন) =================
 # এই ফাংশনটি চেক করবে লিংকটি ভিডিও নাকি অ্যানিমেটেড GIF
 def is_animated_media(url):
     if not url:
@@ -16,7 +16,8 @@ def is_animated_media(url):
     val = url.lower()
     return any(ext in val for ext in ['.gif', '.mp4', '.mov', '.webm'])
 
-# ================= 1. MODALS =================
+# ================= 1. MODALS (প্রিমিয়াম লুক আপডেট) =================
+
 class MessageModal(ui.Modal, title="✨ Custom Greeting Text"):
     msg = ui.TextInput(
         label="Enter your personalized message", 
@@ -24,7 +25,7 @@ class MessageModal(ui.Modal, title="✨ Custom Greeting Text"):
         placeholder="Welcome to the elite club, {member}!", 
         default="Welcome {member}! You are the #{count} member of {server}.",
         required=True, 
-        max_length=800
+        max_length=1000
     )
     
     async def on_submit(self, interaction: discord.Interaction):
@@ -46,9 +47,8 @@ class BackgroundModal(ui.Modal, title="🌌 Upload Visual Media"):
     )
     
     async def on_submit(self, interaction: discord.Interaction):
-        val = self.url.value.lower()
-        if not val.startswith("http"):
-             return await interaction.response.send_message("⚠️ Error: Please provide a valid direct link starting with http/https.", ephemeral=True)
+        if not self.url.value.startswith("http"):
+             return await interaction.response.send_message("⚠️ Error: Please provide a valid direct link.", ephemeral=True)
 
         config = load_config()
         guild_id = str(interaction.guild.id)
@@ -59,15 +59,16 @@ class BackgroundModal(ui.Modal, title="🌌 Upload Visual Media"):
         config[guild_id]["welcome_settings"]["image_url"] = self.url.value
         save_config(config)
         
-        # স্মার্ট রেসপন্স (স্ট্যাটিক নাকি অ্যানিমেটেড তার ওপর ভিত্তি করে)
+        # স্মার্ট রেসপন্স (ভিডিও নাকি ইমেজ তার ওপর ভিত্তি করে মেসেজ)
         if is_animated_media(self.url.value):
-            msg = "🎬 **Animated Media Saved!**\n*(Since it's a Video/GIF, it will play directly without text overlays to preserve the animation.)*"
+            msg = "🎬 **Animated Media Saved!**\n*(Since it's a Video/GIF, it will play directly without text overlays.)*"
         else:
-            msg = "🖼️ **Static Image Saved!**\n*(The bot will elegantly draw the welcome text and profile picture on this image.)*"
+            msg = "🖼️ **Static Image Saved!**\n*(The bot will elegantly draw the welcome text on this image.)*"
             
         await interaction.response.send_message(msg, ephemeral=True)
 
-# ================= 2. CHANNEL SELECT =================
+# ================= 2. CHANNEL SELECT (ডিজাইন আপডেট) =================
+
 class ChannelSelectView(ui.View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -94,7 +95,8 @@ class ChannelSelectView(ui.View):
         
         await interaction.response.send_message(f"✅ VIP Arrivals will now be announced in {channel.mention}!", ephemeral=True)
 
-# ================= 3. PREMIUM DASHBOARD =================
+# ================= 3. MAIN DASHBOARD (বাটন প্যানেল আপডেট) =================
+
 class WelcomeDashboard(ui.View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -119,7 +121,7 @@ class WelcomeDashboard(ui.View):
         if cog:
             await cog.send_welcome_card(interaction.user, interaction.channel, is_test=True, interaction=interaction)
         else:
-            await interaction.followup.send("⚠️ System offline or module missing!", ephemeral=True)
+            await interaction.followup.send("⚠️ System Error: Cog not found!", ephemeral=True)
 
     @ui.button(label="Power Switch", style=discord.ButtonStyle.danger, emoji="⚡", row=1)
     async def toggle_system(self, interaction: discord.Interaction, button: ui.Button):
@@ -137,13 +139,14 @@ class WelcomeDashboard(ui.View):
         status = "🟢 ONLINE & ACTIVE" if new_state else "🔴 OFFLINE"
         await interaction.response.send_message(f"System Status: **{status}**", ephemeral=True)
 
-# ================= 4. CORE LOGIC & SMART RENDERER =================
+# ================= 4. SYSTEM LOGIC (স্মার্ট রেন্ডারার) =================
+
 class WelcomeSystem(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    async def generate_static_image(self, member, bg_url):
-        # Premium Dark Background: এটি এতটাই ডার্ক যে এর ওপর সাদা লেখা খুব সুন্দরভাবে ফুটে উঠবে।
+    async def generate_image(self, member, bg_url):
+        # Premium Dark Abstract Background (সাদা লেখার জন্য পারফেক্ট)
         default_bg = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000&auto=format&fit=crop"
         
         try:
@@ -155,19 +158,21 @@ class WelcomeSystem(commands.Cog):
             try:
                 background = Editor(await load_image_async(default_bg)).resize((900, 400))
             except:
-                background = Editor(Canvas((900, 400), color="#0b0e14")) # Very dark sleek fallback color
+                # ফলব্যাক হিসেবে একটি ডার্ক সলিড ক্যানভাস
+                background = Editor(Canvas((900, 400), color="#0b0e14"))
 
         # Profile Picture Setup
         try:
             raw_profile = await load_image_async(member.display_avatar.url)
-            raw_profile = raw_profile.convert("RGBA")
+            # নাইট্রো এভাটার ফ্রিজ করার জন্য RGBA কনভার্ট
+            raw_profile = raw_profile.convert("RGBA") 
             profile = Editor(raw_profile).resize((200, 200)).circle_image()
             
             background.paste(profile, (350, 50))
             # গোল্ডেন রঙের প্রিমিয়াম বর্ডার 
             background.ellipse((350, 50), 200, 200, outline="#FFD700", stroke_width=6)
-        except Exception as e:
-            print(f"Avatar error: {e}")
+        except:
+            pass 
 
         # Font Setup
         try:
@@ -177,11 +182,11 @@ class WelcomeSystem(commands.Cog):
             font_large = Font.montserrat(size=55, variant="bold")
             font_small = Font.montserrat(size=32, variant="light")
 
-        # Paste Texts
+        # Paste Texts (সাদা এবং গোল্ডেন থিম)
         background.text((450, 275), "WELCOME", color="white", font=font_large, align="center")
         background.text((450, 340), f"@{member.name}", color="#FFD700", font=font_small, align="center")
 
-        return discord.File(fp=background.image_bytes, filename="premium_arrival.png")
+        return discord.File(fp=background.image_bytes, filename="premium_welcome.png")
 
     async def send_welcome_card(self, member, channel, is_test=False, interaction=None):
         config = load_config()
@@ -189,36 +194,38 @@ class WelcomeSystem(commands.Cog):
         
         ws = config.get(guild_id, {}).get("welcome_settings", {})
         
-        raw_msg = ws.get("message", "Welcome {member}! You are the #{count} member of {server}.")
+        raw_msg = ws.get("message", "Welcome {member} to {server}! You are member #{count}")
         msg_content = raw_msg.replace("{member}", member.mention)\
                              .replace("{server}", f"**{member.guild.name}**")\
                              .replace("{count}", str(member.guild.member_count))
 
         bg_url = ws.get("image_url")
-        # আপনার utils থেকে আসা get_theme_color ব্যবহার করা হয়েছে
-        embed = discord.Embed(description=msg_content, color=get_theme_color(member.guild.id))
-        embed.set_footer(text=f"User ID: {member.id} • Arrival Logs")
+        
+        # আপনার utils এর থিম কালার ঠিক রাখা হয়েছে
+        color = get_theme_color(member.guild.id)
+        embed = discord.Embed(description=msg_content, color=color)
+        embed.set_footer(text=f"User ID: {member.id} • #{member.guild.member_count}")
 
-        # THE SMART LOGIC: GIF/Video vs Static Image
         file = None
         content_msg = member.mention
 
+        # 🔥 SMART MEDIA LOGIC 🔥
         if is_animated_media(bg_url):
-            # যদি লিংকটি ভিডিও বা GIF হয়, তবে কোনো ইমেজ জেনারেট না করে সরাসরি সেটি পাঠানো হবে।
+            # যদি লিংকটি ভিডিও বা GIF হয়, তবে ইমেজ জেনারেট না করে সরাসরি পাঠানো হবে।
             if ".gif" in bg_url.lower():
                 embed.set_image(url=bg_url)
             else:
-                # Video (mp4/webm) এর ক্ষেত্রে লিংকটি মেসেজে দিলে ডিসকর্ড নিজে থেকে প্লে করবে।
+                # Video (mp4) এর ক্ষেত্রে মেসেজে দিলে ডিসকর্ড নিজে থেকে প্লে করবে।
                 content_msg = f"{member.mention}\n{bg_url}"
         else:
-            # সাধারণ ইমেজের ক্ষেত্রে নরমাল ওয়েলকাম কার্ড জেনারেট হবে।
+            # নরমাল ইমেজের ক্ষেত্রে ওয়েলকাম কার্ড জেনারেট হবে।
             try:
-                file = await self.generate_static_image(member, bg_url)
-                embed.set_image(url="attachment://premium_arrival.png")
+                file = await self.generate_image(member, bg_url)
+                embed.set_image(url="attachment://premium_welcome.png")
             except Exception as e:
-                print(f"Render Error: {e}")
+                print(f"Image Gen Error: {e}")
 
-        # Send the message
+        # মেসেজ পাঠানো (টেস্ট বা রিয়েল)
         if is_test and interaction:
             if file:
                 await interaction.followup.send(content=content_msg, file=file, embed=embed, ephemeral=True)
@@ -230,6 +237,7 @@ class WelcomeSystem(commands.Cog):
             else:
                 await channel.send(content=content_msg, embed=embed)
 
+    # --- Listener ---
     @commands.Cog.listener()
     async def on_member_join(self, member):
         config = load_config()
@@ -245,28 +253,29 @@ class WelcomeSystem(commands.Cog):
         if channel:
             await self.send_welcome_card(member, channel)
 
-    @app_commands.command(name="setup_lounge", description="🌟 Configure the premium VIP arrival experience for your server")
+    # --- Setup Command ---
+    @app_commands.command(name="welcome_setup", description="🌟 Open the Premium Welcome System Dashboard")
     @app_commands.checks.has_permissions(administrator=True)
-    async def setup_lounge(self, interaction: discord.Interaction):
+    async def welcome_setup(self, interaction: discord.Interaction):
         config = load_config()
         guild_id = str(interaction.guild.id)
         ws = config.get(guild_id, {}).get("welcome_settings", {})
         
         status = "🟢 **ONLINE**" if ws.get("enabled") else "🔴 **OFFLINE**"
         ch_id = ws.get('channel_id')
-        ch_mention = f"<#{ch_id}>" if ch_id else "`Pending Configuration`"
-        msg_preview = ws.get('message', 'Default Configuration')[:45] + "..."
+        ch_mention = f"<#{ch_id}>" if ch_id else "`Not Set`"
+        msg_preview = ws.get('message', 'Default')[:40] + "..."
         media_status = "🎬 Animated/Video" if is_animated_media(ws.get('image_url')) else "🖼️ Static Card"
         
+        # প্রিমিয়াম এমবেড লুক
         embed = discord.Embed(
             title="🌟 Server Arrival Dashboard",
             description=(
-                "Welcome to the premium configuration lounge. Use the interactive "
-                "modules below to design the perfect greeting sequence.\n\n"
+                "Welcome to the premium configuration lounge.\n\n"
                 "**📊 System Diagnostics:**\n"
                 f"> ⚡ **Core Status:** {status}\n"
-                f"> 📍 **Broadcast Channel:** {ch_mention}\n"
-                f"> 📝 **Message Template:** `{msg_preview}`\n"
+                f"> 📍 **Channel:** {ch_mention}\n"
+                f"> 📝 **Message:** `{msg_preview}`\n"
                 f"> 🌌 **Media Mode:** `{media_status}`"
             ),
             color=get_theme_color(interaction.guild.id)
@@ -278,4 +287,4 @@ class WelcomeSystem(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(WelcomeSystem(bot))
-        
+            
