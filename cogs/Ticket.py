@@ -14,11 +14,14 @@ class ContentModal(Modal, title="📝 Edit Panel Text"):
 
     async def on_submit(self, interaction: discord.Interaction):
         config = load_config()
-        if "ticket_config" not in config: config["ticket_config"] = {}
+        guild_id = str(interaction.guild.id)
         
-        config["ticket_config"]["title"] = self.title_input.value
-        config["ticket_config"]["description"] = self.desc_input.value
-        config["ticket_config"]["footer"] = self.footer_input.value
+        if guild_id not in config: config[guild_id] = {}
+        if "ticket_config" not in config[guild_id]: config[guild_id]["ticket_config"] = {}
+        
+        config[guild_id]["ticket_config"]["title"] = self.title_input.value
+        config[guild_id]["ticket_config"]["description"] = self.desc_input.value
+        config[guild_id]["ticket_config"]["footer"] = self.footer_input.value
         save_config(config)
         await interaction.response.send_message("✅ **Text Updated!** Use `/ticket_set` to see changes.", ephemeral=True)
 
@@ -29,11 +32,14 @@ class VisualModal(Modal, title="🎨 Edit Visuals"):
 
     async def on_submit(self, interaction: discord.Interaction):
         config = load_config()
-        if "ticket_config" not in config: config["ticket_config"] = {}
+        guild_id = str(interaction.guild.id)
         
-        if self.image_url.value: config["ticket_config"]["image"] = self.image_url.value
-        if self.thumb_url.value: config["ticket_config"]["thumbnail"] = self.thumb_url.value
-        if self.color_hex.value: config["ticket_config"]["color"] = self.color_hex.value
+        if guild_id not in config: config[guild_id] = {}
+        if "ticket_config" not in config[guild_id]: config[guild_id]["ticket_config"] = {}
+        
+        if self.image_url.value: config[guild_id]["ticket_config"]["image"] = self.image_url.value
+        if self.thumb_url.value: config[guild_id]["ticket_config"]["thumbnail"] = self.thumb_url.value
+        if self.color_hex.value: config[guild_id]["ticket_config"]["color"] = self.color_hex.value
         save_config(config)
         await interaction.response.send_message("✅ **Visuals Updated!** Use `/ticket_set` to see changes.", ephemeral=True)
 
@@ -44,11 +50,14 @@ class CategoryModal(Modal, title="📂 Add New Category"):
 
     async def on_submit(self, interaction: discord.Interaction):
         config = load_config()
-        if "ticket_config" not in config: config["ticket_config"] = {}
-        if "categories" not in config["ticket_config"]: config["ticket_config"]["categories"] = []
+        guild_id = str(interaction.guild.id)
+        
+        if guild_id not in config: config[guild_id] = {}
+        if "ticket_config" not in config[guild_id]: config[guild_id]["ticket_config"] = {}
+        if "categories" not in config[guild_id]["ticket_config"]: config[guild_id]["ticket_config"]["categories"] = []
 
         new_cat = {"label": self.name.value, "emoji": self.emoji.value, "description": self.desc.value, "value": self.name.value}
-        config["ticket_config"]["categories"].append(new_cat)
+        config[guild_id]["ticket_config"]["categories"].append(new_cat)
         save_config(config)
         await interaction.response.send_message(f"✅ Added Category: **{self.name.value}**", ephemeral=True)
 
@@ -80,11 +89,14 @@ class TicketSelect(Select):
 
     async def create_ticket(self, interaction: discord.Interaction, category_name):
         guild = interaction.guild
+        guild_id = str(guild.id)
         config = load_config()
         
+        if guild_id not in config: config[guild_id] = {}
+        
         # Ticket Count Logic
-        count = config.get("ticket_count", 0) + 1
-        config["ticket_count"] = count
+        count = config[guild_id].get("ticket_count", 0) + 1
+        config[guild_id]["ticket_count"] = count
         save_config(config)
 
         # Channel Name & Perms
@@ -96,7 +108,7 @@ class TicketSelect(Select):
         }
 
         # Add Staff Roles
-        staff_ids = config.get("ticket_config", {}).get("staff_roles", [])
+        staff_ids = config[guild_id].get("ticket_config", {}).get("staff_roles", [])
         staff_mentions = []
         for role_id in staff_ids:
             role = guild.get_role(role_id)
@@ -106,7 +118,7 @@ class TicketSelect(Select):
 
         try:
             # Category Check
-            cat_id = config.get("ticket_config", {}).get("category_id")
+            cat_id = config[guild_id].get("ticket_config", {}).get("category_id")
             category_channel = guild.get_channel(cat_id) if cat_id else None
             
             channel = await guild.create_text_channel(name=ch_name, overwrites=overwrites, category=category_channel)
@@ -163,25 +175,35 @@ class DashboardView(View):
     @discord.ui.button(label="♻️ Reset Defaults", style=discord.ButtonStyle.danger, row=1)
     async def reset_config(self, interaction: discord.Interaction, button: Button):
         config = load_config()
-        config["ticket_config"] = {} # Full Reset
+        guild_id = str(interaction.guild.id)
+        if guild_id not in config: config[guild_id] = {}
+        
+        config[guild_id]["ticket_config"] = {} # Full Reset
         save_config(config)
         await interaction.response.send_message("🗑️ **Config Reset!** Now using Default Normal Panel.", ephemeral=True)
 
     @discord.ui.select(cls=RoleSelect, placeholder="🛡️ Add Staff Role", min_values=1, max_values=1, row=2)
     async def select_role(self, interaction: discord.Interaction, select: RoleSelect):
         config = load_config()
-        if "ticket_config" not in config: config["ticket_config"] = {"staff_roles": []}
-        if "staff_roles" not in config["ticket_config"]: config["ticket_config"]["staff_roles"] = []
+        guild_id = str(interaction.guild.id)
         
-        config["ticket_config"]["staff_roles"].append(select.values[0].id)
+        if guild_id not in config: config[guild_id] = {}
+        if "ticket_config" not in config[guild_id]: config[guild_id]["ticket_config"] = {"staff_roles": []}
+        if "staff_roles" not in config[guild_id]["ticket_config"]: config[guild_id]["ticket_config"]["staff_roles"] = []
+        
+        config[guild_id]["ticket_config"]["staff_roles"].append(select.values[0].id)
         save_config(config)
         await interaction.response.send_message(f"✅ Added Staff: **{select.values[0].name}**", ephemeral=True)
 
     @discord.ui.select(cls=ChannelSelect, channel_types=[discord.ChannelType.category], placeholder="📂 Set Category Channel", row=3)
     async def select_channel_cat(self, interaction: discord.Interaction, select: ChannelSelect):
         config = load_config()
-        if "ticket_config" not in config: config["ticket_config"] = {}
-        config["ticket_config"]["category_id"] = select.values[0].id
+        guild_id = str(interaction.guild.id)
+        
+        if guild_id not in config: config[guild_id] = {}
+        if "ticket_config" not in config[guild_id]: config[guild_id]["ticket_config"] = {}
+        
+        config[guild_id]["ticket_config"]["category_id"] = select.values[0].id
         save_config(config)
         await interaction.response.send_message(f"✅ Tickets will open in: **{select.values[0].name}**", ephemeral=True)
 
@@ -209,7 +231,10 @@ class TicketSystem(commands.Cog):
     async def ticket_set(self, interaction: discord.Interaction, channel: discord.TextChannel = None):
         target_channel = channel or interaction.channel
         config = load_config()
-        tc = config.get("ticket_config", {})
+        guild_id = str(interaction.guild.id)
+        
+        # 서버 아이ডি (guild.id) ভিত্তিক কনফিগ রিড
+        tc = config.get(guild_id, {}).get("ticket_config", {})
 
         # --- FALLBACK TO DEFAULT (যদি কনফিগ না থাকে) ---
         title = tc.get("title", "🎫 Funny Bot Support")
@@ -243,3 +268,4 @@ class TicketSystem(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(TicketSystem(bot))
+        
